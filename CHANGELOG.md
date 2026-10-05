@@ -5,11 +5,30 @@ All notable changes to this project are documented in this file.
 
 <div dir="rtl" align="center">
 
-راه سریع تشخیص نسخه: اگر این فایل (**CHANGELOG.md**) داخل زیپ بود، نسخه **v2.0.0** را دارید ✅
+راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.1.0** ✅
 
 </div>
 
 ## 🇬🇧 English
+
+## [2.1.0] — 2026-10-05
+
+### 🌐 Added — Project Website (GitHub Pages)
+
+- New `docs/` folder with a **static RTL demo page** (`index.html`) replicating the shop home page: hero, categories, all 8 sample products with real images & prices, feature cards and a quick-start terminal
+- Hosted **free on GitHub Pages** at <https://mss1625.github.io/shop-php/> — enabled with a single toggle (repo Settings → Pages → main branch `/docs`)
+- Ships with `.nojekyll` and `robots.txt`; every button links back to the repository
+
+### 📝 Changed — README internationalization
+
+- README split into **`README.md` (English)** + **`README.fa.md` (فارسی)** with a two-way language switcher at the top of each file — fixes the missing link to the English version
+- `README.fa.md` now has full parity with the English file (project structure, roadmap and contributing sections added)
+- Release badge now **auto-updates from GitHub Releases** (`github/v/release`) instead of a hard-coded version
+- Live-preview link added to both files
+
+### 📦 Added — Release tooling
+
+- `RELEASE_NOTES.md` — paste-ready bilingual notes for the v2.1.0 GitHub Release
 
 ## [2.0.0] — 2026-10-04
 
@@ -64,6 +83,25 @@ All notable changes to this project are documented in this file.
 ---
 
 ## 🇮🇷 فارسی
+
+## [2.1.0] — ۲۰۲۶-۱۰-۰۵
+
+### 🌐 افزوده شد — وب‌سایت پروژه (GitHub Pages)
+
+- پوشه `docs/` جدید با **صفحه دموی ایستای راست‌چین** (`index.html`) که صفحه اصلی فروشگاه را بازسازی می‌کند: هیرو، دسته‌بندی‌ها، هر ۸ محصول نمونه با تصویر و قیمت واقعی، کارت‌های امکانات و ترمینال راه‌اندازی
+- میزبانی **رایگان روی GitHub Pages** در <https://mss1625.github.io/shop-php/> — فقط با یک تنظیم فعال می‌شود (Settings ← Pages ← شاخه main / پوشه docs)
+- همراه با `.nojekyll` و `robots.txt`؛ همه دکمه‌ها به مخزن لینک می‌شوند
+
+### 📝 تغییرات — بین‌المللی‌سازی README
+
+- README به **`README.md` (انگلیسی)** + **`README.fa.md` (فارسی)** تفکیک شد با سوییچر زبان دوسویه بالای هر فایل — مشکل نبودن لینک نسخه انگلیسی حل شد
+- `README.fa.md` حالا هم‌تراز کامل با نسخه انگلیسی است (ساختار پروژه، نقشه راه و مشارکت اضافه شد)
+- بج Release حالا **خودکار از GitHub Releases** به‌روز می‌شود (`github/v/release`) به‌جای نسخه ثابت دستی
+- لینک پیش‌نمایش آنلاین به هر دو فایل اضافه شد
+
+### 📦 افزوده شد — ابزار انتشار
+
+- `RELEASE_NOTES.md` — یادداشت دوزبانه آماده پیست برای ریلیز v2.1.0 در گیت‌هاب
 
 ## [2.0.0] — ۲۰۲۶-۱۰-۰۴
 

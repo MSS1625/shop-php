@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دیجی‌شاپ | فروشگاه آنلاین تجهیزات شبکه — پیش‌نمایش</title>
+<meta name="description" content="پیش‌نمایش رابط کاربری فروشگاه اینترنتی دیجی‌شاپ — فروشگاه آنلاین تجهیزات شبکه با Laravel 12، پرداخت زرین‌پال و رابط دارک نئونی فارسی">
+<meta property="og:title" content="دیجی‌شاپ — فروشگاه آنلاین تجهیزات شبکه">
+<meta property="og:description" content="پیش‌نمایش ایستای رابط کاربری؛ نسخه کامل با Laravel 12 و PHP 8.2+ اجرا می‌شود">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fa_IR">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%238b5cf6'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='white'%3E%E2%9A%A1%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+:root {
+    --bg: #0b0d14;
+    --bg-soft: #10131d;
+    --surface: #151927;
+    --surface-2: #1a1f30;
+    --border: rgba(255,255,255,.07);
+    --border-strong: rgba(255,255,255,.14);
+    --text: #e8eaf2;
+    --muted: #9aa1b5;
+    --primary: #8b5cf6;
+    --primary-2: #6366f1;
+    --primary-soft: rgba(139,92,246,.14);
+    --neon: #a78bfa;
+    --cyan: #22d3ee;
+    --success: #34d399;
+    --warning: #fbbf24;
+    --glow: 0 0 24px rgba(139,92,246,.35);
+    --radius: 16px;
+    --font: 'Vazirmatn', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.8;
+    overflow-x: hidden;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+::selection { background: var(--primary); color: #fff; }
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #2a3048; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+a { text-decoration: none; color: inherit; }
+img { max-width: 100%; }
+main { flex: 1 0 auto; }
+.container { width: min(1140px, 92%); margin-inline: auto; }
+
+/* ---------- نوار آگاهی ایستا بودن ---------- */
+.notice {
+    background: linear-gradient(90deg, rgba(139,92,246,.22), rgba(34,211,238,.14));
+    border-bottom: 1px solid var(--border-strong);
+    font-size: .82rem;
+    padding: .55rem 0;
+}
+.notice .container {
+    display: flex; align-items: center; justify-content: center;
+    gap: .75rem; flex-wrap: wrap; text-align: center;
+}
+.notice i { color: var(--neon); }
+.notice a { color: var(--cyan); font-weight: 700; }
+.notice a:hover { text-decoration: underline; }
+
+/* ---------- نوار بالا ---------- */
+.navbar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(11,13,20,.85);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+    padding: .65rem 0;
+}
+.navbar .container {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+}
+.brand { display: flex; align-items: center; gap: .6rem; font-size: 1.3rem; font-weight: 800; }
+.brand-icon {
+    width: 42px; height: 42px; border-radius: 13px;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--primary), var(--primary-2));
+    color: #fff; font-size: 1.15rem; box-shadow: var(--glow);
+    transition: transform .3s ease;
+}
+.brand:hover .brand-icon { transform: rotate(-8deg) scale(1.05); }
+.nav-links { display: flex; align-items: center; gap: 1.4rem; font-weight: 500; font-size: .95rem; }
+.nav-links a { color: var(--muted); transition: color .2s; }
+.nav-links a:hover { color: var(--text); }
+.btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+    border: 0; cursor: pointer; font-family: var(--font);
+    font-weight: 700; font-size: .95rem; border-radius: 50rem; padding: .6rem 1.5rem;
+    transition: transform .2s, box-shadow .2s, background .2s;
+}
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-2));
+    color: #fff; box-shadow: var(--glow);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 32px rgba(139,92,246,.5); }
+.btn-ghost { background: var(--primary-soft); color: var(--neon); border: 1px solid var(--border-strong); }
+.btn-ghost:hover { background: rgba(139,92,246,.24); transform: translateY(-2px); }
+.nav-cta { padding: .45rem 1.1rem; font-size: .88rem; }
+
+/* ---------- هیرو ---------- */
+.hero {
+    position: relative;
+    padding: 5.5rem 0 4.5rem;
+    background:
+        radial-gradient(60% 55% at 85% 0%, rgba(139,92,246,.16), transparent 60%),
+        radial-gradient(45% 40% at 10% 100%, rgba(34,211,238,.10), transparent 60%);
+    text-align: center;
+}
+.hero-badge {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: var(--primary-soft); color: var(--neon);
+    border: 1px solid var(--border-strong);
+    border-radius: 50rem; padding: .4rem 1.1rem; font-size: .85rem; font-weight: 600;
+    margin-bottom: 1.4rem;
+}
+.hero h1 {
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    font-weight: 900; line-height: 1.35; margin-bottom: 1rem;
+}
+.grad {
+    background: linear-gradient(90deg, var(--neon), var(--cyan));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.hero p { color: var(--muted); font-size: 1.1rem; max-width: 640px; margin: 0 auto 2rem; }
+.hero-actions { display: flex; gap: .8rem; justify-content: center; flex-wrap: wrap; }
+.hero-stats {
+    margin-top: 3.5rem; display: flex; justify-content: center; gap: clamp(1rem, 5vw, 4rem); flex-wrap: wrap;
+}
+.stat { min-width: 110px; }
+.stat b { display: block; font-size: 1.6rem; font-weight: 900; color: var(--neon); }
+.stat span { color: var(--muted); font-size: .85rem; }
+
+/* ---------- سکشن‌ها ---------- */
+section { padding: 3.2rem 0; }
+.section-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.8rem; flex-wrap: wrap; }
+.section-title { font-size: 1.5rem; font-weight: 800; position: relative; padding-inline-start: 1rem; }
+.section-title::before {
+    content: ''; position: absolute; inset-inline-start: 0; top: 12%;
+    height: 76%; width: 4px; border-radius: 4px;
+    background: linear-gradient(180deg, var(--primary), var(--cyan));
+}
+
+/* ---------- دسته‌بندی‌ها ---------- */
+.cats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; }
+.cat {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.3rem 1rem; text-align: center;
+    transition: transform .25s, border-color .25s, box-shadow .25s;
+}
+.cat:hover { transform: translateY(-5px); border-color: var(--primary); box-shadow: var(--glow); }
+.cat i { font-size: 1.5rem; color: var(--neon); margin-bottom: .6rem; display: block; }
+.cat b { display: block; font-size: 1rem; margin-bottom: .2rem; }
+.cat span { color: var(--muted); font-size: .8rem; }
+
+/* ---------- کارت محصول ---------- */
+.products { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.2rem; }
+.card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    transition: transform .25s, border-color .25s, box-shadow .25s;
+    display: flex; flex-direction: column;
+}
+.card:hover { transform: translateY(-6px); border-color: var(--primary); box-shadow: var(--glow); }
+.card-img {
+    background: var(--bg-soft); display: grid; place-items: center;
+    padding: 1.6rem 1rem; border-bottom: 1px solid var(--border);
+}
+.card-img img { width: 150px; height: 150px; object-fit: contain; filter: drop-shadow(0 10px 22px rgba(0,0,0,.55)); transition: transform .3s; }
+.card:hover .card-img img { transform: scale(1.07) rotate(-2deg); }
+.card-body { padding: 1.1rem 1.2rem 1.3rem; display: flex; flex-direction: column; gap: .45rem; flex: 1; }
+.card-cat { font-size: .74rem; color: var(--cyan); font-weight: 600; }
+.card-title { font-size: 1.05rem; font-weight: 800; }
+.card-price { margin-top: auto; padding-top: .5rem; }
+.card-price b { font-size: 1.15rem; color: var(--neon); font-weight: 900; }
+.card-price small { color: var(--muted); font-weight: 500; }
+.card .btn { margin-top: .8rem; width: 100%; }
+
+/* ---------- ویژگی‌ها ---------- */
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem; }
+.feature {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.5rem; display: flex; gap: 1rem; align-items: flex-start;
+    transition: border-color .25s, transform .25s;
+}
+.feature:hover { border-color: var(--primary); transform: translateY(-4px); }
+.feature .fi {
+    flex: 0 0 46px; width: 46px; height: 46px; border-radius: 13px;
+    display: grid; place-items: center; font-size: 1.2rem; color: #fff;
+    background: linear-gradient(135deg, var(--primary), var(--primary-2)); box-shadow: var(--glow);
+}
+.feature b { display: block; margin-bottom: .25rem; font-size: 1rem; }
+.feature p { color: var(--muted); font-size: .87rem; line-height: 1.7; }
+
+/* ---------- راه‌اندازی ---------- */
+.quick { background: var(--bg-soft); border-block: 1px solid var(--border); }
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.2rem; margin-bottom: 1.8rem; }
+.step { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.4rem; }
+.step .sn {
+    display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px;
+    background: var(--primary-soft); color: var(--neon); font-weight: 800; margin-bottom: .7rem;
+    border: 1px solid var(--border-strong);
+}
+.step b { display: block; margin-bottom: .3rem; }
+.step p { color: var(--muted); font-size: .85rem; }
+.step code, .terminal code {
+    font-family: 'Vazirmatn', ui-monospace, monospace;
+    direction: ltr; display: block; text-align: left;
+    background: #0b0e17; border: 1px solid var(--border-strong);
+    border-radius: 10px; padding: .8rem 1rem; margin-top: .6rem;
+    color: #7ee2b8; font-size: .82rem; white-space: pre-wrap;
+}
+.terminal { border-radius: var(--radius); border: 1px solid var(--border-strong); background: #0b0e17; overflow: hidden; }
+.terminal .tbar {
+    display: flex; gap: .45rem; align-items: center;
+    background: var(--surface-2); padding: .6rem 1rem; border-bottom: 1px solid var(--border);
+    font-size: .8rem; color: var(--muted);
+}
+.terminal .tbar i { color: var(--primary); }
+.terminal code { border: 0; margin: 0; padding: 1.1rem 1.2rem; display: block; }
+
+/* ---------- فوتر ---------- */
+footer { border-top: 1px solid var(--border); padding: 2.6rem 0 1.8rem; margin-top: 2rem; background: var(--bg-soft); }
+.foot-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+.foot-grid p { color: var(--muted); font-size: .88rem; margin-top: .8rem; max-width: 420px; }
+.foot-col b { display: block; margin-bottom: .8rem; font-size: .95rem; }
+.foot-col a { display: block; color: var(--muted); font-size: .88rem; padding: .22rem 0; transition: color .2s; }
+.foot-col a:hover { color: var(--neon); }
+.foot-bottom {
+    border-top: 1px solid var(--border); padding-top: 1.4rem;
+    display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    color: var(--muted); font-size: .82rem;
+}
+.foot-bottom .heart { color: var(--danger); }
+
+/* ---------- توست ---------- */
+#toast {
+    position: fixed; bottom: 1.6rem; inset-inline: 0; margin: auto;
+    width: max-content; max-width: 92%;
+    background: var(--surface-2); border: 1px solid var(--primary);
+    border-radius: 50rem; padding: .7rem 1.5rem;
+    box-shadow: var(--glow); z-index: 99;
+    opacity: 0; transform: translateY(16px); pointer-events: none;
+    transition: opacity .3s, transform .3s; font-size: .9rem;
+}
+#toast.show { opacity: 1; transform: translateY(0); }
+
+/* ---------- واکنش‌گرا ---------- */
+@media (max-width: 768px) {
+    .nav-links { display: none; }
+    .foot-grid { grid-template-columns: 1fr; }
+    .hero { padding: 3.5rem 0 3rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="notice">
+    <div class="container">
+        <i class="fa-solid fa-circle-info"></i>
+        این صفحه <b>پیش‌نمایش ایستای رابط کاربری</b> است — نسخهٔ کامل فروشگاه (سبد خرید، پرداخت و پنل مدیریت) با PHP 8.2+ و Laravel 12 اجرا می‌شود.
+        <a href="https://github.com/MSS1625/shop-php#quick-start-sqlite--zero-config" target="_blank" rel="noopener">راه‌اندازی در ۴ فرمان</a>
+    </div>
+</div>
+
+<header class="navbar">
+    <div class="container">
+        <a class="brand" href="#home">
+            <span class="brand-icon"><i class="fa-solid fa-bolt"></i></span>
+            دیجی‌شاپ
+        </a>
+        <nav class="nav-links">
+            <a href="#home">خانه</a>
+            <a href="#categories">دسته‌بندی‌ها</a>
+            <a href="#products">محصولات</a>
+            <a href="#features">امکانات</a>
+            <a href="#quickstart">راه‌اندازی</a>
+        </nav>
+        <a class="btn btn-ghost nav-cta" href="https://github.com/MSS1625/shop-php" target="_blank" rel="noopener">
+            <i class="fa-brands fa-github"></i> گیت‌هاب
+        </a>
+    </div>
+</header>
+
+<main>
+    <section class="hero" id="home">
+        <div class="container">
+            <span class="hero-badge"><i class="fa-solid fa-circle-check"></i> ارسال سریع به سراسر کشور</span>
+            <h1>تجهیزات شبکه را <span class="grad">حرفه‌ای</span> بخرید</h1>
+            <p>از آچار شبکه تا سوییچ و فیبر نوری — همه چیز برای زیرساخت شبکه‌تان، با گارانتی اصالت کالا</p>
+            <div class="hero-actions">
+                <a class="btn btn-primary" href="#products"><i class="fa-solid fa-store"></i> مشاهده محصولات</a>
+                <a class="btn btn-ghost" href="#categories"><i class="fa-solid fa-layer-group"></i> دسته‌بندی‌ها</a>
+            </div>
+            <div class="hero-stats">
+                <div class="stat"><b>۸</b><span>محصول فعال</span></div>
+                <div class="stat"><b>۵</b><span>دسته‌بندی</span></div>
+                <div class="stat"><b>۳۵</b><span>تست خودکار</span></div>
+                <div class="stat"><b>MIT</b><span>مجوز متن‌باز</span></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="categories">
+        <div class="container">
+            <div class="section-head">
+                <h2 class="section-title">خرید بر اساس دسته‌بندی</h2>
+            </div>
+            <div class="cats">
+                <div class="cat"><i class="fa-solid fa-screwdriver-wrench"></i><b>ابزار شبکه</b><span>۳ محصول</span></div>
+                <div class="cat"><i class="fa-solid fa-wifi"></i><b>مودم و روتر</b><span>۱ محصول</span></div>
+                <div class="cat"><i class="fa-solid fa-network-wired"></i><b>سوییچ و هاب</b><span>۱ محصول</span></div>
+                <div class="cat"><i class="fa-solid fa-plug"></i><b>کابل و کانکتور</b><span>۲ محصول</span></div>
+                <div class="cat"><i class="fa-solid fa-shield-halved"></i><b>لوازم جانبی</b><span>۱ محصول</span></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="products">
+        <div class="container">
+            <div class="section-head">
+                <h2 class="section-title">جدیدترین محصولات</h2>
+                <a class="btn btn-ghost" href="https://github.com/MSS1625/shop-php/releases" target="_blank" rel="noopener">
+                    دریافت از Releases <i class="fa-solid fa-arrow-left"></i>
+                </a>
+            </div>
+            <div class="products">
+                <article class="card">
+                    <div class="card-img"><img src="images/products/network-crimper-pro.webp" alt="آچار شبکه حرفه‌ای" loading="lazy"></div>
+                    <div class="card-body">
+                        <span class="card-cat">ابزار شبکه</span>
+                        <span class="card-title">آچار شبکه حرفه‌ای</span>
+                        <div class="card-price"><b>۲,۰۰۰,۰۰۰</b> <small>تومان</small></div>
+                        <button class="btn btn-primary demo-btn"><i class="fa-solid fa-cart-plus"></i> افزودن به سبد</button>
+                    </div>
+                </article>
+                <article class="card">
+                    <div class="card-img"><img src="images/products/modem.webp" alt="مودم پرسرعت" loading="lazy"></div>
+                    <div class="card-body">
+                        <span class="card-cat">مودم و روتر</span>
+                        <span class="card-title">مودم پرسرعت</span>
+                        <div class="card-price"><b>۱,۰۰۰,۰۰۰</b> <small>تومان</small></div>
+                        <button class="btn btn-primary demo-btn"><i class="fa-solid fa-cart-plus"></i> افزودن به سبد</button>
+                    </div>
+                </article>
+                <article class="card">
+                    <div class="card-img"><img src="images/products/network-switch.webp" alt="سوییچ شبکه" loading="lazy"></div>
+                    <div class="card-body">
+                        <span class="card-cat">سوییچ و هاب</span>
+                        <span class="card-title">سوییچ شبکه</span>
+                        <div class="card-price"><b>۴,۰۰۰,۰۰۰</b> <small>تومان</small></div>
+                        <button class="btn btn-primary demo-btn"><i class="fa-solid fa-cart-plus"></i> افزودن به سبد</button>
+                    </div>
+                </article>
+                <article class="card">
+                    <div class="card-img"><img src="images/products/fiber-optic-cable.webp" alt="کابل فیبر نوری" loading="lazy"></div>
+                    <div class="card-body">
+                        <span class="card-cat">کابل و کانکتور</span>
+                        <span class="card-title">کابل فیبر نوری</span>
+                        <div class="card-price"><b>۵۰۰,۰۰۰</b> <small>تومان</small></div>
+                        <button class="btn btn-primary demo-btn"><i class="fa-solid fa-cart-plus"></i> افزودن به سبد</button>
+                    </div>
+                </article>
+                <article class="card">
+                    <div class="card-img"><img src="images/products/socket-protector.webp" alt="محافظ سوکت" loading="lazy"></div>
+                    <div class="card-body">
+                        <span class="card-cat">لوازم جانبی</span>
+                        <span class="card-title">محافظ سوکت</span>
+                        <div class="card-price"><b>۶۰۰,۰۰۰</b> <small>تومان</small></div>
+                        <button class="btn btn-primary demo-btn"><i class="fa-solid fa-cart-plus"></i> افزودن به سبد</button>
+                    </div>
+                </article>
+                <article class="card">
+                    <div class="card-img"><img src="images/products/cat6-cable.webp" alt="کابل شبکه Cat6" loading="lazy"></div>
+                    <div class="card-body">
+                        <span class="card-cat">کابل و کانکتور</span>
+                        <span class="card-title">کابل شبکه Cat6</span>
+                        <div class="card-price"><b>۲۰۰,۰۰۰</b> <small>تومان</small></div>
+                        <button class="btn btn-primary demo-btn"><i class="fa-solid fa-cart-plus"></i> افزودن به سبد</button>
+                    </div>
+                </article>
+                <article class="card">
+                    <div class="card-img"><img src="images/products/network-tester.webp" alt="تستر شبکه" loading="lazy"></div>
+                    <div class="card-body">
+                        <span class="card-cat">ابزار شبکه</span>
+                        <span class="card-title">تستر شبکه</span>
+                        <div class="card-price"><b>۷۰۰,۰۰۰</b> <small>تومان</small></div>
+                        <button class="btn btn-primary demo-btn"><i class="fa-solid fa-cart-plus"></i> افزودن به سبد</button>
+                    </div>
+                </article>
+                <article class="card">
+                    <div class="card-img"><img src="images/products/network-crimper.webp" alt="آچار شبکه کریمپ" loading="lazy"></div>
+                    <div class="card-body">
+                        <span class="card-cat">ابزار شبکه</span>
+                        <span class="card-title">آچار شبکه کریمپ</span>
+                        <div class="card-price"><b>۶۷۰,۰۰۰</b> <small>تومان</small></div>
+                        <button class="btn btn-primary demo-btn"><i class="fa-solid fa-cart-plus"></i> افزودن به سبد</button>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+    <section id="features">
+        <div class="container">
+            <div class="section-head">
+                <h2 class="section-title">چرا دیجی‌شاپ؟</h2>
+            </div>
+            <div class="features">
+                <div class="feature">
+                    <span class="fi"><i class="fa-solid fa-credit-card"></i></span>
+                    <div><b>پرداخت آنلاین زرین‌پال</b><p>اتصال کامل به API نسخه ۴ با تایید سمت سرور، سه حالت mock / sandbox / production و پرداخت در محل.</p></div>
+                </div>
+                <div class="feature">
+                    <span class="fi"><i class="fa-solid fa-user"></i></span>
+                    <div><b>حساب کاربری و رهگیری سفارش</b><p>ثبت‌نام و ورود، داشبورد شخصی، تاریخچه سفارش‌ها و تایم‌لاین چهار مرحله‌ای پیگیری.</p></div>
+                </div>
+                <div class="feature">
+                    <span class="fi"><i class="fa-solid fa-gauge-high"></i></span>
+                    <div><b>پنل مدیریت کامل</b><p>آمار فروش، نمودار ۷ روزه، CRUD محصول و دسته، مدیریت سفارش‌ها و هشدار موجودی کم.</p></div>
+                </div>
+                <div class="feature">
+                    <span class="fi"><i class="fa-solid fa-shield-halved"></i></span>
+                    <div><b>امنیت سخت‌گیرانه</b><p>CSRF، محدودیت ورود، آپلود اعتبارسنجی‌شده، هدرهای امنیتی و پرداخت اتمیک با تایید سرور به سرور.</p></div>
+                </div>
+                <div class="feature">
+                    <span class="fi"><i class="fa-solid fa-moon"></i></span>
+                    <div><b>رابط دارک نئونی فارسی</b><p>راست‌چین، فونت وزیرمتن، اعداد فارسی، تم بنفش-فیروزه‌ای مدرن بر پایه Bootstrap 5 RTL.</p></div>
+                </div>
+                <div class="feature">
+                    <span class="fi"><i class="fa-solid fa-robot"></i></span>
+                    <div><b>تست و CI خودکار</b><p>۳۵ تست Feature که روی هر push در GitHub Actions با ماتریس PHP 8.2 / 8.3 / 8.4 اجرا می‌شود.</p></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="quick" id="quickstart">
+        <div class="container">
+            <div class="section-head">
+                <h2 class="section-title">راه‌اندازی نسخه کامل</h2>
+            </div>
+            <div class="steps">
+                <div class="step">
+                    <span class="sn">۱</span>
+                    <b>دریافت و نصب وابستگی‌ها</b>
+                    <p>پروژه را کلون کنید و وابستگی‌ها را با Composer نصب کنید.</p>
+                    <code>git clone https://github.com/MSS1625/shop-php.git
+cd shop-php
+composer install</code>
+                </div>
+                <div class="step">
+                    <span class="sn">۲</span>
+                    <b>نصب یک‌مرحله‌ای</b>
+                    <p>فایل env، کلید، مهاجرت‌ها، داده نمونه و لینک تصاویر — همه با یک فرمان.</p>
+                    <code>php artisan shop:install</code>
+                </div>
+                <div class="step">
+                    <span class="sn">۳</span>
+                    <b>مدیر و اجرا</b>
+                    <p>کاربر مدیر را تعاملی بسازید و سرور داخلی را بالا بیاورید.</p>
+                    <code>php artisan admin:create
+php artisan serve
+# http://localhost:8000</code>
+                </div>
+            </div>
+            <div class="terminal">
+                <div class="tbar"><i class="fa-solid fa-terminal"></i> terminal — راه‌اندازی کامل در ۴ فرمان</div>
+                <code>$ git clone https://github.com/MSS1625/shop-php.git &amp;&amp; cd shop-php
+$ composer install
+$ php artisan shop:install &amp;&amp; php artisan admin:create
+$ php artisan serve   →   http://localhost:8000  🎉</code>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <div class="container">
+        <div class="foot-grid">
+            <div>
+                <a class="brand" href="#home">
+                    <span class="brand-icon"><i class="fa-solid fa-bolt"></i></span>
+                    دیجی‌شاپ
+                </a>
+                <p>فروشگاه اینترنتی تجهیزات شبکه — ساخته‌شده با Laravel 12 و PHP 8.2+، با پرداخت زرین‌پال، حساب کاربری و پنل مدیریت کامل. این صفحه پیش‌نمایش ایستا روی GitHub Pages است.</p>
+            </div>
+            <div class="foot-col">
+                <b>لینک‌ها</b>
+                <a href="https://github.com/MSS1625/shop-php" target="_blank" rel="noopener">مخزن گیت‌هاب</a>
+                <a href="https://github.com/MSS1625/shop-php/releases" target="_blank" rel="noopener">Releases</a>
+                <a href="https://github.com/MSS1625/shop-php/blob/main/CHANGELOG.md" target="_blank" rel="noopener">تاریخچه تغییرات</a>
+                <a href="https://github.com/MSS1625/shop-php/blob/main/README.fa.md" target="_blank" rel="noopener">راهنمای فارسی</a>
+            </div>
+            <div class="foot-col">
+                <b>پروژه</b>
+                <a href="https://github.com/MSS1625/shop-php/blob/main/LICENSE" target="_blank" rel="noopener">مجوز MIT</a>
+                <a href="https://github.com/MSS1625/shop-php/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">مشارکت</a>
+                <a href="#quickstart">راه‌اندازی</a>
+                <a href="#features">امکانات</a>
+            </div>
+        </div>
+        <div class="foot-bottom">
+            <span>ساخته‌شده با <span class="heart">❤</span> توسط <b>محمد صادق صداقت</b> (MSS1625)</span>
+            <span>Laravel 12 · PHP 8.2+ · Vazirmatn · GitHub Pages</span>
+        </div>
+    </div>
+</footer>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+    var toast = document.getElementById('toast');
+    var timer = null;
+
+    function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(timer);
+        timer = setTimeout(function () { toast.classList.remove('show'); }, 2600);
+    }
+
+    document.querySelectorAll('.demo-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            showToast('در نسخهٔ کامل، این دکمه محصول را با Ajax به سبد اضافه می‌کند 😉');
+        });
+    });
+})();
+</script>
+</body>
+</html>

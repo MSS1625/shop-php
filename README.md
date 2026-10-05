@@ -1,25 +1,27 @@
-<div dir="rtl" align="center">
+<div align="center">
 
 # ⚡ دیجی‌شاپ
 
-**فروشگاه آنلاین تجهیزات شبکه — ساخته‌شده با Laravel**
+**Online Shop for Network Equipment — built with Laravel**
 
 [![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?style=flat-square&logo=laravel)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?style=flat-square&logo=php)](https://php.net)
 [![CI](https://github.com/MSS1625/shop-php/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/MSS1625/shop-php/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/badge/Release-v2.0.0-blueviolet?style=flat-square)](CHANGELOG.md)
+[![Release](https://img.shields.io/github/v/release/MSS1625/shop-php?style=flat-square&label=Release)](../../releases)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
 
-فروشگاه اینترنتی کامل با پنل مدیریت، سبد خرید، پرداخت آنلاین زرین‌پال و مدیریت سفارش‌ها — راست‌چین، فارسی و با طراحی دارک مدرن.
+A complete online shop with admin panel, shopping cart, ZarinPal online payment and order management — RTL, Persian-first, dark modern UI.
+
+**🌐 Live UI preview:** <https://mss1625.github.io/shop-php/>
 
 </div>
 
-<div align="center">
+---
 
-## 🇬🇧 English | [🇮🇷 فارسی](#-فارسی)
+**English** | [فارسی](README.fa.md)
 
-</div>
+---
 
 <div align="center">
 
@@ -40,6 +42,14 @@
 | ![Dashboard](screenshots/07-admin-dashboard.png) | ![Orders](screenshots/09-admin-orders.png) |
 
 </div>
+
+## 🌐 Live Preview (GitHub Pages)
+
+A **static demo page** of the shop UI is hosted on GitHub Pages:
+
+> **<https://mss1625.github.io/shop-php/>**
+
+It replicates the home page (hero, categories, product cards) with the real sample products. Note that GitHub Pages only serves static files — the *full* application (cart, checkout, payment, admin panel) runs with PHP, via the 4-command quick start below. The preview link is also listed in the repo **About** sidebar, so it is visible right on the project page.
 
 ## ✨ Features
 
@@ -156,9 +166,11 @@ app/
 │   ├── Cart.php           # سرویس سبد خرید مبتنی بر سشن
 │   └── Payments/          # ZarinPalGateway, MockGateway
 database/seeders/images/   # تصاویر نمونه محصولات
+docs/                      # صفحه دموی ایستا برای GitHub Pages
 public/assets/             # تم دارک + اسکریپت سبد خرید
 resources/views/           # Blade templates (shop + admin + auth + account)
 .github/workflows/ci.yml   # اجرای خودکار تست روی هر push
+README.md / README.fa.md   # English | فارسی
 ```
 
 ## 🧪 Tests & CI
@@ -175,13 +187,14 @@ Every `push` and `pull request` runs the full test matrix automatically on GitHu
 - [x] Online payment gateway (ZarinPal)
 - [x] Customer accounts & order history
 - [x] GitHub Actions CI
+- [x] Project website (GitHub Pages demo)
 - [ ] Product gallery (multiple images)
 - [ ] Discount codes
 - [ ] Email/SMS notifications
 
 ## 🤝 Contributing
 
-PRs are welcome! Run `composer test` and `vendor/bin/pint` before submitting.
+PRs are welcome! Run `composer test` and `vendor/bin/pint` before submitting. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 👤 Author
 
@@ -190,127 +203,3 @@ PRs are welcome! Run `composer test` and `vendor/bin/pint` before submitting.
 ## 📄 License
 
 [MIT](LICENSE)
-
----
-
-<div dir="rtl" align="center">
-
-# ⚡ دیجی‌شاپ — فارسی
-
-</div>
-
-<div dir="rtl">
-
-## ✨ امکانات
-
-- 💳 **پرداخت آنلاین زرین‌پال** — اتصال کامل به API نسخه ۴ زرین‌پال با تایید سمت سرور، امکان تلاش مجدد پس از خطا + گزینه «پرداخت در محل»؛ همراه با **درگاه آزمایشی محلی** برای تست کل جریان بدون نیاز به پذیرنده
-- 👤 **حساب کاربری مشتری** — ثبت‌نام/ورود، داشبورد با آمار خرید، تاریخچه کامل سفارش‌ها و تایم‌لاین پیگیری وضعیت؛ خرید مهمان هم همچنان ممکن است
-- 🛒 **سبد خرید کامل** — افزودن/حذف/تغییر تعداد بدون رفرش صفحه (Ajax)
-- 📦 **مدیریت سفارش‌ها** — ثبت سفارش، گردش کار وضعیت (در انتظار → پردازش → ارسال → تحویل/لغو)، کاهش و بازگشت خودکار موجودی انبار، لغو سفارش توسط مشتری با بازگشت موجودی
-- 🔍 **جستجو، فیلتر و مرتب‌سازی** — جستجوی زنده محصولات، فیلتر دسته‌بندی، مرتب‌سازی بر اساس قیمت و جدیدترین، صفحه‌بندی
-- 🗂 **دسته‌بندی‌ها** — دسته‌بندی پویا با آیکون و تعداد محصولات
-- 📊 **داشبورد مدیریت** — آمار فروش، نمودار فروش ۷ روز اخیر، هشدار موجودی کم، آخرین سفارش‌ها
-- 🖼 **آپلود امن تصویر** — فقط تصاویر معتبر (JPG/PNG/WebP حداکثر ۲ مگابایت) با نام تصادفی
-- 🌐 **کاملاً فارسی** — راست‌چین، فونت وزیرمتن، اعداد فارسی (۰۱۲۳۴۵۶۷۸۹)، واحد تومان
-- 🌙 **رابط دارک مدرن** — تم نئونی بنفش بر پایه Bootstrap 5 RTL
-
-## 🚀 راه‌اندازی سریع (SQLite — بدون تنظیمات)
-
-```bash
-# ۱) دریافت و نصب وابستگی‌ها
-git clone https://github.com/MSS1625/shop-php.git
-cd shop-php
-composer install
-
-# ۲) نصب یک‌مرحله‌ای (env + کلید + مهاجرت + داده اولیه + لینک تصاویر)
-php artisan shop:install
-
-# ۳) ساخت کاربر مدیر (تعاملی)
-php artisan admin:create
-
-# ۴) اجرا
-php artisan serve
-```
-
-حالا **http://localhost:8000** را باز کنید — فروشگاه با ۸ محصول نمونه آماده است. 🎉
-
-## 🛠 راه‌اندازی با XAMPP / MySQL
-
-۱. در phpMyAdmin یک دیتابیس خالی با نام `shop_php` بسازید
-
-۲. در فایل `.env` خط SQLite را کامنت و بخش MySQL را از کامنت خارج کنید:
-
-```env
-# DB_CONNECTION=sqlite
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=shop_php
-DB_USERNAME=root
-DB_PASSWORD=
-```
-
-۳. نصب و اجرا:
-
-```bash
-php artisan shop:install
-php artisan admin:create
-php artisan serve
-```
-
-> **پیش‌نیازها:** PHP نسخه 8.2 به بالا با اکستنشن‌های `pdo_sqlite` (یا `pdo_mysql`)، `mbstring`، `gd` و `fileinfo` — همه به‌صورت پیش‌فرض در XAMPP فعال هستند.
-
-## 💳 درگاه پرداخت زرین‌پال
-
-لایه پرداخت بر پایه قرارداد `PaymentGateway` پیاده‌سازی شده و سه حالت با فایل `.env` قابل انتخاب است:
-
-| حالت | مقدار | توضیح |
-|---|---|---|
-| **آزمایشی محلی** (پیش‌فرض) | `mock` | شبیه‌ساز محلی پرداخت — بدون اینترنت و بدون پذیرنده؛ برای توسعه و دمو |
-| **سندباکس** | `sandbox` | محیط آزمایشی زرین‌پال (`sandbox.zarinpal.com`) |
-| **واقعی** | `production` | پرداخت واقعی (`payment.zarinpal.com`) |
-
-برای فعال‌سازی پرداخت واقعی، **شناسه پذیرنده** (UUID ۳۶ کاراکتری) را از [پنل زرین‌پال](https://zarinpal.com) بگیرید و تنظیم کنید:
-
-```env
-ZARINPAL_MERCHANT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-ZARINPAL_MODE=production
-# مبلغ سفارش‌ها «تومان» است و API زرین‌پال «ریال» می‌گیرد؛ ضریب پیش‌فرض ۱۰ است
-ZARINPAL_AMOUNT_MULTIPLIER=10
-```
-
-**جریان پرداخت:** تکمیل خرید ← ثبت اتمیک سفارش و رزرو موجودی ← هدایت به درگاه ← تایید **سمت سرور** پس از بازگشت (به کوئری‌استرینگ اعتماد نمی‌شود) ← سفارش «پرداخت‌شده» با شماره پیگیری بانکی. پرداخت ناموفق/لغوشده قابل تلاش مجدد است و «پرداخت در محل» هم به‌عنوان گزینه دوم موجود است.
-
-## 🔐 امنیت
-
-| تهدید | راهکار |
-|---|---|
-| SQL Injection | استفاده کامل از Eloquent ORM و کوئری‌های پارامتری |
-| XSS | خروجی امن خودکار Blade — `{{ }}` |
-| CSRF | توکن `@csrf` در همه فرم‌ها |
-| حمله Brute Force | حداکثر ۵ تلاش ناموفق در دقیقه برای هر ایمیل+IP |
-| آپلود فایل خطرناک | اعتبارسنجی تصویر + وایت‌لیست فرمت + محدودیت حجم + نام تصادفی |
-| دستکاری پرداخت | نتیجه پرداخت فقط با فراخوانی سرور به سرور (verify) تایید می‌شود |
-| دسترسی غیرمجاز به سفارش‌ها | هر سفارش فقط برای مالک آن (یا مدیر) قابل مشاهده است؛ صفحات پرداخت به سشن گره خورده‌اند |
-| Session Fixation | بازسازی شناسه سشن هنگام ورود |
-| Mass Assignment | لیست سفید `$fillable` در همه مدل‌ها |
-| Clickjacking | هدرهای امنیتی استاندارد |
-
-## 🧪 تست‌ها و CI
-
-```bash
-php artisan test        # ۳۵ تست Feature
-vendor/bin/pint --test  # بررسی سبک کد
-```
-
-روی هر `push` و هر `pull request`، تست‌ها به‌صورت خودکار روی GitHub Actions (PHP 8.2 / 8.3 / 8.4 + Pint) اجرا می‌شوند — بج بالای همین فایل.
-
-## 👤 نویسنده
-
-**محمد صادق صداقت** — با ❤️
-
-## 📄 مجوز
-
-این پروژه تحت مجوز [MIT](LICENSE) منتشر شده است.
-
-</div>
