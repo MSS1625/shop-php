@@ -92,6 +92,31 @@
                             <span class="badge text-bg-{{ $order->statusColor() }}">{{ $order->statusLabel() }}</span>
                         </div>
                     </div>
+                    <div class="col-md-12">
+                        <div class="ds-spec-row">
+                            <span>روش پرداخت</span>
+                            <span>
+                                {{ $order->paymentMethodLabel() }}
+                                <span class="badge text-bg-{{ $order->paymentStatusColor() }} ms-2">{{ $order->paymentStatusLabel() }}</span>
+                            </span>
+                        </div>
+                    </div>
+                    @if($order->ref_id)
+                        <div class="col-md-12">
+                            <div class="ds-spec-row">
+                                <span>شماره پیگیری بانکی</span>
+                                <strong class="text-info" dir="ltr">{{ fa_num($order->ref_id) }}</strong>
+                            </div>
+                        </div>
+                    @endif
+                    @if($order->paid_at)
+                        <div class="col-md-12">
+                            <div class="ds-spec-row">
+                                <span>تاریخ پرداخت</span>
+                                <span>{{ fa_num($order->paid_at->format('Y-m-d H:i')) }}</span>
+                            </div>
+                        </div>
+                    @endif
                     <div class="col-12">
                         <div class="ds-spec-row">
                             <span>آدرس</span>

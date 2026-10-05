@@ -57,12 +57,15 @@ class CheckoutController extends Controller
 
             $order = Order::create([
                 'order_number' => Order::generateOrderNumber(),
+                'user_id' => auth()->id(),
                 'customer_name' => trim($request->validated('customer_name')),
                 'customer_phone' => $request->validated('customer_phone'),
                 'customer_address' => trim($request->validated('customer_address')),
                 'note' => $request->validated('note'),
                 'total' => $items->sum('subtotal'),
                 'status' => Order::STATUS_PENDING,
+                'payment_method' => $request->paymentMethod(),
+                'payment_status' => Order::PAYMENT_PENDING,
             ]);
 
             foreach ($items as $item) {
@@ -87,6 +90,11 @@ class CheckoutController extends Controller
         $viewed[] = $order->order_number;
         session(['viewed_orders' => array_slice($viewed, -10)]);
 
+        // پرداخت آنلاین → هدایت به درگاه
+        if ($order->isOnlinePayment()) {
+            return redirect()->route('payment.start', $order->order_number);
+        }
+
         return redirect()
             ->route('order.success', $order->order_number)
             ->with('success', 'سفارش شما با موفقیت ثبت شد.');
@@ -97,14 +105,8 @@ class CheckoutController extends Controller
      */
     public function success(Order $order): View
     {
-        // فقط سفارش‌های بدون احراز هویت از طریق سشن فعلی قابل مشاهده‌اند
-        $viewedOrders = session('viewed_orders', []);
-
-        abort_unless(
-            in_array($order->order_number, $viewedOrders) ||
-            (auth()->check() && auth()->user()->isAdmin()),
-            404
-        );
+        // فقط سفارش‌های همین سشن / مالک آن / مدیر قابل مشاهده‌اند
+        abort_unless($order->isAccessibleByCurrentUser(), 404);
 
         $order->load('items');
 

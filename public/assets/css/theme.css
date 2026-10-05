@@ -1004,3 +1004,164 @@ a {
     direction: ltr;
     display: inline-block;
 }
+
+/* ---------- حساب کاربری و پرداخت ---------- */
+
+.ds-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-cyan));
+    color: #fff;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.ds-dropdown {
+    background: var(--ds-bg-soft);
+    border: 1px solid var(--ds-border);
+    border-radius: 14px;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.5);
+    padding: 0.4rem;
+    min-width: 190px;
+}
+
+.ds-dropdown .dropdown-item {
+    border-radius: 10px;
+    color: var(--ds-text);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+}
+
+.ds-dropdown .dropdown-item:hover,
+.ds-dropdown .dropdown-item:focus {
+    background: rgba(139, 92, 246, 0.15);
+    color: #fff;
+}
+
+.ds-dropdown .dropdown-divider {
+    border-color: var(--ds-border);
+    opacity: 0.6;
+}
+
+/* گزینه انتخاب روش پرداخت */
+.ds-payment-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    border: 2px solid var(--ds-border);
+    border-radius: 14px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--ds-bg-soft);
+}
+
+.ds-payment-option:hover {
+    border-color: rgba(139, 92, 246, 0.5);
+}
+
+.ds-payment-option:has(input:checked) {
+    border-color: var(--ds-primary);
+    background: rgba(139, 92, 246, 0.1);
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12);
+}
+
+.ds-payment-option input {
+    margin-top: 0.3rem;
+    accent-color: var(--ds-primary);
+    width: 1.1rem;
+    height: 1.1rem;
+    flex-shrink: 0;
+}
+
+/* تایم‌لاین وضعیت سفارش */
+.ds-timeline {
+    display: flex;
+    align-items: flex-start;
+    position: relative;
+    padding-top: 0.5rem;
+}
+
+.ds-timeline::before {
+    content: '';
+    position: absolute;
+    top: 1.35rem;
+    right: 1.4rem;
+    left: 1.4rem;
+    height: 3px;
+    background: var(--ds-border);
+    border-radius: 2px;
+}
+
+.ds-timeline-step {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    text-align: center;
+}
+
+.ds-timeline-dot {
+    width: 2.6rem;
+    height: 2.6rem;
+    margin: 0 auto 0.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ds-bg-soft);
+    border: 2px solid var(--ds-border);
+    color: var(--ds-muted);
+    font-size: 0.95rem;
+}
+
+.ds-timeline-step.is-done .ds-timeline-dot {
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-cyan));
+    border-color: transparent;
+    color: #fff;
+}
+
+.ds-timeline-step.is-active .ds-timeline-dot {
+    border-color: var(--ds-cyan);
+    color: var(--ds-cyan);
+    box-shadow: 0 0 0 5px rgba(34, 211, 238, 0.15);
+}
+
+.ds-timeline-step.is-cancelled .ds-timeline-dot {
+    background: #dc3545;
+    border-color: transparent;
+    color: #fff;
+}
+
+.ds-timeline-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--ds-muted);
+}
+
+.ds-timeline-step.is-done .ds-timeline-title,
+.ds-timeline-step.is-active .ds-timeline-title {
+    color: var(--ds-text);
+}
+
+/* صفحه درگاه آزمایشی */
+.ds-gateway-card {
+    max-width: 460px;
+    margin: 3rem auto;
+    background: var(--ds-bg-soft);
+    border: 1px solid var(--ds-border);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.ds-gateway-header {
+    background: linear-gradient(135deg, #f5c542, #e8891c);
+    color: #1c1917;
+    padding: 1.1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}

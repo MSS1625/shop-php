@@ -61,25 +61,31 @@ class OrderController extends Controller
             return redirect()->route('admin.orders.show', $order);
         }
 
-        // اگر سفارش لغو می‌شود، موجودی محصولات برگردد (فقط یک‌بار)
+        // اگر سفارش لغو می‌شود، موجودی محصولات برمی‌گردد و وضعیت پرداخت ثبت می‌شود (اتمیک)
         if ($newStatus === Order::STATUS_CANCELLED && ! $order->isCancelled()) {
-            foreach ($order->items as $item) {
-                if ($item->product) {
-                    $item->product->increment('stock', $item->quantity);
-                }
-            }
+            $order->cancelWithRestock();
         }
 
-        // اگر سفارش از حالت لغو خارج شد، موجودی دوباره کسر شود
+        // اگر سفارش از حالت لغو خارج شد، موجودی دوباره کسر و وضعیت پرداخت ریست می‌شود
         if ($order->isCancelled() && $newStatus !== Order::STATUS_CANCELLED) {
             foreach ($order->items as $item) {
                 if ($item->product) {
                     $item->product->decrement('stock', $item->quantity);
                 }
             }
+
+            $order->update([
+                'status' => $newStatus,
+                'payment_status' => $order->isOnlinePayment() && ! $order->isPaid()
+                    ? Order::PAYMENT_PENDING
+                    : $order->payment_status,
+            ]);
+        } elseif (! $order->isCancelled()) {
+            $order->update(['status' => $newStatus]);
         }
 
-        $order->update(['status' => $newStatus]);
+        // رفرش برای نمایش پیام درست
+        $order->refresh();
 
         return redirect()
             ->route('admin.orders.show', $order)

@@ -5,9 +5,13 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Auth\AdminLoginController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Shop\AccountController;
 use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\CheckoutController;
 use App\Http\Controllers\Shop\HomeController;
+use App\Http\Controllers\Shop\PaymentController;
 use App\Http\Controllers\Shop\ProductController;
 use Illuminate\Support\Facades\Route;
 
@@ -50,6 +54,61 @@ Route::prefix('checkout')->name('checkout.')->group(function () {
 
 Route::get('/order/{order:order_number}', [CheckoutController::class, 'success'])
     ->name('order.success');
+
+/*
+|--------------------------------------------------------------------------
+| پرداخت آنلاین (زرین‌پال)
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('payment')->name('payment.')->group(function () {
+    // شروع/تلاش مجدد پرداخت سفارش
+    Route::get('start/{order:order_number}', [PaymentController::class, 'start'])
+        ->name('start');
+
+    // بازگشت از درگاه
+    Route::get('callback', [PaymentController::class, 'callback'])->name('callback');
+
+    // درگاه آزمایشی محلی — فقط در حالت mock فعال است
+    Route::get('mock/{order:order_number}', [PaymentController::class, 'mockShow'])
+        ->name('mock.show');
+    Route::post('mock/{order:order_number}', [PaymentController::class, 'mockResult'])
+        ->name('mock.result');
+});
+
+/*
+|--------------------------------------------------------------------------
+| حساب کاربری مشتری — ثبت‌نام / ورود / خروج
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('guest')->group(function () {
+    Route::get('register', [RegisterController::class, 'create'])->name('register');
+    Route::post('register', [RegisterController::class, 'store'])->name('register.store');
+
+    Route::get('login', [LoginController::class, 'showLogin'])->name('login');
+    Route::post('login', [LoginController::class, 'login'])
+        ->middleware('throttle:10,1')
+        ->name('login.attempt');
+});
+
+Route::post('logout', [LoginController::class, 'logout'])
+    ->middleware('auth')
+    ->name('logout');
+
+/*
+|--------------------------------------------------------------------------
+| پنل مشتری — تاریخچه سفارش‌ها
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth')->prefix('account')->name('account.')->group(function () {
+    Route::get('/', [AccountController::class, 'index'])->name('dashboard');
+    Route::get('orders', [AccountController::class, 'orders'])->name('orders');
+    Route::get('orders/{order}', [AccountController::class, 'showOrder'])->name('orders.show');
+    Route::post('orders/{order}/cancel', [AccountController::class, 'cancelOrder'])
+        ->name('orders.cancel');
+});
 
 /*
 |--------------------------------------------------------------------------
