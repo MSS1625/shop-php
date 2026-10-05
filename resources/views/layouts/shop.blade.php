@@ -62,15 +62,50 @@
                         {{ fa_num($cartCount ?? 0) }}
                     </span>
                 </a>
+
                 @auth
                     @if(auth()->user()->isAdmin())
                         <a href="{{ route('admin.dashboard') }}" class="btn btn-ds-outline d-none d-sm-inline-flex">
                             <i class="fa-solid fa-gauge-high ms-1"></i> پنل مدیریت
                         </a>
                     @endif
+
+                    <div class="dropdown">
+                        <button class="btn btn-ds-ghost dropdown-toggle d-flex align-items-center gap-2"
+                                type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="ds-avatar"><i class="fa-solid fa-user"></i></span>
+                            <span class="d-none d-md-inline text-truncate" style="max-width:110px">
+                                {{ auth()->user()->name }}
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark ds-dropdown">
+                            <li>
+                                <a class="dropdown-item" href="{{ route('account.dashboard') }}">
+                                    <i class="fa-solid fa-user ms-1"></i> حساب کاربری
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('account.orders') }}">
+                                    <i class="fa-solid fa-box-open ms-1"></i> سفارش‌های من
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form action="{{ route('logout') }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="fa-solid fa-right-from-bracket ms-1"></i> خروج
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
                 @else
-                    <a href="{{ route('admin.login') }}" class="btn btn-ds-ghost d-none d-sm-inline-flex">
-                        <i class="fa-solid fa-user-shield ms-1"></i> ورود مدیر
+                    <a href="{{ route('login') }}" class="btn btn-ds-ghost d-none d-sm-inline-flex">
+                        <i class="fa-solid fa-user ms-1"></i> ورود
+                    </a>
+                    <a href="{{ route('register') }}" class="btn btn-ds-outline d-none d-sm-inline-flex">
+                        <i class="fa-solid fa-user-plus ms-1"></i> ثبت‌نام
                     </a>
                 @endauth
             </div>
@@ -93,6 +128,15 @@
             <div class="alert alert-ds-error d-flex align-items-center gap-2">
                 <i class="fa-solid fa-circle-xmark"></i>
                 <div>{{ session('error') }}</div>
+            </div>
+        </div>
+    @endif
+
+    @if (session('warning'))
+        <div class="container mt-3">
+            <div class="alert alert-warning d-flex align-items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <div>{{ session('warning') }}</div>
             </div>
         </div>
     @endif

@@ -21,7 +21,7 @@
                         <label for="customer_name" class="form-label">نام و نام خانوادگی</label>
                         <input type="text" class="form-control @error('customer_name') is-invalid @enderror"
                                id="customer_name" name="customer_name"
-                               value="{{ old('customer_name') }}" required autofocus>
+                               value="{{ old('customer_name', auth()->user()->name ?? '') }}" required autofocus>
                         @error('customer_name')
                             <div class="invalid-feedback d-block">{{ $message }}</div>
                         @enderror
@@ -52,6 +52,44 @@
                         <label for="note" class="form-label">توضیحات (اختیاری)</label>
                         <textarea class="form-control" id="note" name="note" rows="2">{{ old('note') }}</textarea>
                     </div>
+
+                    {{--
+                        روش پرداخت
+                    --}}
+                    <h2 class="fs-6 fw-bold mt-5 mb-3">
+                        <i class="fa-solid fa-credit-card ms-1 text-muted"></i> روش پرداخت
+                    </h2>
+
+                    <div class="d-grid gap-2">
+                        <label class="ds-payment-option">
+                            <input type="radio" name="payment_method" value="zarinpal"
+                                   @checked(old('payment_method', 'zarinpal') === 'zarinpal') required>
+                            <span>
+                                <strong class="d-block mb-1">
+                                    <i class="fa-solid fa-shield-halved ms-1 text-warning"></i>
+                                    پرداخت آنلاین زرین‌پال
+                                </strong>
+                                <small class="text-muted">
+                                    پرداخت امن با تمام کارت‌های عضو شتاب؛ سفارش بلافاصله پس از پرداخت تایید می‌شود.
+                                </small>
+                            </span>
+                        </label>
+
+                        <label class="ds-payment-option">
+                            <input type="radio" name="payment_method" value="cod"
+                                   @checked(old('payment_method', 'zarinpal') === 'cod')>
+                            <span>
+                                <strong class="d-block mb-1">
+                                    <i class="fa-solid fa-truck ms-1 text-info"></i>
+                                    پرداخت در محل
+                                </strong>
+                                <small class="text-muted">پرداخت هنگام تحویل سفارش به مأمور پست.</small>
+                            </span>
+                        </label>
+                    </div>
+                    @error('payment_method')
+                        <div class="invalid-feedback d-block mt-2">{{ $message }}</div>
+                    @enderror
                 </div>
             </div>
 
@@ -77,12 +115,21 @@
                     </div>
 
                     <button type="submit" class="btn btn-ds w-100 mt-4">
-                        <i class="fa-solid fa-circle-check ms-1"></i> ثبت نهایی سفارش
+                        <i class="fa-solid fa-circle-check ms-1"></i>
+                        پرداخت و ثبت نهایی سفارش
                     </button>
 
                     <a href="{{ route('cart.index') }}" class="btn btn-ds-ghost w-100 mt-2">
                         <i class="fa-solid fa-arrow-right ms-1"></i> بازگشت به سبد
                     </a>
+
+                    @guest
+                        <p class="text-muted small mt-3 mb-0 text-center">
+                            برای پیگیری بعدی سفارش می‌توانید
+                            <a href="{{ route('login') }}" class="text-info">وارد شوید</a>
+                            یا <a href="{{ route('register') }}" class="text-info">ثبت‌نام کنید</a>.
+                        </p>
+                    @endguest
                 </div>
             </div>
         </form>

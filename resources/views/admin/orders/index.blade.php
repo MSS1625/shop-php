@@ -30,6 +30,7 @@
                             <th>اقلام</th>
                             <th>مبلغ (تومان)</th>
                             <th>وضعیت</th>
+                            <th>پرداخت</th>
                             <th>تاریخ ثبت</th>
                             <th class="text-center">عملیات</th>
                         </tr>
@@ -48,6 +49,12 @@
                                 <td class="text-success">{{ fa_price($order->total) }}</td>
                                 <td>
                                     <span class="badge text-bg-{{ $order->statusColor() }}">{{ $order->statusLabel() }}</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column align-items-start gap-1">
+                                        <small class="text-muted">{{ $order->isOnlinePayment() ? 'زرین‌پال' : 'در محل' }}</small>
+                                        <span class="badge text-bg-{{ $order->paymentStatusColor() }}">{{ $order->paymentStatusLabel() }}</span>
+                                    </div>
                                 </td>
                                 <td class="text-muted small" dir="ltr">{{ $order->created_at->format('Y-m-d H:i') }}</td>
                                 <td class="text-center">

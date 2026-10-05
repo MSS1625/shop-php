@@ -23,8 +23,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => EnsureUserIsAdmin::class,
         ]);
 
-        // ریدایرکت مهمان‌ها به صفحه ورود مدیر
-        $middleware->redirectGuestsTo(fn () => route('admin.login'));
+        // ریدایرکت مهمان‌ها: مسیرهای مدیریت → ورود مدیر، سایر مسیرها → ورود مشتری
+        $middleware->redirectGuestsTo(function (Request $request) {
+            return $request->routeIs('admin.*')
+                ? route('admin.login')
+                : route('login');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // خطای کمبود موجودی انبار هنگام ثبت سفارش
