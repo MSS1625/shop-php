@@ -65,6 +65,14 @@ class Product extends Model
     }
 
     /**
+     * گالری تصاویر اضافی محصول — مرتب‌شده بر اساس موقعیت
+     */
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)->orderBy('position');
+    }
+
+    /**
      * فقط محصولات فعال و نمایش‌داده‌شونده
      */
     public function scopeActive(Builder $query): Builder

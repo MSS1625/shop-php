@@ -175,4 +175,23 @@
             }
         });
     }
+
+    /* ---------- گالری تصاویر (صفحه جزئیات محصول) ---------- */
+
+    const galleryThumbs = document.querySelector('[data-gallery-thumbs]');
+
+    if (galleryThumbs) {
+        const mainImage = document.querySelector('[data-gallery-main]');
+
+        galleryThumbs.querySelectorAll('button').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                if (mainImage) {
+                    mainImage.src = btn.querySelector('img').src;
+                }
+
+                galleryThumbs.querySelectorAll('button').forEach((other) => other.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+    }
 })();

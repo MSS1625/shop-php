@@ -5,11 +5,31 @@ All notable changes to this project are documented in this file.
 
 <div dir="rtl" align="center">
 
-راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.1.0** ✅
+راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.2.0** ✅
 
 </div>
 
 ## 🇬🇧 English
+
+## [2.2.0] — 2026-10-05
+
+### 🖼 Added — Product Image Gallery
+
+- New `product_images` table with position ordering — each product can now have extra shots alongside its cover image
+- Admin product form: multi-file upload (up to 4 per submit, same MIME/size/dimension rules as the cover) plus per-image delete checkboxes; the existing gallery is displayed as thumbnails on every edit
+- Product detail page: a thumbnail strip under the main image — click any thumb to swap the big view; the strip is omitted entirely for products without a gallery
+- IDOR-safe removal: delete requests are always scoped through the product relation, so a foreign image ID has no effect; files are deleted together with their rows, and deleting a product cleans up its gallery files
+
+### 🔧 Fixed — CI failures (composer platform pin)
+
+- Root cause of the red CI badge: the lock file had been resolved on PHP 8.4 without a platform pin, pulling packages that refuse PHP 8.2/8.3 (`symfony/*` 8.1 needs `>=8.4.1`, `laravel/pint` 1.32 needs `^8.3`) — so the 8.2/8.3 matrix legs failed at `composer install`
+- Fix: added `config.platform.php = "8.2.0"` to `composer.json` and ran a full `composer update` — the lock now resolves for PHP 8.2.0+ and installs on every matrix leg (verified locally with `composer install --dry-run`)
+- Locked now: laravel/pint 1.30.4 and symfony 7.4.x; laravel/framework stays 12.69.3
+- Workflow hygiene: `actions/checkout` and `actions/cache` bumped v4 → v5 (Node 20 deprecation warnings gone) and the runner pinned to `ubuntu-24.04` to stay ahead of the `ubuntu-latest` → Ubuntu 26 migration (2026-10-19)
+
+### 🔍 Changed
+
+- 8 new feature tests (gallery upload/update/remove, IDOR guard, 4-image limit, detail-page render, guest guard) — **43 tests total, 145 assertions**
 
 ## [2.1.0] — 2026-10-05
 
@@ -83,6 +103,25 @@ All notable changes to this project are documented in this file.
 ---
 
 ## 🇮🇷 فارسی
+
+## [2.2.0] — ۲۰۲۶-۱۰-۰۵
+
+### 🖼 افزوده شد — گالری تصاویر محصول
+
+- جدول جدید `product_images` با ترتیب نمایش — هر محصول می‌تواند در کنار تصویر اصلی، تصاویر اضافی داشته باشد
+- فرم ادمین: آپلود چندتایی (حداکثر ۴ تصویر در هر ارسال، همان قواعد فرمت/حجم/ابعاد تصویر اصلی) + چک‌باکس حذف برای هر تصویر؛ گالری موجود در هر ویرایش به‌صورت بندانگشتی نمایش داده می‌شود
+- صفحه جزئیات محصول: نوار بندانگشتی زیر تصویر اصلی — با کلیک، تصویر بزرگ عوض می‌شود؛ برای محصول بدون گالری هیچ نوار اضافه‌ای رندر نمی‌شود
+- حذف ضد IDOR: درخواست‌های حذف همیشه از رابطه محصول پاس داده می‌شوند، پس ID تصویر محصول دیگر هیچ اثری ندارد؛ فایل‌ها همراه رکوردشان حذف می‌شوند و حذف محصول، فایل‌های گالری‌اش را هم پاک می‌کند
+
+### 🔧 رفع شد — خرابی CI (پین platform کمپوزر)
+
+- علت بج قرمز CI: فایل قفل روی PHP 8.4 و بدون پین platform رزول شده بود و بسته‌هایی را می‌آورد که 8.2/8.3 را قبول نمی‌کنند (`symfony/*` 8.1 نیازمند `>=8.4.1`، `pint` 1.32 نیازمند `^8.3`) — در نتیجه پاهای 8.2/8.3 ماتریس در مرحله `composer install` رد می‌شدند
+- راه‌حل: `config.platform.php = "8.2.0"` به `composer.json` اضافه و یک `composer update` کامل اجرا شد — قفل جدید برای PHP 8.2.0+ رزول می‌شود و روی همه پاهای ماتریس نصب می‌شود (با `composer install --dry-run` تأیید شد)
+- نسخه‌های قفل‌شده جدید: laravel/pint 1.30.4 و symfony 7.4.x؛ فریم‌ورک همان 12.69.3 می‌ماند
+
+### 🔍 تغییرات
+
+- ۸ تست فیچر جدید (آپلود/ویرایش/حذف گالری، محافظ IDOR، سقف ۴ تصویر، رندر صفحه جزئیات، گارد مهمان) — در مجموع **۴۳ تست، ۱۴۵ ادعا**
 
 ## [2.1.0] — ۲۰۲۶-۱۰-۰۵
 

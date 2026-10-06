@@ -56,7 +56,9 @@ class ProductController extends Controller
             Storage::disk('public')->putFileAs('products', $request->file('image'), $data['image']);
         }
 
-        Product::create($data);
+        $product = Product::create($data);
+
+        $this->syncGallery($request, $product);
 
         return redirect()
             ->route('admin.products.index')
@@ -94,6 +96,8 @@ class ProductController extends Controller
 
         $product->update($data);
 
+        $this->syncGallery($request, $product);
+
         return redirect()
             ->route('admin.products.index')
             ->with('success', 'محصول با موفقیت بروزرسانی شد.');
@@ -106,6 +110,11 @@ class ProductController extends Controller
     {
         $title = $product->title;
 
+        // حذف فایل‌های گالری همراه رکوردهایشان (ردیف‌ها با FK حذف می‌شوند)
+        foreach ($product->images as $galleryImage) {
+            Storage::disk('public')->delete($galleryImage->path);
+        }
+
         if ($product->image) {
             Storage::disk('public')->delete('products/'.$product->image);
         }
@@ -115,5 +124,40 @@ class ProductController extends Controller
         return redirect()
             ->route('admin.products.index')
             ->with('success', 'محصول «'.$title.'» حذف شد.');
+    }
+
+    /**
+     * همگام‌سازی گالری: حذف انتخاب‌شده‌ها + آپلود تصاویر جدید
+     * فقط ردیف‌های متعلق به همین محصول قابل حذف‌اند (ضد IDOR)
+     */
+    private function syncGallery(ProductRequest $request, Product $product): void
+    {
+        // ۱) حذف تصاویر انتخاب‌شده — کوئری از رابطه تضمین می‌کند ID خارجی اثری ندارد
+        $removeIds = array_values(array_filter((array) $request->input('remove_images', []), 'is_numeric'));
+
+        if ($removeIds !== []) {
+            $product->images()->whereIn('id', $removeIds)->get()
+                ->each(function ($image) {
+                    Storage::disk('public')->delete($image->path);
+                    $image->delete();
+                });
+        }
+
+        // ۲) آپلود تصاویر جدید گالری — نام تصادفی، همان قواعد تصویر اصلی
+        if ($request->hasFile('images')) {
+            $position = (int) $product->images()->max('position');
+
+            foreach ($request->file('images') as $file) {
+                $name = $file->hashName();
+
+                if (Storage::disk('public')->putFileAs('products', $file, $name)) {
+                    $product->images()->create([
+                        'path' => 'products/'.$name,
+                        'alt' => $product->title,
+                        'position' => ++$position,
+                    ]);
+                }
+            }
+        }
     }
 }
