@@ -23,11 +23,24 @@
         </nav>
 
         <div class="row g-4">
-            {{-- تصویر --}}
+            {{-- تصویر + گالری --}}
             <div class="col-lg-6">
                 <div class="ds-detail-img">
-                    <img src="{{ $product->imageUrl() }}" alt="{{ $product->title }}">
+                    <img src="{{ $product->imageUrl() }}" alt="{{ $product->title }}" data-gallery-main>
                 </div>
+
+                @if($product->images->isNotEmpty())
+                    <div class="ds-gallery-thumbs mt-3" data-gallery-thumbs role="tablist" aria-label="گالری تصاویر محصول">
+                        <button type="button" class="active" aria-label="تصویر اصلی">
+                            <img src="{{ $product->imageUrl() }}" alt="تصویر اصلی {{ $product->title }}">
+                        </button>
+                        @foreach($product->images as $image)
+                            <button type="button" aria-label="تصویر {{ fa_num($loop->iteration + 1) }}">
+                                <img src="{{ $image->url() }}" alt="{{ $image->alt ?: $product->title }}">
+                            </button>
+                        @endforeach
+                    </div>
+                @endif
             </div>
 
             {{-- اطلاعات --}}

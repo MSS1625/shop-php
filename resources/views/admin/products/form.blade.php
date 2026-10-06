@@ -105,6 +105,46 @@
                         </div>
                     </div>
 
+                    {{-- گالری تصاویر اضافی --}}
+                    <hr class="border-secondary-subtle my-4">
+
+                    <div class="mb-3">
+                        <label for="galleryInput" class="form-label">
+                            <i class="fa-solid fa-images ms-1"></i>
+                            گالری تصاویر (اختیاری)
+                        </label>
+                        <input type="file" multiple class="form-control @error('images') is-invalid @enderror"
+                               id="galleryInput" name="images[]"
+                               accept="image/jpeg,image/png,image/webp">
+                        <div class="form-text">
+                            تا ۴ تصویر اضافی در هر ارسال — همان فرمت‌ها و سقف ۲ مگابایت.
+                            این تصاویر به‌صورت بندانگشتی زیر تصویر اصلیِ صفحه محصول نمایش داده می‌شوند.
+                        </div>
+                        @error('images')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    @if($product->exists && $product->images->isNotEmpty())
+                        <div class="mb-2">
+                            <div class="form-text mb-2">
+                                <i class="fa-solid fa-circle-info"></i>
+                                تصاویر فعلی گالری — برای حذف هنگام ذخیره، تصویر را تیک بزنید:
+                            </div>
+                            <div class="row g-2">
+                                @foreach($product->images as $image)
+                                    <div class="col-4 col-md-2">
+                                        <label class="ds-gallery-item @error('remove_images') is-invalid @enderror">
+                                            <input type="checkbox" name="remove_images[]" value="{{ $image->id }}"
+                                                   class="form-check-input" aria-label="حذف این تصویر">
+                                            <img src="{{ $image->url() }}" alt="{{ $image->alt ?: $product->title }}">
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
                     <hr class="border-secondary-subtle my-4">
 
                     <div class="d-flex gap-2">

@@ -29,6 +29,20 @@ class ProductRequest extends FormRequest
                 'max:2048',
                 Rule::dimensions()->maxWidth(4000)->maxHeight(4000),
             ],
+
+            // گالری تصاویر اضافی (حداکثر ۴ تصویر در هر ارسال)
+            'images' => ['nullable', 'array', 'max:4'],
+            'images.*' => [
+                'nullable',
+                'image',
+                'mimes:jpeg,jpg,png,webp',
+                'max:2048',
+                Rule::dimensions()->maxWidth(4000)->maxHeight(4000),
+            ],
+
+            // حذف تصاویر موجود گالری (فقط ID های متعلق به همین محصول پاک می‌شوند)
+            'remove_images' => ['nullable', 'array'],
+            'remove_images.*' => ['nullable', 'integer'],
         ];
 
         return $rules;
@@ -50,6 +64,11 @@ class ProductRequest extends FormRequest
             'image.mimes' => 'فرمت‌های مجاز تصویر: JPG، PNG و WebP.',
             'image.max' => 'حجم تصویر حداکثر باید ۲ مگابایت باشد.',
             'image.dimensions' => 'ابعاد تصویر حداکثر باید ۴۰۰۰×۴۰۰۰ پیکسل باشد.',
+            'images.max' => 'حداکثر ۴ تصویر برای گالری در هر ارسال مجاز است.',
+            'images.*.image' => 'همه فایل‌های گالری باید تصویر باشند.',
+            'images.*.mimes' => 'فرمت‌های مجاز گالری: JPG، PNG و WebP.',
+            'images.*.max' => 'حجم هر تصویر گالری حداکثر ۲ مگابایت.',
+            'images.*.dimensions' => 'ابعاد تصاویر گالری حداکثر ۴۰۰۰×۴۰۰۰ پیکسل.',
         ];
     }
 

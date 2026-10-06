@@ -1,15 +1,4 @@
-<!-- ============================================================
-  نحوه استفاده | How to use:
-  ۱) در گیت‌هاب: Releases → Draft a new release → Choose tag → v2.1.0 (Create on main)
-  ۲) عنوان را تایپ کنید: «⚡ v2.1.0 — Payment, Accounts, CI & Project Website»
-  ۳) همه‌ی متن زیر خط جداکننده (---) را در باکس توضیحات پیست کنید
-  ۴) فایل shop-php-v2.1.0.zip را بکشید و رها کنید (Attach binaries)
-  ۵) اگر می‌خواهید اول ببینیدش، Set as pre-release را بزنید؛ در غیر این صورت Publish release
-  ============================================================ -->
-
----
-
-# ⚡ v2.1.0 — Payment, Accounts, CI & Project Website
+# 🖼 v2.2.0 — Product Gallery & CI Fix
 
 <div dir="rtl" align="center">
 
@@ -20,19 +9,26 @@ Laravel 12 · PHP 8.2+ · Bootstrap 5 RTL · MIT License
 
 ## 🇬🇧 English
 
-Since this is the first published release, it ships **everything** — the full Laravel rewrite of the original plain-PHP shop:
+### 🖼 New — Product Image Gallery
 
-- 💳 **ZarinPal payment gateway** (v4 API, server-side verification) with `mock` / `sandbox` / `production` modes + Cash on Delivery — test the whole payment flow locally with the built-in mock gateway, no merchant account needed
-- 👤 **Customer accounts** — register/login, personal dashboard, order history, 4-step tracking timeline, cancel-with-restock; guest checkout still works
-- 🛒 **Full cart & orders** — AJAX cart, DB-transactional checkout with stock re-validation, 5-state order workflow, price snapshots
-- 🛠 **Admin panel** — dashboard with stats & 7-day sales chart, product/category CRUD, secure image upload, order management with payment columns
-- 🌐 **Project website** — static demo hosted on GitHub Pages: <https://mss1625.github.io/shop-php/>
-- 📖 **Bilingual docs** — [English](https://github.com/MSS1625/shop-php/blob/main/README.md) · [فارسی](https://github.com/MSS1625/shop-php/blob/main/README.fa.md)
-- 🤖 **CI on every push** — test matrix PHP 8.2 / 8.3 / 8.4 + Pint style check
-- 🔐 **Security hardened** — CSRF, rate-limited logins, upload whitelist, security headers, atomic payments, no default credentials
-- ✅ **35 passing tests** (110 assertions)
+- Every product can now have **multiple images** next to its cover: a `product_images` table with position ordering
+- Admin form: multi-upload (up to 4 per submit, same validation as the cover) + per-image delete checkboxes; the current gallery is shown as thumbnails on every edit
+- Product detail page: a **thumbnail strip** under the main image — click any thumb to swap the big view; products without a gallery render no extra markup
+- Removal is **IDOR-safe**: delete requests always go through the product relation, so a forged image ID does nothing; files are deleted with their rows; deleting a product cleans its gallery files too
 
-**Quick start:**
+### 🔧 Fixed — CI red badge
+
+- Root cause: `composer.lock` had been resolved on PHP 8.4 **without a platform pin**, locking packages that refuse PHP 8.2/8.3 (symfony 8.1 → `>=8.4.1`, pint 1.32 → `^8.3`), so the 8.2/8.3 CI legs failed at `composer install`
+- Fix: `config.platform.php = "8.2.0"` in `composer.json` + full `composer update`; the lock now installs on **every** matrix leg (PHP 8.2 / 8.3 / 8.4) — verified with `composer install --dry-run`
+- Workflow hygiene: `actions/checkout` & `actions/cache` bumped v4 → v5 (Node 20 warnings gone), runner pinned to `ubuntu-24.04` ahead of the Ubuntu 26 migration (2026-10-19)
+
+### 📊 Numbers
+
+- **43 feature tests** (145 assertions) — 8 new gallery tests (upload, remove, IDOR guard, 4-image cap, detail render, guest guard)
+- Code style: Pint clean across 80 files
+
+<details>
+<summary>Quick start (unchanged)</summary>
 
 ```bash
 git clone https://github.com/MSS1625/shop-php.git && cd shop-php
@@ -42,25 +38,34 @@ php artisan admin:create     # interactive admin user
 php artisan serve            # → http://localhost:8000
 ```
 
+</details>
+
 ---
 
 ## 🇮🇷 فارسی
 
 <div dir="rtl">
 
-این نخستین ریلیز منتشرشده است و **همه‌چیز** را دارد — بازنویسی کامل لاراولی پروژه PHP ساده:
+### 🖼 جدید — گالری تصاویر محصول
 
-- 💳 **درگاه پرداخت زرین‌پال** (API نسخه ۴ با تایید سمت سرور) در سه حالت `mock` / `sandbox` / `production` + پرداخت در محل — با درگاه آزمایشی محلی، کل جریان پرداخت بدون پذیرنده قابل تست است
-- 👤 **حساب کاربری مشتری** — ثبت‌نام/ورود، داشبورد شخصی، تاریخچه سفارش، تایم‌لاین رهگیری و لغو سفارش با بازگشت موجودی؛ خرید مهمان هم ممکن است
-- 🛒 **سبد خرید و سفارش‌های کامل** — سبد Ajax، تسویه تراکنشی با اعتبارسنجی مجدد موجودی، گردش کار ۵ وضعیتی و اسنپ‌شات قیمت
-- 🛠 **پنل مدیریت** — داشبورد آماری و نمودار ۷ روزه، CRUD محصول/دسته، آپلود امن تصویر و مدیریت سفارش‌ها
-- 🌐 **وب‌سایت پروژه** — دموی ایستا روی GitHub Pages: <https://mss1625.github.io/shop-php/>
-- 📖 **مستندات دوزبانه** — [English](https://github.com/MSS1625/shop-php/blob/main/README.md) · [فارسی](https://github.com/MSS1625/shop-php/blob/main/README.fa.md)
-- 🤖 **CI روی هر push** — ماتریس تست PHP 8.2 / 8.3 / 8.4 + بررسی استایل Pint
-- 🔐 **امنیت سخت‌گیرانه** — CSRF، محدودیت ورود، وایت‌لیست آپلود، هدرهای امنیتی، پرداخت اتمیک و بدون رمز پیش‌فرض
-- ✅ **۳۵ تست پاس‌شده** (۱۱۰ ادعا)
+- هر محصول حالا می‌تواند در کنار تصویر اصلی، **چند تصویر** داشته باشد: جدول `product_images` با ترتیب نمایش
+- فرم ادمین: آپلود چندتایی (حداکثر ۴ تصویر در هر ارسال، همان اعتبارسنجی تصویر اصلی) + چک‌باکس حذف برای هر تصویر؛ گالری فعلی در هر ویرایش به‌صورت بندانگشتی دیده می‌شود
+- صفحه جزئیات محصول: **نوار بندانگشتی** زیر تصویر اصلی — کلیک روی هر بندانگشتی، تصویر بزرگ را عوض می‌کند؛ محصولِ بدون گالری هیچ نشانه اضافه‌ای رندر نمی‌کند
+- حذف **ضد IDOR**: درخواست حذف همیشه از رابطه محصول می‌گذرد، پس ID جعلی تصویر هیچ کاری نمی‌کند؛ فایل‌ها همراه رکورد حذف می‌شوند و حذف محصول هم فایل‌های گالری‌اش را پاک می‌کند
 
-**راه‌اندازی سریع:**
+### 🔧 رفع شد — بج قرمز CI
+
+- علت: `composer.lock` روی PHP 8.4 و **بدون پین platform** رزول شده بود و بسته‌هایی قفل کرده بود که PHP 8.2/8.3 را قبول نمی‌کنند (symfony 8.1 نیازمند `>=8.4.1` و pint 1.32 نیازمند `^8.3`) — به همین دلیل پاهای 8.2/8.3 در مرحله `composer install` رد می‌شدند
+- راه‌حل: `config.platform.php = "8.2.0"` در `composer.json` + یک `composer update` کامل؛ قفل جدید روی **همه** پاهای ماتریس (PHP 8.2 / 8.3 / 8.4) نصب می‌شود — با `composer install --dry-run` تأیید شد
+- به‌روزرسانی اکشن‌های GitHub Actions به نسخه v5 (رفع هشدار Node 20) و پین‌کردن رانر روی `ubuntu-24.04` برای پیشگیری از مشکل مهاجرت Ubuntu 26 (۱۹ اکتبر ۲۰۲۶)
+
+### 📊 اعداد
+
+- **۴۳ تست فیچر** (۱۴۵ ادعا) — ۸ تست جدید گالری (آپلود، حذف، محافظ IDOR، سقف ۴ تصویر، رندر جزئیات، گارد مهمان)
+- سبک کد: Pint پاک روی ۸۰ فایل
+
+<details>
+<summary>راه‌اندازی سریع (بدون تغییر)</summary>
 
 ```bash
 git clone https://github.com/MSS1625/shop-php.git && cd shop-php
@@ -69,6 +74,8 @@ php artisan shop:install     # env + کلید + مهاجرت + داده + لین
 php artisan admin:create     # ساخت مدیر (تعاملی)
 php artisan serve            # ← http://localhost:8000
 ```
+
+</details>
 
 </div>
 
