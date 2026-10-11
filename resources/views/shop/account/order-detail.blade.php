@@ -96,8 +96,21 @@
                         </div>
                     @endforeach
 
+                    @if($order->hasDiscount())
+                        <div class="ds-spec-row">
+                            <span>جمع اقلام</span>
+                            <span>{{ fa_price($order->subtotalAmount()) }} تومان</span>
+                        </div>
+                        <div class="ds-spec-row">
+                            <span class="text-success">
+                                <i class="fa-solid fa-ticket ms-1"></i>
+                                تخفیف کد <code dir="ltr">{{ $order->coupon_code }}</code>
+                            </span>
+                            <span class="text-success">{{ fa_num('-').fa_price($order->discount_amount) }} تومان</span>
+                        </div>
+                    @endif
                     <div class="ds-spec-row mt-3">
-                        <span class="fw-bold">مبلغ کل سفارش</span>
+                        <span class="fw-bold">مبلغ قابل پرداخت</span>
                         <strong class="text-success fs-5">{{ fa_price($order->total) }} تومان</strong>
                     </div>
                 </div>

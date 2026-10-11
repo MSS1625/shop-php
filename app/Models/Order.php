@@ -105,6 +105,9 @@ class Order extends Model
         'customer_phone',
         'customer_address',
         'note',
+        'subtotal',
+        'discount_amount',
+        'coupon_code',
         'total',
         'status',
         'payment_method',
@@ -115,6 +118,8 @@ class Order extends Model
     ];
 
     protected $casts = [
+        'subtotal' => 'integer',
+        'discount_amount' => 'integer',
         'total' => 'integer',
         'ref_id' => 'integer',
         'paid_at' => 'datetime',
@@ -135,6 +140,18 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /** آیا سفارش تخفیف کد داشته است؟ */
+    public function hasDiscount(): bool
+    {
+        return $this->discount_amount > 0;
+    }
+
+    /** جمع اقلام پیش از تخفیف (سفارش‌های قدیمی = همان مبلغ نهایی) */
+    public function subtotalAmount(): int
+    {
+        return $this->subtotal ?? $this->total;
     }
 
     /** کاربر مالک سفارش (اگر با حساب کاربری خرید شده باشد) */

@@ -38,6 +38,10 @@
             <i class="fa-solid fa-layer-group"></i> دسته‌بندی‌ها
         </a>
 
+        <a class="ds-nav-link {{ request()->routeIs('admin.coupons.*') ? 'active' : '' }}" href="{{ route('admin.coupons.index') }}">
+            <i class="fa-solid fa-ticket"></i> کدهای تخفیف
+        </a>
+
         <a class="ds-nav-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}" href="{{ route('admin.orders.index') }}">
             <i class="fa-solid fa-receipt"></i> سفارش‌ها
             @php($pendingCount = \App\Models\Order::where('status', \App\Models\Order::STATUS_PENDING)->count())

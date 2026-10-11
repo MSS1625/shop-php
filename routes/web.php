@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
@@ -44,6 +45,10 @@ Route::prefix('cart')->name('cart.')->group(function () {
     Route::post('/remove/{product:slug}', [CartController::class, 'destroy'])
         ->name('destroy')
         ->where('product', '[a-z0-9-]+');
+
+    // کد تخفیف سبد
+    Route::post('/coupon', [CartController::class, 'applyCoupon'])->name('coupon.apply');
+    Route::delete('/coupon', [CartController::class, 'removeCoupon'])->name('coupon.remove');
 });
 
 // تکمیل خرید
@@ -146,6 +151,11 @@ Route::middleware(['auth', 'admin'])
         Route::resource('categories', AdminCategoryController::class)
             ->except(['show'])
             ->names('categories');
+
+        // مدیریت کدهای تخفیف
+        Route::resource('coupons', AdminCouponController::class)
+            ->except(['show'])
+            ->names('coupons');
 
         // مدیریت سفارش‌ها
         Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');

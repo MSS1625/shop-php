@@ -1,4 +1,15 @@
-# 🖼 v2.2.0 — Product Gallery & CI Fix
+<!-- ============================================================
+  نحوه استفاده | How to use:
+  ۱) در گیت‌هاب: Releases → Draft a new release → Choose tag → v2.3.0 (Create on main)
+  ۲) عنوان: «🎟 v2.3.0 — Discount Coupon Codes»
+  ۳) متن زیر خط جداکننده (---) را در باکس توضیحات پیست کنید
+  ۴) در صورت تمایل، فایل shop-php-v2.3.0.zip را بکشید و رها کنید
+  ۵) Publish release
+  ============================================================ -->
+
+---
+
+# 🎟 v2.3.0 — Discount Coupon Codes
 
 <div dir="rtl" align="center">
 
@@ -9,23 +20,21 @@ Laravel 12 · PHP 8.2+ · Bootstrap 5 RTL · MIT License
 
 ## 🇬🇧 English
 
-### 🖼 New — Product Image Gallery
+### 🎟 New — Discount Coupon Codes
 
-- Every product can now have **multiple images** next to its cover: a `product_images` table with position ordering
-- Admin form: multi-upload (up to 4 per submit, same validation as the cover) + per-image delete checkboxes; the current gallery is shown as thumbnails on every edit
-- Product detail page: a **thumbnail strip** under the main image — click any thumb to swap the big view; products without a gallery render no extra markup
-- Removal is **IDOR-safe**: delete requests always go through the product relation, so a forged image ID does nothing; files are deleted with their rows; deleting a product cleans its gallery files too
-
-### 🔧 Fixed — CI red badge
-
-- Root cause: `composer.lock` had been resolved on PHP 8.4 **without a platform pin**, locking packages that refuse PHP 8.2/8.3 (symfony 8.1 → `>=8.4.1`, pint 1.32 → `^8.3`), so the 8.2/8.3 CI legs failed at `composer install`
-- Fix: `config.platform.php = "8.2.0"` in `composer.json` + full `composer update`; the lock now installs on **every** matrix leg (PHP 8.2 / 8.3 / 8.4) — verified with `composer install --dry-run`
-- Workflow hygiene: `actions/checkout` & `actions/cache` bumped v4 → v5 (Node 20 warnings gone), runner pinned to `ubuntu-24.04` ahead of the Ubuntu 26 migration (2026-10-19)
+- Create **percent or fixed-amount** coupon codes with optional minimum cart amount, usage cap and start/expiry window — all from a new «کدهای تخفیف» (Coupons) page in the admin panel
+- Customers apply a code right in the cart: wrong, expired, exhausted or below-minimum codes get clear Persian error messages; a valid code shows the chip, the discount line and the **final payable amount**
+- The discount is re-validated at checkout — if the code became invalid the customer is sent back to the cart instead of being silently charged full price
+- Race-safe redemption: the coupon row is locked inside the order transaction and re-validated before usage is counted, so the usage cap cannot be bypassed by concurrent checkouts
+- Fixed-amount discounts are capped at the cart subtotal — payable never goes below zero
+- Orders store the full breakdown (`subtotal` / `discount_amount` / `coupon_code`) — visible on the success page, in the customer account and in the admin order view
+- Input is normalized everywhere: `summer 500` → `SUMMER500` (Persian digits and spaces handled)
+- A demo coupon **WELCOME10** (10٪, 100 uses) is seeded by `shop:install` so you can try it immediately
 
 ### 📊 Numbers
 
-- **43 feature tests** (145 assertions) — 8 new gallery tests (upload, remove, IDOR guard, 4-image cap, detail render, guest guard)
-- Code style: Pint clean across 80 files
+- **61 feature tests** (231 assertions) — 18 new coupon tests (apply/remove/reject, cap math, checkout storage, usage increment, invalid-at-checkout guard, admin CRUD + guards)
+- Code style: Pint clean across 87 files
 
 <details>
 <summary>Quick start (unchanged)</summary>
@@ -33,7 +42,7 @@ Laravel 12 · PHP 8.2+ · Bootstrap 5 RTL · MIT License
 ```bash
 git clone https://github.com/MSS1625/shop-php.git && cd shop-php
 composer install
-php artisan shop:install     # env + key + migrate + seed + link
+php artisan shop:install     # env + key + migrate + seed + link (includes WELCOME10)
 php artisan admin:create     # interactive admin user
 php artisan serve            # → http://localhost:8000
 ```
@@ -46,23 +55,21 @@ php artisan serve            # → http://localhost:8000
 
 <div dir="rtl">
 
-### 🖼 جدید — گالری تصاویر محصول
+### 🎟 جدید — کدهای تخفیف
 
-- هر محصول حالا می‌تواند در کنار تصویر اصلی، **چند تصویر** داشته باشد: جدول `product_images` با ترتیب نمایش
-- فرم ادمین: آپلود چندتایی (حداکثر ۴ تصویر در هر ارسال، همان اعتبارسنجی تصویر اصلی) + چک‌باکس حذف برای هر تصویر؛ گالری فعلی در هر ویرایش به‌صورت بندانگشتی دیده می‌شود
-- صفحه جزئیات محصول: **نوار بندانگشتی** زیر تصویر اصلی — کلیک روی هر بندانگشتی، تصویر بزرگ را عوض می‌کند؛ محصولِ بدون گالری هیچ نشانه اضافه‌ای رندر نمی‌کند
-- حذف **ضد IDOR**: درخواست حذف همیشه از رابطه محصول می‌گذرد، پس ID جعلی تصویر هیچ کاری نمی‌کند؛ فایل‌ها همراه رکورد حذف می‌شوند و حذف محصول هم فایل‌های گالری‌اش را پاک می‌کند
-
-### 🔧 رفع شد — بج قرمز CI
-
-- علت: `composer.lock` روی PHP 8.4 و **بدون پین platform** رزول شده بود و بسته‌هایی قفل کرده بود که PHP 8.2/8.3 را قبول نمی‌کنند (symfony 8.1 نیازمند `>=8.4.1` و pint 1.32 نیازمند `^8.3`) — به همین دلیل پاهای 8.2/8.3 در مرحله `composer install` رد می‌شدند
-- راه‌حل: `config.platform.php = "8.2.0"` در `composer.json` + یک `composer update` کامل؛ قفل جدید روی **همه** پاهای ماتریس (PHP 8.2 / 8.3 / 8.4) نصب می‌شود — با `composer install --dry-run` تأیید شد
-- به‌روزرسانی اکشن‌های GitHub Actions به نسخه v5 (رفع هشدار Node 20) و پین‌کردن رانر روی `ubuntu-24.04` برای پیشگیری از مشکل مهاجرت Ubuntu 26 (۱۹ اکتبر ۲۰۲۶)
+- ساخت کد تخفیف **درصدی یا مبلغ ثابت** با حداقل مبلغ سبد، سقف تعداد استفاده و بازه اعتبار — همه از صفحه جدید «کدهای تخفیف» در پنل مدیریت
+- مشتری کد را همان‌جا در سبد خرید اعمال می‌کند: کد اشتباه/منقضی/تکمیل‌ظرفیت/کمتر از حداقل، پیام خطای فارسی روشن می‌گیرد؛ کد معتبر چیپ کد + خط تخفیف + **مبلغ قابل پرداخت نهایی** را نشان می‌دهد
+- تخفیف در لحظه ثبت سفارش دوباره اعتبارسنجی می‌شود — اگر کد نامعتبر شده باشد مشتری به سبد برمی‌گردد، نه اینکه بی‌خبر مبلغ کامل بپردازد
+- مصرف ضدرقابت: ردیف کوپن داخل تراکنش سفارش قفل و دوباره اعتبارسنجی می‌شود، پس سقف مصرف با سفارش‌های همزمان قابل دور زدن نیست
+- تخفیف مبلغ ثابت سقف‌دار به جمع سبد است — مبلغ قابل پرداخت هرگز منفی نمی‌شود
+- سفارش تفکیک کامل را ذخیره می‌کند (`subtotal` / `discount_amount` / `coupon_code`) — در صفحه موفقیت، حساب مشتری و ویو سفارش ادمین دیده می‌شود
+- ورودی همه‌جا نرمال می‌شود: `summer 500` ← `SUMMER500` (ارقام فارسی و فاصله هم مدیریت می‌شود)
+- با `shop:install` کد نمونه **WELCOME10** (۱۰٪، ۱۰۰ بار) ساخته می‌شود تا همین حالا امتحانش کنید
 
 ### 📊 اعداد
 
-- **۴۳ تست فیچر** (۱۴۵ ادعا) — ۸ تست جدید گالری (آپلود، حذف، محافظ IDOR، سقف ۴ تصویر، رندر جزئیات، گارد مهمان)
-- سبک کد: Pint پاک روی ۸۰ فایل
+- **۶۱ تست فیچر** (۲۳۱ ادعا) — ۱۸ تست جدید کوپن (اعمال/حذف/رد، ریاضی سقف، ذخیره در سفارش، شمارش مصرف، گارد نامعتبری در ثبت، CRUD و گارد ادمین)
+- سبک کد: Pint پاک روی ۸۷ فایل
 
 <details>
 <summary>راه‌اندازی سریع (بدون تغییر)</summary>
@@ -70,15 +77,11 @@ php artisan serve            # → http://localhost:8000
 ```bash
 git clone https://github.com/MSS1625/shop-php.git && cd shop-php
 composer install
-php artisan shop:install     # env + کلید + مهاجرت + داده + لینک
+php artisan shop:install     # env + کلید + مهاجرت + داده + لینک (شامل WELCOME10)
 php artisan admin:create     # ساخت مدیر (تعاملی)
-php artisan serve            # ← http://localhost:8000
+php artisan serve            # → http://localhost:8000
 ```
 
 </details>
 
 </div>
-
----
-
-**Full changelog:** [CHANGELOG.md](https://github.com/MSS1625/shop-php/blob/main/CHANGELOG.md) · **Live demo:** <https://mss1625.github.io/shop-php/> · **Issues:** [GitHub Issues](https://github.com/MSS1625/shop-php/issues)
