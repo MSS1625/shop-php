@@ -59,8 +59,21 @@
                             @endforeach
                         </tbody>
                         <tfoot>
+                            @if($order->hasDiscount())
+                                <tr>
+                                    <td colspan="3">جمع اقلام</td>
+                                    <td>{{ fa_price($order->subtotalAmount()) }} تومان</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-success">
+                                        <i class="fa-solid fa-ticket ms-1"></i>
+                                        تخفیف کد <code dir="ltr">{{ $order->coupon_code }}</code>
+                                    </td>
+                                    <td class="text-success">{{ fa_num('-').fa_price($order->discount_amount) }} تومان</td>
+                                </tr>
+                            @endif
                             <tr>
-                                <td colspan="3" class="fw-bold">مبلغ کل سفارش</td>
+                                <td colspan="3" class="fw-bold">مبلغ قابل پرداخت</td>
                                 <td class="fw-bold text-success fs-5">{{ fa_price($order->total) }} تومان</td>
                             </tr>
                         </tfoot>

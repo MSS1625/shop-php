@@ -110,8 +110,29 @@
                     @endforeach
 
                     <div class="ds-spec-row mt-2">
+                        <span>جمع اقلام</span>
+                        <span>{{ fa_price($total) }} تومان</span>
+                    </div>
+
+                    @if($coupon && $discount > 0)
+                        <div class="ds-spec-row">
+                            <span class="text-success">
+                                <i class="fa-solid fa-ticket ms-1"></i>
+                                تخفیف کد <code dir="ltr">{{ $coupon->code }}</code>
+                            </span>
+                            <span class="text-success">{{ fa_num('-').fa_price($discount) }} تومان</span>
+                        </div>
+                    @elseif($coupon)
+                        <p class="text-warning small mb-0">
+                            <i class="fa-solid fa-triangle-exclamation ms-1"></i>
+                            کد تخفیف <code dir="ltr">{{ $coupon->code }}</code> برای این سبد قابل اعمال نیست —
+                            <a href="{{ route('cart.index') }}" class="text-info">اصلاح سبد</a>
+                        </p>
+                    @endif
+
+                    <div class="ds-spec-row mt-2">
                         <span>مبلغ قابل پرداخت</span>
-                        <strong class="text-success fs-5">{{ fa_price($total) }} تومان</strong>
+                        <strong class="text-success fs-5">{{ fa_price($payable) }} تومان</strong>
                     </div>
 
                     <button type="submit" class="btn btn-ds w-100 mt-4">

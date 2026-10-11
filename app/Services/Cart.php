@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Coupon;
 use App\Models\Product;
 use Illuminate\Support\Collection;
 
@@ -12,6 +13,8 @@ use Illuminate\Support\Collection;
 class Cart
 {
     protected const SESSION_KEY = 'cart';
+
+    protected const COUPON_KEY = 'coupon_code';
 
     /**
      * آیتم‌های سبد به‌همراه اطلاعات کامل محصولات
@@ -96,11 +99,12 @@ class Cart
     }
 
     /**
-     * خالی کردن کل سبد
+     * خالی کردن کل سبد — کد تخفیف هم پاک می‌شود
      */
     public function clear(): void
     {
         session()->forget(self::SESSION_KEY);
+        $this->forgetCoupon();
     }
 
     /**
@@ -125,5 +129,71 @@ class Cart
     public function isEmpty(): bool
     {
         return $this->count() === 0;
+    }
+
+    /*
+    |----------------------------------------------------------------------
+    | کد تخفیف سبد
+    |----------------------------------------------------------------------
+    */
+
+    /**
+     * کوپن اعمال‌شده روی سبد (اگر کد دیگر در دیتابیس نباشد خودش پاک می‌شود)
+     */
+    public function coupon(): ?Coupon
+    {
+        $code = session(self::COUPON_KEY);
+
+        if (! $code) {
+            return null;
+        }
+
+        $coupon = Coupon::findByCode($code);
+
+        if (! $coupon) {
+            $this->forgetCoupon();
+        }
+
+        return $coupon;
+    }
+
+    /**
+     * ثبت کد تخفیف روی سبد
+     */
+    public function setCoupon(string $code): void
+    {
+        session([self::COUPON_KEY => $code]);
+    }
+
+    /**
+     * حذف کد تخفیف از سبد
+     */
+    public function forgetCoupon(): void
+    {
+        session()->forget(self::COUPON_KEY);
+    }
+
+    /**
+     * مبلغ تخفیف سبد — کوپن دوباره اعتبارسنجی می‌شود؛
+     * نامعتبر بودن (انقضا/سقف مصرف/حداقل مبلغ) یعنی صفر
+     */
+    public function discount(): int
+    {
+        $subtotal = $this->total();
+        $coupon = $this->coupon();
+
+        if (! $coupon || ! $coupon->isValidFor($subtotal)) {
+            return 0;
+        }
+
+        return $coupon->discountFor($subtotal);
+    }
+
+    /**
+     * مبلغ نهایی قابل پرداخت پس از کسر تخفیف
+     */
+    public function payable(): int
+    {
+        return max(0, $this->total() - $this->discount());
     }
 }

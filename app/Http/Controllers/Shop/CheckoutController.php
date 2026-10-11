@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Shop;
 use App\Exceptions\StockUnavailableException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CheckoutRequest;
+use App\Models\Coupon;
 use App\Models\Order;
 use App\Services\Cart;
 use Illuminate\Contracts\View\View;
@@ -28,6 +29,9 @@ class CheckoutController extends Controller
         return view('shop.checkout', [
             'items' => $this->cart->items(),
             'total' => $this->cart->total(),
+            'coupon' => $this->cart->coupon(),
+            'discount' => $this->cart->discount(),
+            'payable' => $this->cart->payable(),
         ]);
     }
 
@@ -43,7 +47,20 @@ class CheckoutController extends Controller
                 ->with('error', 'سبد خرید شما خالی است.');
         }
 
-        $order = DB::transaction(function () use ($request, $items) {
+        $subtotal = $items->sum('subtotal');
+
+        // کد تخفیف سبد پیش از ثبت سفارش یک بار شفاف اعتبارسنجی می‌شود —
+        // اگر کاربر سبد را بعد از اعمال تغییر داده باشد، به سبد برمی‌گردد
+        $sessionCoupon = $this->cart->coupon();
+
+        if ($sessionCoupon && ($reason = $sessionCoupon->invalidReason($subtotal)) !== null) {
+            return redirect()->route('cart.index')
+                ->with('error', 'کد تخفیف «'.$sessionCoupon->code.'» دیگر برای این سبد معتبر نیست: '.$reason);
+        }
+
+        $droppedCouponCode = null;
+
+        $order = DB::transaction(function () use ($request, $items, $subtotal, $sessionCoupon, &$droppedCouponCode) {
             // اعتبارسنجی نهایی موجودی انبار قبل از ثبت
             foreach ($items as $item) {
                 $fresh = $item['product']->fresh();
@@ -55,6 +72,23 @@ class CheckoutController extends Controller
                 }
             }
 
+            // کوپن دوباره با قفل ردیف اعتبارسنجی می‌شود (ضد رقابت روی سقف مصرف)
+            $discount = 0;
+            $couponCode = null;
+
+            if ($sessionCoupon) {
+                $locked = Coupon::whereKey($sessionCoupon->getKey())->lockForUpdate()->first();
+
+                if ($locked && $locked->isValidFor($subtotal)) {
+                    $discount = $locked->discountFor($subtotal);
+                    $couponCode = $locked->code;
+                    $locked->increment('used_count');
+                } else {
+                    // پنجره میلی‌ثانیه‌ای بین دو اعتبارسنجی — سفارش بدون تخفیف ثبت می‌شود
+                    $droppedCouponCode = $sessionCoupon->code;
+                }
+            }
+
             $order = Order::create([
                 'order_number' => Order::generateOrderNumber(),
                 'user_id' => auth()->id(),
@@ -62,7 +96,10 @@ class CheckoutController extends Controller
                 'customer_phone' => $request->validated('customer_phone'),
                 'customer_address' => trim($request->validated('customer_address')),
                 'note' => $request->validated('note'),
-                'total' => $items->sum('subtotal'),
+                'subtotal' => $subtotal,
+                'discount_amount' => $discount,
+                'coupon_code' => $couponCode,
+                'total' => max(0, $subtotal - $discount),
                 'status' => Order::STATUS_PENDING,
                 'payment_method' => $request->paymentMethod(),
                 'payment_status' => Order::PAYMENT_PENDING,
@@ -84,6 +121,13 @@ class CheckoutController extends Controller
         });
 
         $this->cart->clear();
+
+        if ($droppedCouponCode !== null) {
+            session()->flash(
+                'warning',
+                'کد تخفیف «'.$droppedCouponCode.'» در لحظه پایانی معتبر نبود و سفارش بدون تخفیف ثبت شد.'
+            );
+        }
 
         // ثبت شماره سفارش در سشن تا صفحه موفقیت فقط برای همین کاربر قابل مشاهده باشد
         $viewed = session('viewed_orders', []);

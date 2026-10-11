@@ -45,6 +45,10 @@ A complete online shop with admin panel, shopping cart, ZarinPal online payment 
 |:---:|:---:|
 | ![Detail](screenshots/03-product-detail.png) | ![Admin Gallery](screenshots/admin-product-gallery.png) |
 
+| Cart with Coupon | Admin Coupons |
+|:---:|:---:|
+| ![Coupon](screenshots/04-cart-coupon.png) | ![Admin Coupons](screenshots/admin-coupons.png) |
+
 </div>
 
 ## 🌐 Live Preview (GitHub Pages)
@@ -66,6 +70,7 @@ It replicates the home page (hero, categories, product cards) with the real samp
 - 📊 **Admin Dashboard** — sales stats, 7-day sales chart, low-stock alerts, latest orders, payment status per order
 - 🖼 **Secure Image Upload** — validated images only (JPG/PNG/WebP, max 2MB), random filenames
 - 🖼️ **Product Gallery** — multiple images per product; thumbnail strip on the detail page swaps the main view; IDOR-safe delete in admin
+- 🎟 **Discount Coupon Codes** — percent/fixed codes with usage caps, minimum-cart, expiry window; race-safe redemption inside the order transaction and a full admin management page
 - 🌐 **Persian-first** — RTL layout, Vazirmatn font, Persian digits (۰۱۲۳۴۵۶۷۸۹), Toman currency
 - 🌙 **Dark Modern UI** — neon violet theme built on Bootstrap 5 RTL
 - 🔐 **Security Hardened** — CSRF protection, rate-limited login, XSS-safe templating, mass-assignment protection, security headers, atomic payments
@@ -181,7 +186,7 @@ README.md / README.fa.md   # English | فارسی
 ## 🧪 Tests & CI
 
 ```bash
-php artisan test        # 43 feature tests
+php artisan test        # 61 feature tests
 vendor/bin/pint --test  # code style
 ```
 
@@ -194,7 +199,7 @@ Every `push` and `pull request` runs the full test matrix automatically on GitHu
 - [x] GitHub Actions CI
 - [x] Project website (GitHub Pages demo)
 - [x] Product gallery (multiple images)
-- [ ] Discount codes
+- [x] Discount codes
 - [ ] Email/SMS notifications
 
 ## 🤝 Contributing

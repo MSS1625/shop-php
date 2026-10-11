@@ -11,6 +11,21 @@ All notable changes to this project are documented in this file.
 
 ## 🇬🇧 English
 
+## [2.3.0] — 2026-10-11
+
+### 🎟 Added — Discount Coupon Codes
+
+- New `coupons` table: percent or fixed-amount codes, optional minimum cart amount, optional total usage cap, optional start/expiry window, active toggle
+- Shop cart: coupon input box in the order summary — wrong, expired, exhausted or below-minimum codes are rejected with clear Persian messages; a valid code shows the applied-code chip, discount line and the final payable amount
+- Checkout: the summary shows subtotal, discount line and payable amount; before the order is placed the coupon is re-validated transparently — if it became invalid the customer is sent back to the cart instead of being silently charged full price
+- Orders now store `subtotal`, `discount_amount` and `coupon_code` (historical text, no FK) — the success page, customer account and admin order view all show the discount breakdown
+- Race-safe redemption: inside the order transaction the coupon row is locked (`lockForUpdate`) and re-validated before `used_count` is incremented, so the usage cap cannot be exceeded by concurrent checkouts
+- Fixed-amount discount is always capped at the cart subtotal — the payable amount can never go below zero
+- Admin panel: full coupon management (list with status badges — فعال / غیرفعال / منقضی / تکمیل ظرفیت / شروع نشده — create, edit, delete with confirm) under a new «کدهای تخفیف» menu item
+- Code normalization everywhere: Persian/Arabic digits converted, spaces stripped, upper-cased; `summer 500` typed by an admin becomes `SUMMER500`
+- Seeder ships a demo coupon `WELCOME10` (10٪, 100 uses) so the feature is visible right after `shop:install`
+- 18 new feature tests (apply/remove/reject paths, cap math, checkout storage, usage increment, invalid-at-checkout guard, admin CRUD + guards) — **61 tests total, 231 assertions**
+
 ## [2.2.0] — 2026-10-05
 
 ### 🖼 Added — Product Image Gallery

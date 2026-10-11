@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
+use App\Models\Coupon;
 use App\Models\Product;
 use App\Services\Cart;
 use Illuminate\Contracts\View\View;
@@ -22,6 +23,9 @@ class CartController extends Controller
         return view('shop.cart.index', [
             'items' => $this->cart->items(),
             'total' => $this->cart->total(),
+            'coupon' => $this->cart->coupon(),
+            'discount' => $this->cart->discount(),
+            'payable' => $this->cart->payable(),
         ]);
     }
 
@@ -88,6 +92,57 @@ class CartController extends Controller
             $this->cart->count(),
             $this->cart->total()
         );
+    }
+
+    /**
+     * اعمال کد تخفیف روی سبد
+     */
+    public function applyCoupon(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:64'],
+        ], [
+            'code.required' => 'کد تخفیف را وارد کنید.',
+            'code.max' => 'کد تخفیف نامعتبر است.',
+        ]);
+
+        if ($this->cart->isEmpty()) {
+            return redirect()->route('cart.index')
+                ->with('error', 'ابتدا محصولی به سبد خرید اضافه کنید.');
+        }
+
+        $code = Coupon::normalizeCode($validated['code']);
+
+        if ($code === '') {
+            return back()->with('error', 'کد تخفیف واردشده معتبر نیست.')->withInput();
+        }
+
+        $coupon = Coupon::findByCode($code);
+
+        if (! $coupon) {
+            return back()->with('error', 'کد تخفیف «'.$code.'» یافت نشد.')->withInput();
+        }
+
+        if ($reason = $coupon->invalidReason($this->cart->total())) {
+            return back()->with('error', $reason)->withInput();
+        }
+
+        $this->cart->setCoupon($code);
+
+        return back()->with(
+            'success',
+            'کد تخفیف «'.$code.'» اعمال شد — '.$coupon->discountLabel().' از مبلغ سفارش کم می‌شود.'
+        );
+    }
+
+    /**
+     * حذف کد تخفیف از سبد
+     */
+    public function removeCoupon(): RedirectResponse
+    {
+        $this->cart->forgetCoupon();
+
+        return back()->with('success', 'کد تخفیف از سبد حذف شد.');
     }
 
     /**
