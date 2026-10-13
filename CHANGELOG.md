@@ -5,11 +5,26 @@ All notable changes to this project are documented in this file.
 
 <div dir="rtl" align="center">
 
-راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.2.0** ✅
+راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.4.0** ✅
 
 </div>
 
 ## 🇬🇧 English
+
+## [2.4.0] — 2026-10-14
+
+### 📧 Added — Order Email Notifications
+
+- New optional `customer_email` on checkout — orders can now notify customers by email (guests included); when the field is left empty, the logged-in account's email is used as fallback
+- Contract-based notifier (`App\Contracts\OrderNotifier`) following the same pattern as the payment gateway — the default implementation sends emails, a `NullNotifier` keeps everything silent when disabled, and the channel can be swapped (e.g. SMS) without touching the business logic
+- Three bilingual-ready RTL Persian email templates (inline CSS, email-client safe): order summary, payment breakdown with discount line
+  - **Order placed** — sent right after checkout (both online and cash-on-delivery orders)
+  - **Payment confirmed** — sent exactly once, right after the gateway verifies the payment (repeat callbacks never duplicate it)
+  - **Status changed** — sent when the admin moves the order (processing / shipped / delivered / cancelled), including old → new status
+- Failure isolation: notification errors are caught and logged — a broken SMTP can never break checkout or payment confirmation
+- Admin order view now shows the customer's email next to phone
+- Config switch: `SHOP_NOTIFICATIONS=true|false` in `.env` (documented in `.env.example`); with `MAIL_MAILER=log` emails land in `storage/logs/laravel.log` — perfect for local development without SMTP
+- 10 new feature tests (sent/fallback/invalid-email/disabled-config/SMTP-failure-isolation/no-duplicate/no-same-status) — **71 tests total, 276 assertions**
 
 ## [2.3.0] — 2026-10-11
 
@@ -118,6 +133,36 @@ All notable changes to this project are documented in this file.
 ---
 
 ## 🇮🇷 فارسی
+
+## [2.4.0] — ۲۰۲۶-۱۰-۱۴
+
+### 📧 افزوده شد — اطلاع‌رسانی ایمیلی سفارش
+
+- فیلد اختیاری `customer_email` در فرم تکمیل خرید — سفارش‌ها (حتی خرید مهمان) می‌توانند مشتری را با ایمیل مطلع کنند؛ اگر خالی بماند، ایمیل حساب کاربری واردشده به‌عنوان جایگزین استفاده می‌شود
+- اطلاع‌رسانی قراردادمحور (`App\Contracts\OrderNotifier`) با همان الگوی درگاه پرداخت — پیاده‌سازی پیش‌فرض ایمیل می‌فرستد، `NullNotifier` در حالت خاموش ساکت است و کانال (مثلاً SMS) بدون دست‌زدن به منطق اصلی قابل تعویض است
+- سه قالب ایمیلی راست‌چین فارسی با CSS درون‌خطی (سازگار با کلاینت‌های ایمیل): خلاصه سفارش، ریز مبلغ با سطر تخفیف
+  - **ثبت سفارش** — بلافاصله پس از checkout (هم پرداخت آنلاین، هم پرداخت در محل)
+  - **تأیید پرداخت** — دقیقاً یک بار، بلافاصله پس از verify درگاه (کال‌بک‌های تکراری هرگز ایمیل تکراری نمی‌سازند)
+  - **تغییر وضعیت** — هنگام تغییر وضعیت سفارش توسط ادمین (پردازش / ارسال / تحویل / لغو)، با ذکر وضعیت قبلی و جدید
+- ایزوله‌سازی خطا: خطاهای ارسال اطلاع‌رسانی گرفته و لاگ می‌شوند — خرابی SMTP هرگز ثبت سفارش یا تأیید پرداخت را نمی‌شکند
+- نمای سفارش ادمین حالا ایمیل مشتری را کنار شماره موبایل نشان می‌دهد
+- کلید تنظیم: `SHOP_NOTIFICATIONS=true|false` در `.env` (در `.env.example` مستند شده)؛ با `MAIL_MAILER=log` ایمیل‌ها در `storage/logs/laravel.log` می‌ریزند — بدون SMTP برای توسعه محلی
+- ۱۰ تست فیچر جدید (ارسال/جایگزین/ایمیل نامعتبر/کانفیگ خاموش/ایزوله‌سازی خطای SMTP/عدم تکرار/وضعیت بدون تغییر) — در مجموع **۷۱ تست، ۲۷۶ ادعا**
+
+## [2.3.0] — ۲۰۲۶-۱۰-۱۱
+
+### 🎟 افزوده شد — کدهای تخفیف
+
+- جدول جدید `coupons`: کدهای درصدی یا مبلغی، حداقل مبلغ سبد اختیاری، سقف مصرف کل اختیاری، بازه شروع/انقضا اختیاری و کلید فعال/غیرفعال
+- سبد خرید: باکس وارد کردن کد تخفیف در خلاصه سفارش — کدهای غلط/منقضی/تکمیل‌ظرفیت/کمتر از حداقل با پیام فارسی روشن رد می‌شوند؛ کد معتبر چیپ اعمال‌شده، سطر تخفیف و مبلغ نهایی قابل پرداخت را نشان می‌دهد
+- تسویه: خلاصه سفارش جمع، سطر تخفیف و مبلغ قابل پرداخت را نشان می‌دهد؛ پیش از ثبت سفارش کد یک بار شفاف اعتبارسنجی مجدد می‌شود — اگر نامعتبر شده بود مشتری به سبد برمی‌گردد، نه اینکه بی‌خبر قیمت کامل بپردازد
+- سفارش‌ها حالا `subtotal` و `discount_amount` و `coupon_code` (متن تاریخی، بدون FK) را ذخیره می‌کنند — صفحه موفقیت، حساب کاربری و نمای ادمین همه ریز تخفیف را نشان می‌دهند
+- بازخرید ضد رقابت: داخل تراکنش سفارش، ردیف کوپن قفل (`lockForUpdate`) و مجدداً اعتبارسنجی می‌شود و بعد `used_count` زیاد می‌شود؛ سقف مصرف با تسویه‌های همزمان قابل عبور نیست
+- تخفیف مبلغی همیشه به جمع سبد محدود است — مبلغ قابل پرداخت هرگز منفی نمی‌شود
+- پنل ادمین: مدیریت کامل کوپن‌ها (لیست با بج وضعیت — فعال / غیرفعال / منقضی / تکمیل ظرفیت / شروع نشده — ساخت، ویرایش، حذف با تأیید) زیر آیتم منوی «کدهای تخفیف»
+- نرمال‌سازی کد در همه‌جا: ارقام فارسی/عربی تبدیل، فاصله‌ها حذف و حروف بزرگ می‌شوند؛ `summer 500` که ادمین بنویسد `SUMMER500` می‌شود
+- سیدر یک کوپن نمونه `WELCOME10` (۱۰٪، ۱۰۰ بار) می‌سازد تا قابلیت بلافاصله بعد از `shop:install` دیده شود
+- ۱۸ تست فیچر جدید (مسیرهای اعمال/حذف/رد، محاسبه سقف، ذخیره در تسویه، افزایش مصرف، گارد نامعتبر-در-تسویه، CRUD ادمین + گاردها) — در مجموع **۶۱ تست، ۲۳۱ ادعا**
 
 ## [2.2.0] — ۲۰۲۶-۱۰-۰۵
 

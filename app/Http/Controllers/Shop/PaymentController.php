@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Shop;
 
+use App\Contracts\OrderNotifier;
 use App\Contracts\PaymentGateway;
 use App\Exceptions\PaymentGatewayException;
 use App\Exceptions\PaymentVerificationFailedException;
@@ -12,7 +13,10 @@ use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
-    public function __construct(protected PaymentGateway $gateway) {}
+    public function __construct(
+        protected PaymentGateway $gateway,
+        protected OrderNotifier $notifier,
+    ) {}
 
     /**
      * هدایت به درگاه پرداخت — هم برای پرداخت اولیه و هم تلاش مجدد
@@ -89,6 +93,9 @@ class PaymentController extends Controller
         }
 
         $order->markAsPaid($refId);
+
+        // اطلاع‌رسانی تأیید پرداخت — فقط بار اول که سفارش پرداخت می‌شود
+        $this->notifier->paymentConfirmed($order);
 
         return redirect()
             ->route('order.success', $order->order_number)

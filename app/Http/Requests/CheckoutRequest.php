@@ -14,6 +14,7 @@ class CheckoutRequest extends FormRequest
             'customer_name' => ['required', 'string', 'min:3', 'max:100'],
             // شماره موبایل ایران: ۰۹xxxxxxxxx
             'customer_phone' => ['required', 'string', 'regex:/^09\d{9}$/', 'max:20'],
+            'customer_email' => ['nullable', 'email', 'max:255'],
             'customer_address' => ['required', 'string', 'min:10', 'max:1000'],
             'note' => ['nullable', 'string', 'max:1000'],
             'payment_method' => ['required', Rule::in(Order::PAYMENT_METHODS)],
@@ -27,6 +28,8 @@ class CheckoutRequest extends FormRequest
             'customer_name.min' => 'نام باید حداقل :min کاراکتر باشد.',
             'customer_phone.required' => 'شماره موبایل الزامی است.',
             'customer_phone.regex' => 'شماره موبایل معتبر نیست (مثال: 09123456789).',
+            'customer_email.email' => 'ایمیل واردشده معتبر نیست.',
+            'customer_email.max' => 'ایمیل حداکثر می‌تواند :max کاراکتر باشد.',
             'customer_address.required' => 'آدرس تحویل سفارش الزامی است.',
             'customer_address.min' => 'آدرس باید حداقل :min کاراکتر باشد.',
             'note.max' => 'توضیحات حداکثر می‌تواند :max کاراکتر باشد.',

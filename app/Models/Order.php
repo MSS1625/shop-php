@@ -103,6 +103,7 @@ class Order extends Model
         'user_id',
         'customer_name',
         'customer_phone',
+        'customer_email',
         'customer_address',
         'note',
         'subtotal',
@@ -158,6 +159,21 @@ class Order extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * ایمیل دریافت‌کنندهٔ اطلاع‌رسانی‌ها —
+     * اول ایمیل واردشده در فرم خرید، بعد ایمیل حساب کاربری
+     */
+    public function recipientEmail(): ?string
+    {
+        $email = trim((string) $this->customer_email);
+
+        if ($email !== '') {
+            return $email;
+        }
+
+        return $this->user?->email;
     }
 
     public function scopeStatus(Builder $query, ?string $status): Builder
