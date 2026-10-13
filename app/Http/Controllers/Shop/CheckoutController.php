@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Shop;
 
+use App\Contracts\OrderNotifier;
 use App\Exceptions\StockUnavailableException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CheckoutRequest;
@@ -14,7 +15,10 @@ use Illuminate\Support\Facades\DB;
 
 class CheckoutController extends Controller
 {
-    public function __construct(protected Cart $cart) {}
+    public function __construct(
+        protected Cart $cart,
+        protected OrderNotifier $notifier,
+    ) {}
 
     /**
      * صفحه تکمیل خرید
@@ -94,6 +98,7 @@ class CheckoutController extends Controller
                 'user_id' => auth()->id(),
                 'customer_name' => trim($request->validated('customer_name')),
                 'customer_phone' => $request->validated('customer_phone'),
+                'customer_email' => strtolower(trim((string) $request->validated('customer_email'))) ?: null,
                 'customer_address' => trim($request->validated('customer_address')),
                 'note' => $request->validated('note'),
                 'subtotal' => $subtotal,
@@ -121,6 +126,9 @@ class CheckoutController extends Controller
         });
 
         $this->cart->clear();
+
+        // اطلاع‌رسانی ثبت سفارش — خارج از تراکنش و هرگز مانع ثبت نمی‌شود
+        $this->notifier->orderPlaced($order);
 
         if ($droppedCouponCode !== null) {
             session()->flash(

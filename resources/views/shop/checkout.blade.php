@@ -40,6 +40,20 @@
                     </div>
 
                     <div class="mb-3">
+                        <label for="customer_email" class="form-label">
+                            ایمیل <span class="text-muted fw-normal">(اختیاری — برای اطلاع‌رسانی وضعیت سفارش)</span>
+                        </label>
+                        <input type="email" class="form-control @error('customer_email') is-invalid @enderror"
+                               id="customer_email" name="customer_email"
+                               value="{{ old('customer_email', auth()->user()->email ?? '') }}"
+                               placeholder="name@example.com" dir="ltr">
+                        <div class="form-text">وضعیت ثبت، پرداخت و ارسال سفارش به این ایمیل اطلاع داده می‌شود.</div>
+                        @error('customer_email')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
                         <label for="customer_address" class="form-label">آدرس تحویل سفارش</label>
                         <textarea class="form-control @error('customer_address') is-invalid @enderror"
                                   id="customer_address" name="customer_address" rows="3" required>{{ old('customer_address') }}</textarea>

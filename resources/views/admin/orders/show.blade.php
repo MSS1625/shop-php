@@ -101,6 +101,16 @@
                     </div>
                     <div class="col-md-4">
                         <div class="ds-spec-row">
+                            <span>ایمیل</span>
+                            @if($order->customer_email)
+                                <span dir="ltr">{{ $order->customer_email }}</span>
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="ds-spec-row">
                             <span>وضعیت</span>
                             <span class="badge text-bg-{{ $order->statusColor() }}">{{ $order->statusLabel() }}</span>
                         </div>

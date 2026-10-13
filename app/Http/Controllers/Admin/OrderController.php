@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Contracts\OrderNotifier;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Contracts\View\View;
@@ -11,6 +12,8 @@ use Illuminate\Validation\Rule;
 
 class OrderController extends Controller
 {
+    public function __construct(protected OrderNotifier $notifier) {}
+
     /**
      * لیست سفارش‌ها با فیلتر وضعیت
      */
@@ -56,6 +59,7 @@ class OrderController extends Controller
         ]);
 
         $newStatus = $validated['status'];
+        $oldStatus = $order->status;
 
         if ($order->status === $newStatus) {
             return redirect()->route('admin.orders.show', $order);
@@ -86,6 +90,11 @@ class OrderController extends Controller
 
         // رفرش برای نمایش پیام درست
         $order->refresh();
+
+        // اطلاع‌رسانی تغییر وضعیت به مشتری — فقط وقتی واقعاً تغییر کرده باشد
+        if ($order->status !== $oldStatus) {
+            $this->notifier->statusChanged($order, $oldStatus);
+        }
 
         return redirect()
             ->route('admin.orders.show', $order)

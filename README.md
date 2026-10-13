@@ -71,6 +71,7 @@ It replicates the home page (hero, categories, product cards) with the real samp
 - 🖼 **Secure Image Upload** — validated images only (JPG/PNG/WebP, max 2MB), random filenames
 - 🖼️ **Product Gallery** — multiple images per product; thumbnail strip on the detail page swaps the main view; IDOR-safe delete in admin
 - 🎟 **Discount Coupon Codes** — percent/fixed codes with usage caps, minimum-cart, expiry window; race-safe redemption inside the order transaction and a full admin management page
+- 📧 **Order Email Notifications** — order-placed, payment-confirmed and status-changed emails with RTL Persian templates; contract-based (`OrderNotifier`) so an SMS channel can be plugged in later; failures are isolated — a broken SMTP never breaks checkout
 - 🌐 **Persian-first** — RTL layout, Vazirmatn font, Persian digits (۰۱۲۳۴۵۶۷۸۹), Toman currency
 - 🌙 **Dark Modern UI** — neon violet theme built on Bootstrap 5 RTL
 - 🔐 **Security Hardened** — CSRF protection, rate-limited login, XSS-safe templating, mass-assignment protection, security headers, atomic payments
@@ -200,7 +201,8 @@ Every `push` and `pull request` runs the full test matrix automatically on GitHu
 - [x] Project website (GitHub Pages demo)
 - [x] Product gallery (multiple images)
 - [x] Discount codes
-- [ ] Email/SMS notifications
+- [x] Email notifications
+- [ ] SMS notifications
 
 ## 🤝 Contributing
 
