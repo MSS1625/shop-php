@@ -21,11 +21,27 @@ return [
     |--------------------------------------------------------------------------
     | اطلاع‌رسانی سفارش
     |--------------------------------------------------------------------------
-    | با خاموش کردن این گزینه هیچ ایمیلی برای رویدادهای سفارش ارسال نمی‌شود
+    | با خاموش کردن این گزینه هیچ اطلاع‌رسانی برای رویدادهای سفارش ارسال نمی‌شود
     | (ثبت سفارش، تأیید پرداخت، تغییر وضعیت) — برای محیط تست/توسعه کاربرد دارد.
+    |
+    | channels: کانال‌های فعال — mail و/یا sms (مثال env: SHOP_NOTIFICATION_CHANNELS=mail,sms)
+    | sms.driver: log = ثبت در لاگ برای توسعه/تست | kavenegar = ارسال واقعی
     */
 
     'notifications' => [
         'enabled' => env('SHOP_NOTIFICATIONS', true),
+
+        'channels' => array_values(array_filter(array_map('trim',
+            explode(',', (string) env('SHOP_NOTIFICATION_CHANNELS', 'mail')),
+        ))),
+
+        'sms' => [
+            'driver' => env('SMS_DRIVER', 'log'),
+
+            'kavenegar' => [
+                'api_key' => env('KAVENEGAR_API_KEY'),
+                'from' => env('KAVENEGAR_FROM'),
+            ],
+        ],
     ],
 ];

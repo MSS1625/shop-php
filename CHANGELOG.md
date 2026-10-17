@@ -5,11 +5,22 @@ All notable changes to this project are documented in this file.
 
 <div dir="rtl" align="center">
 
-راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.4.0** ✅
+راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.5.0** ✅
 
 </div>
 
 ## 🇬🇧 English
+
+## [2.5.0] — 2026-10-16
+
+### 📱 Added — SMS Notifications (Kavenegar)
+
+- SMS channel for order notifications — the same three events as email (order placed / payment confirmed / status changed) now also go out as short Persian text messages to the customer's mobile number already collected at checkout; **no database change and not a single controller line touched** — the whole feature plugs in through the `OrderNotifier` binding in the service provider, exactly the swap promised in the v2.4.0 architecture
+- `SmsGateway` contract (mirrors `PaymentGateway`): `KavenegarSmsGateway` sends for real through Kavenegar's REST API, `LogSmsGateway` only logs messages for local development and tests
+- `CompositeNotifier` — with both `mail` and `sms` channels enabled, every event is dispatched to both, and a failure in one channel never stops the other
+- New env/config switches: `SHOP_NOTIFICATION_CHANNELS` (default `mail`; e.g. `mail,sms`), `SMS_DRIVER` (`log` | `kavenegar`), `KAVENEGAR_API_KEY`, `KAVENEGAR_FROM` — all documented in `.env.example`
+- Same failure-isolation rule as email: an SMS failure is caught and logged — it can never break checkout or payment
+- 15 new tests (SmsTest): channel dispatch, dual-channel composite, failure isolation, message content (order number, Persian-digit amount, bank RefID, old→new status labels), the Kavenegar HTTP contract, API-error / missing-key exceptions, driver resolution and unknown-channel fallback — **86 tests total, 331 assertions**
 
 ## [2.4.0] — 2026-10-14
 
@@ -133,6 +144,17 @@ All notable changes to this project are documented in this file.
 ---
 
 ## 🇮🇷 فارسی
+
+## [2.5.0] — ۲۰۲۶-۱۰-۱۶
+
+### 📱 افزوده شد — اطلاع‌رسانی پیامکی (کاوه‌نگار)
+
+- کانال پیامک برای اطلاع‌رسانی سفارش — همان سه رویداد ایمیل (ثبت سفارش / تأیید پرداخت / تغییر وضعیت) حالا به‌صورت پیام‌های کوتاه فارسی هم به شماره موبایلی که از همان ابتدای فرم تسویه گرفته می‌شود ارسال می‌شود؛ **بدون هیچ تغییر در دیتابیس و بدون دست‌زدن به حتی یک خط از کنترلرها** — کل قابلیت فقط از طریق binding قرارداد `OrderNotifier` در سرویس‌پرووایدر وصل می‌شود؛ همان تعویضی که در معماری v2.4.0 قولش را دادیم
+- قرارداد `SmsGateway` (قرینهٔ `PaymentGateway`): `KavenegarSmsGateway` ارسال واقعی از طریق REST API کاوه‌نگار، `LogSmsGateway` فقط پیام را برای توسعه و تست لاگ می‌کند
+- `CompositeNotifier` — با فعال‌بودن هر دو کانال `mail` و `sms`، هر رویداد به هر دو می‌رسد و خطای یک کانال هرگز کانال دیگر را متوقف نمی‌کند
+- کلیدهای جدید env/config: `SHOP_NOTIFICATION_CHANNELS` (پیش‌فرض `mail`؛ مثال: `mail,sms`)، `SMS_DRIVER` (`log` | `kavenegar`)، `KAVENEGAR_API_KEY` و `KAVENEGAR_FROM` — همه در `.env.example` مستند شده‌اند
+- همان قانون ایزوله‌سازی خطای ایمیل: خطای پیامک گرفته و لاگ می‌شود — هرگز ثبت سفارش یا پرداخت را نمی‌شکند
+- ۱۵ تست جدید (SmsTest): ارسال بر اساس کانال، زنجیرهٔ دوکاناله، ایزوله‌سازی خطا، محتوای پیام (شماره سفارش، مبلغ با ارقام فارسی، کد پیگیری بانکی، برچسب وضعیت قبلی ← جدید)، قرارداد HTTP کاوه‌نگار، خطای API / نبود کلید، تشخیص درایور و نادیده‌گرفتن کانال ناشناخته — در مجموع **۸۶ تست، ۳۳۱ ادعا**
 
 ## [2.4.0] — ۲۰۲۶-۱۰-۱۴
 
