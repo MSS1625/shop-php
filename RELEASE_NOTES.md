@@ -1,15 +1,15 @@
 <!-- ============================================================
   نحوه استفاده | How to use:
-  ۱) در گیت‌هاب: Releases → Draft a new release → Choose tag → v2.4.0 (Create on main)
-  ۲) عنوان: «📧 v2.4.0 — Order Email Notifications»
+  ۱) در گیت‌هاب: Releases → Draft a new release → Choose tag → v2.5.0 (Create on main)
+  ۲) عنوان: «📱 v2.5.0 — SMS Notifications»
   ۳) متن زیر خط جداکننده (---) را در باکس توضیحات پیست کنید
-  ۴) در صورت تمایل، فایل shop-php-v2.4.0.zip را بکشید و رها کنید
+  ۴) در صورت تمایل، فایل shop-php-v2.5.0.zip را بکشید و رها کنید
   ۵) Publish release
   ============================================================ -->
 
 ---
 
-# 📧 v2.4.0 — Order Email Notifications
+# 📱 v2.5.0 — SMS Notifications
 
 <div dir="rtl" align="center">
 
@@ -20,24 +20,39 @@ Laravel 12 · PHP 8.2+ · Bootstrap 5 RTL · MIT License
 
 ## 🇬🇧 English
 
-### 📧 New — Order Email Notifications
+### 📱 New — SMS Notifications (Kavenegar)
 
-- Optional **email field at checkout** — guests can get order updates too; when left empty, the logged-in account's email is used as a fallback
-- Three automatic emails (RTL Persian templates, inline CSS, safe in every mail client):
-  - **Order placed** — right after checkout, for both online and cash-on-delivery orders
-  - **Payment confirmed** — exactly once, the moment the gateway verifies the payment; repeat callbacks never duplicate it
-  - **Status changed** — when the admin moves the order to processing / shipped / delivered / cancelled, showing old → new status
-- Every email carries the full order summary: items, quantities, unit prices, subtotal, discount line (with coupon code) and the final payable amount
-- **Contract-based architecture** (`OrderNotifier`) — the same pattern as the payment gateway: the default implementation sends email, `NullNotifier` keeps it silent, and a future SMS channel can be plugged in without touching business logic
-- **Failure isolation** — a broken SMTP is caught and logged; it can never break checkout or payment confirmation
-- Toggle everything with one switch: `SHOP_NOTIFICATIONS=false` in `.env`
-- Zero-config local development: with `MAIL_MAILER=log` (the default) emails land in `storage/logs/laravel.log` — set SMTP whenever you're ready for real delivery
-- Admin order view now shows the customer's email next to the phone number
+- The same three order events as email — **order placed / payment confirmed / status changed** — now also go out as short Persian text messages, to the mobile number already collected at checkout
+- **Zero-controller-change release** — the promise made in v2.4.0 is kept: the whole feature plugs in through one `OrderNotifier` binding in the service provider; no migration, no controller line, no template change
+- `SmsGateway` contract (mirrors `PaymentGateway`):
+  - `KavenegarSmsGateway` — real delivery through [Kavenegar](https://kavenegar.com)'s REST API
+  - `LogSmsGateway` — logs messages instead of sending them; the default driver, perfect for local development and tests
+- `CompositeNotifier` — with both channels on (`SHOP_NOTIFICATION_CHANNELS=mail,sms`) every event reaches email **and** SMS; a failure in one channel never stops the other
+- Same failure-isolation rule as email: an SMS failure is caught and logged — checkout and payment can never break because of it
+- Message examples (Persian, with Persian digits):
+  - `دیجی‌شاپ: سفارش شما با کد DS-261016-8F3K ثبت شد. مبلغ: ۲,۴۰۰,۰۰۰ تومان. سپاس از خرید شما.`
+  - `دیجی‌شاپ: پرداخت سفارش DS-261016-8F3K تأیید شد. کد پیگیری بانکی: ۱۲۳۴۵۶.`
+  - `دیجی‌شاپ: وضعیت سفارش DS-261016-8F3K از «در انتظار بررسی» به «ارسال شده» تغییر کرد.`
+
+### ⚙️ Setup
+
+```bash
+# .env — enable the SMS channel next to email:
+SHOP_NOTIFICATION_CHANNELS=mail,sms
+
+# local development (default) — messages land in storage/logs/laravel.log:
+SMS_DRIVER=log
+
+# real delivery — get an API key from kavenegar.com:
+SMS_DRIVER=kavenegar
+KAVENEGAR_API_KEY=your-api-key
+KAVENEGAR_FROM=            # optional sender line; empty = panel default
+```
 
 ### 📊 Numbers
 
-- **71 feature tests** (276 assertions) — 10 new notification tests (sent, account-email fallback, invalid email rejected, disabled via config, SMTP-failure isolation, no duplicates on repeat callbacks, no email on same-status)
-- Code style: Pint clean across 96 files
+- **86 feature tests** (331 assertions) — 15 new SMS tests (channel dispatch, dual-channel composite, failure isolation, message content with order number / Persian-digit amount / bank RefID / old→new status labels, the Kavenegar HTTP contract, API-error and missing-key exceptions, driver resolution, unknown-channel fallback)
+- Code style: Pint clean across 103 files
 
 <details>
 <summary>Quick start (unchanged)</summary>
@@ -53,15 +68,16 @@ php artisan serve            # → http://localhost:8000
 </details>
 
 <details>
-<summary>Trying the emails locally</summary>
+<summary>Trying the SMS locally</summary>
 
 ```bash
-# .env (already the default after shop:install)
-MAIL_MAILER=log
-SHOP_NOTIFICATIONS=true
+# .env (defaults after this release)
+SHOP_NOTIFICATION_CHANNELS=mail,sms
+SMS_DRIVER=log
 
-# place an order → then read the rendered email:
-tail -n 40 storage/logs/laravel.log
+# place an order → then read the rendered messages:
+tail -n 20 storage/logs/laravel.log
+# [sms:09123456789] دیجی‌شاپ: سفارش شما با کد DS-… ثبت شد. …
 ```
 
 </details>
@@ -72,24 +88,39 @@ tail -n 40 storage/logs/laravel.log
 
 <div dir="rtl">
 
-### 📧 جدید — اطلاع‌رسانی ایمیلی سفارش
+### 📱 جدید — اطلاع‌رسانی پیامکی (کاوه‌نگار)
 
-- فیلد **ایمیل اختیاری در فرم تکمیل خرید** — خریدار مهمان هم اطلاع‌رسانی می‌گیرد؛ اگر خالی بماند، ایمیل حساب کاربریِ واردشده به‌عنوان جایگزین استفاده می‌شود
-- سه ایمیل خودکار (قالب‌های راست‌چین فارسی با CSS درون‌خطی، سازگار با همه کلاینت‌های ایمیل):
-  - **ثبت سفارش** — بلافاصله پس از ثبت، هم برای پرداخت آنلاین هم پرداخت در محل
-  - **تأیید پرداخت** — دقیقاً یک بار، همان لحظه‌ای که درگاه پرداخت را تأیید می‌کند؛ کال‌بک‌های تکراری هرگز ایمیل تکراری نمی‌سازند
-  - **تغییر وضعیت** — وقتی ادمین سفارش را به پردازش / ارسال / تحویل / لغو می‌برد، با ذکر وضعیت قبلی و جدید
-- هر ایمیل خلاصهٔ کامل سفارش را دارد: اقلام، تعداد، قیمت واحد، جمع، سطر تخفیف (با کد کوپن) و مبلغ نهایی قابل پرداخت
-- **معماری قراردادمحور** (`OrderNotifier`) — همان الگوی درگاه پرداخت: پیاده‌سازی پیش‌فرض ایمیل می‌فرستد، `NullNotifier` ساکت است و کانال آینده مثل SMS بدون دست‌زدن به منطق اصلی قابل اضافه‌شدن است
-- **ایزوله‌سازی خطا** — خرابی SMTP گرفته و لاگ می‌شود؛ هرگز ثبت سفارش یا تأیید پرداخت را نمی‌شکند
-- خاموش/روشن با یک کلید: `SHOP_NOTIFICATIONS=false` در `.env`
-- توسعهٔ محلی بدون تنظیمات: با `MAIL_MAILER=log` (پیش‌فرض) ایمیل‌ها در `storage/logs/laravel.log` می‌ریزند — هر وقت خواستید SMTP را تنظیم کنید
-- نمای سفارش ادمین حالا ایمیل مشتری را کنار شماره موبایل نشان می‌دهد
+- همان سه رویداد سفارش که ایمیل می‌روند — **ثبت سفارش / تأیید پرداخت / تغییر وضعیت** — حالا به‌صورت پیام‌های کوتاه فارسی هم ارسال می‌شوند؛ به همان شماره موبایلی که از ابتدا در فرم تسویه گرفته می‌شود
+- **ریلیزی با تغییر صفر در کنترلرها** — قولِ v2.4.0 عمل شد: کل قابلیت فقط با یک binding قرارداد `OrderNotifier` در سرویس‌پرووایدر وصل می‌شود؛ بدون مهاجرت دیتابیس، بدون یک خط تغییر در کنترلرها و قالب‌ها
+- قرارداد `SmsGateway` (قرینهٔ `PaymentGateway`):
+  - `KavenegarSmsGateway` — ارسال واقعی از طریق REST API [کاوه‌نگار](https://kavenegar.com)
+  - `LogSmsGateway` — پیام را به‌جای ارسال، لاگ می‌کند؛ درایور پیش‌فرض، مناسب توسعهٔ محلی و تست
+- `CompositeNotifier` — با فعال‌بودن هر دو کانال (`SHOP_NOTIFICATION_CHANNELS=mail,sms`) هر رویداد به ایمیل **و** پیامک می‌رسد؛ خطای یک کانال هرگز کانال دیگر را متوقف نمی‌کند
+- همان قانون ایزوله‌سازی خطای ایمیل: خطای پیامک گرفته و لاگ می‌شود — ثبت سفارش و پرداخت به‌خاطر آن هرگز نمی‌شکنند
+- نمونه پیام‌ها (فارسی، با ارقام فارسی):
+  - `دیجی‌شاپ: سفارش شما با کد DS-261016-8F3K ثبت شد. مبلغ: ۲,۴۰۰,۰۰۰ تومان. سپاس از خرید شما.`
+  - `دیجی‌شاپ: پرداخت سفارش DS-261016-8F3K تأیید شد. کد پیگیری بانکی: ۱۲۳۴۵۶.`
+  - `دیجی‌شاپ: وضعیت سفارش DS-261016-8F3K از «در انتظار بررسی» به «ارسال شده» تغییر کرد.`
+
+### ⚙️ تنظیمات
+
+```bash
+# در .env — فعال‌کردن کانال پیامک کنار ایمیل:
+SHOP_NOTIFICATION_CHANNELS=mail,sms
+
+# توسعهٔ محلی (پیش‌فرض) — پیام‌ها در storage/logs/laravel.log:
+SMS_DRIVER=log
+
+# ارسال واقعی — کلید API را از kavenegar.com بگیرید:
+SMS_DRIVER=kavenegar
+KAVENEGAR_API_KEY=کلید-شما
+KAVENEGAR_FROM=            # خط فرستنده (اختیاری)؛ خالی = خط پیش‌فرض پنل
+```
 
 ### 📊 اعداد
 
-- **۷۱ تست فیچر** (۲۷۶ ادعا) — ۱۰ تست جدید اطلاع‌رسانی (ارسال، جایگزین ایمیل حساب، رد ایمیل نامعتبر، خاموش با کانفیگ، ایزوله‌سازی خطای SMTP، عدم تکرار در کال‌بک تکراری، عدم ارسال در وضعیت بدون تغییر)
-- سبک کد: Pint پاک روی ۹۶ فایل
+- **۸۶ تست فیچر** (۳۳۱ ادعا) — ۱۵ تست جدید پیامک (ارسال بر اساس کانال، زنجیرهٔ دوکاناله، ایزوله‌سازی خطا، محتوای پیام شامل شماره سفارش / مبلغ با ارقام فارسی / کد پیگیری بانکی / برچسب وضعیت قبلی و جدید، قرارداد HTTP کاوه‌نگار، خطای API و نبود کلید، تشخیص درایور، نادیده‌گرفتن کانال ناشناخته)
+- سبک کد: Pint پاک روی ۱۰۳ فایل
 
 <details>
 <summary>راه‌اندازی سریع (بدون تغییر)</summary>
@@ -105,15 +136,16 @@ php artisan serve            # → http://localhost:8000
 </details>
 
 <details>
-<summary>امتحان ایمیل‌ها به‌صورت محلی</summary>
+<summary>امتحان پیامک به‌صورت محلی</summary>
 
 ```bash
-# در .env (پیش‌فرض بعد از shop:install همین است)
-MAIL_MAILER=log
-SHOP_NOTIFICATIONS=true
+# در .env (پیش‌فرض این نسخه)
+SHOP_NOTIFICATION_CHANNELS=mail,sms
+SMS_DRIVER=log
 
-# یک سفارش ثبت کنید → سپس ایمیل رندرشده را بخوانید:
-tail -n 40 storage/logs/laravel.log
+# یک سفارش ثبت کنید → سپس پیام‌ها را بخوانید:
+tail -n 20 storage/logs/laravel.log
+# [sms:09123456789] دیجی‌شاپ: سفارش شما با کد DS-… ثبت شد. …
 ```
 
 </details>

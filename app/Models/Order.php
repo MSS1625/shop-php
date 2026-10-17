@@ -176,6 +176,17 @@ class Order extends Model
         return $this->user?->email;
     }
 
+    /**
+     * موبایل دریافت‌کنندهٔ پیامک —
+     * همان شمارهٔ الزامی فرم تسویه (customer_phone)
+     */
+    public function recipientMobile(): ?string
+    {
+        $phone = trim((string) $this->customer_phone);
+
+        return $phone !== '' ? $phone : null;
+    }
+
     public function scopeStatus(Builder $query, ?string $status): Builder
     {
         return $query->when($status && in_array($status, self::STATUSES, true),
