@@ -1,5 +1,15 @@
+<!-- ============================================================
+  نحوه استفاده | How to use:
+  ۱) در گیت‌هاب: Releases → Draft a new release → Choose tag → v2.6.0 (Create on main)
+  ۲) عنوان: «📊 v2.6.0 — Admin Reports Dashboard»
+  ۳) متن زیر خط جداکننده (---) را در باکس توضیحات پیست کنید
+  ۴) در صورت تمایل، فایل shop-php-v2.6.0.zip را بکشید و رها کنید
+  ۵) Publish release
+  ============================================================ -->
 
-# 📱 v2.5.0 — SMS Notifications
+---
+
+# 📊 v2.6.0 — Admin Reports Dashboard
 
 <div dir="rtl" align="center">
 
@@ -10,39 +20,27 @@ Laravel 12 · PHP 8.2+ · Bootstrap 5 RTL · MIT License
 
 ## 🇬🇧 English
 
-### 📱 New — SMS Notifications (Kavenegar)
+### 📊 New — Admin Reports Dashboard
 
-- The same three order events as email — **order placed / payment confirmed / status changed** — now also go out as short Persian text messages, to the mobile number already collected at checkout
-- **Zero-controller-change release** — the promise made in v2.4.0 is kept: the whole feature plugs in through one `OrderNotifier` binding in the service provider; no migration, no controller line, no template change
-- `SmsGateway` contract (mirrors `PaymentGateway`):
-  - `KavenegarSmsGateway` — real delivery through [Kavenegar](https://kavenegar.com)'s REST API
-  - `LogSmsGateway` — logs messages instead of sending them; the default driver, perfect for local development and tests
-- `CompositeNotifier` — with both channels on (`SHOP_NOTIFICATION_CHANNELS=mail,sms`) every event reaches email **and** SMS; a failure in one channel never stops the other
-- Same failure-isolation rule as email: an SMS failure is caught and logged — checkout and payment can never break because of it
-- Message examples (Persian, with Persian digits):
-  - `دیجی‌شاپ: سفارش شما با کد DS-261016-8F3K ثبت شد. مبلغ: ۲,۴۰۰,۰۰۰ تومان. سپاس از خرید شما.`
-  - `دیجی‌شاپ: پرداخت سفارش DS-261016-8F3K تأیید شد. کد پیگیری بانکی: ۱۲۳۴۵۶.`
-  - `دیجی‌شاپ: وضعیت سفارش DS-261016-8F3K از «در انتظار بررسی» به «ارسال شده» تغییر کرد.`
+- The admin dashboard is now a full reports page, built around **revenue**: today / this month / all-time / average order value — cancelled orders are excluded from every sales figure
+- The sales chart grew from 7 days to a **14-day chart fed by a single grouped query** (previously one query per day); days without sales are zero-filled so the chart is always complete, and every bar carries its day's order count and amount
+- New **best-sellers table** — products ranked by units sold with per-product revenue; items belonging to cancelled orders are excluded
+- New **order-status breakdown** — count, percentage share and a progress bar per status, plus a footer line with this month's new customers and product counts
+- All dashboard queries now live in one testable `DashboardStats` service — the controller became a thin pass-through
+- The low-stock panel gained a separate **out-of-stock badge**
 
-### ⚙️ Setup
+### ⚙️ Optional config (works out of the box)
 
-```bash
-# .env — enable the SMS channel next to email:
-SHOP_NOTIFICATION_CHANNELS=mail,sms
-
-# local development (default) — messages land in storage/logs/laravel.log:
-SMS_DRIVER=log
-
-# real delivery — get an API key from kavenegar.com:
-SMS_DRIVER=kavenegar
-KAVENEGAR_API_KEY=your-api-key
-KAVENEGAR_FROM=            # optional sender line; empty = panel default
+```env
+# .env — both optional, defaults shown:
+SHOP_DASHBOARD_DAYS=14          # length of the sales chart
+SHOP_LOW_STOCK_THRESHOLD=3      # low-stock alert threshold
 ```
 
 ### 📊 Numbers
 
-- **86 feature tests** (331 assertions) — 15 new SMS tests (channel dispatch, dual-channel composite, failure isolation, message content with order number / Persian-digit amount / bank RefID / old→new status labels, the Kavenegar HTTP contract, API-error and missing-key exceptions, driver resolution, unknown-channel fallback)
-- Code style: Pint clean across 103 files
+- **96 feature tests** (406 assertions) — 10 new dashboard tests: access guards, KPI math with cancelled and previous-month orders, chart series coverage, best-seller ranking, status percentages, low-stock threshold (default and overridden) and empty states
+- Code style: Pint clean across 105 files
 
 <details>
 <summary>Quick start (unchanged)</summary>
@@ -58,16 +56,13 @@ php artisan serve            # → http://localhost:8000
 </details>
 
 <details>
-<summary>Trying the SMS locally</summary>
+<summary>Seeing it in action</summary>
 
 ```bash
-# .env (defaults after this release)
-SHOP_NOTIFICATION_CHANNELS=mail,sms
-SMS_DRIVER=log
-
-# place an order → then read the rendered messages:
-tail -n 20 storage/logs/laravel.log
-# [sms:09123456789] دیجی‌شاپ: سفارش شما با کد DS-… ثبت شد. …
+# log in at /admin/login → the dashboard is the first page:
+# four revenue KPI cards, the 14-day chart, the status breakdown,
+# best sellers, low-stock alerts and the latest orders.
+# Place a test order (mock gateway) and refresh — today's numbers move.
 ```
 
 </details>
@@ -78,39 +73,27 @@ tail -n 20 storage/logs/laravel.log
 
 <div dir="rtl">
 
-### 📱 جدید — اطلاع‌رسانی پیامکی (کاوه‌نگار)
+### 📊 جدید — داشبورد گزارش‌های مدیریت
 
-- همان سه رویداد سفارش که ایمیل می‌روند — **ثبت سفارش / تأیید پرداخت / تغییر وضعیت** — حالا به‌صورت پیام‌های کوتاه فارسی هم ارسال می‌شوند؛ به همان شماره موبایلی که از ابتدا در فرم تسویه گرفته می‌شود
-- **ریلیزی با تغییر صفر در کنترلرها** — قولِ v2.4.0 عمل شد: کل قابلیت فقط با یک binding قرارداد `OrderNotifier` در سرویس‌پرووایدر وصل می‌شود؛ بدون مهاجرت دیتابیس، بدون یک خط تغییر در کنترلرها و قالب‌ها
-- قرارداد `SmsGateway` (قرینهٔ `PaymentGateway`):
-  - `KavenegarSmsGateway` — ارسال واقعی از طریق REST API [کاوه‌نگار](https://kavenegar.com)
-  - `LogSmsGateway` — پیام را به‌جای ارسال، لاگ می‌کند؛ درایور پیش‌فرض، مناسب توسعهٔ محلی و تست
-- `CompositeNotifier` — با فعال‌بودن هر دو کانال (`SHOP_NOTIFICATION_CHANNELS=mail,sms`) هر رویداد به ایمیل **و** پیامک می‌رسد؛ خطای یک کانال هرگز کانال دیگر را متوقف نمی‌کند
-- همان قانون ایزوله‌سازی خطای ایمیل: خطای پیامک گرفته و لاگ می‌شود — ثبت سفارش و پرداخت به‌خاطر آن هرگز نمی‌شکنند
-- نمونه پیام‌ها (فارسی، با ارقام فارسی):
-  - `دیجی‌شاپ: سفارش شما با کد DS-261016-8F3K ثبت شد. مبلغ: ۲,۴۰۰,۰۰۰ تومان. سپاس از خرید شما.`
-  - `دیجی‌شاپ: پرداخت سفارش DS-261016-8F3K تأیید شد. کد پیگیری بانکی: ۱۲۳۴۵۶.`
-  - `دیجی‌شاپ: وضعیت سفارش DS-261016-8F3K از «در انتظار بررسی» به «ارسال شده» تغییر کرد.`
+- داشبورد ادمین حالا یک صفحهٔ کامل گزارش‌ها است، حول **فروش**: امروز / این ماه / کل / میانگین ارزش سفارش — سفارش‌های لغوشده از همهٔ اعداد فروش حذف هستند
+- نمودار فروش از ۷ روز به **نمودار ۱۴ روزه با یک کوئری گروهی** ارتقا یافت (قبلاً برای هر روز یک کوئری زده می‌شد)؛ روزهای بدون فروش صفر پر می‌شوند تا نمودار همیشه کامل باشد و روی هر ستون تعداد سفارش و مبلغ همان روز هست
+- جدول جدید **پرفروش‌ترین محصولات** — رتبه‌بندی بر اساس تعداد فروش به‌همراه درآمد هر محصول؛ اقلام سفارش‌های لغوشده حساب نمی‌شوند
+- تفکیک جدید **وضعیت سفارش‌ها** — تعداد، درصد سهم و نوار پیشرفت برای هر وضعیت + سطر پایانی با کاربران جدید این ماه و تعداد محصولات
+- تمام کوئری‌های داشبورد در سرویس قابل‌آزمون `DashboardStats` جمع شدند — کنترلر فقط لاغر شده است
+- پنل موجودی کم به **بج جداگانهٔ ناموجود** مجهز شد
 
-### ⚙️ تنظیمات
+### ⚙️ تنظیمات اختیاری (بدون تنظیم هم کار می‌کند)
 
-```bash
-# در .env — فعال‌کردن کانال پیامک کنار ایمیل:
-SHOP_NOTIFICATION_CHANNELS=mail,sms
-
-# توسعهٔ محلی (پیش‌فرض) — پیام‌ها در storage/logs/laravel.log:
-SMS_DRIVER=log
-
-# ارسال واقعی — کلید API را از kavenegar.com بگیرید:
-SMS_DRIVER=kavenegar
-KAVENEGAR_API_KEY=کلید-شما
-KAVENEGAR_FROM=            # خط فرستنده (اختیاری)؛ خالی = خط پیش‌فرض پنل
+```env
+# .env — هر دو اختیاری، پیش‌فرض‌ها:
+SHOP_DASHBOARD_DAYS=14          # طول نمودار فروش
+SHOP_LOW_STOCK_THRESHOLD=3      # آستانهٔ هشدار موجودی
 ```
 
 ### 📊 اعداد
 
-- **۸۶ تست فیچر** (۳۳۱ ادعا) — ۱۵ تست جدید پیامک (ارسال بر اساس کانال، زنجیرهٔ دوکاناله، ایزوله‌سازی خطا، محتوای پیام شامل شماره سفارش / مبلغ با ارقام فارسی / کد پیگیری بانکی / برچسب وضعیت قبلی و جدید، قرارداد HTTP کاوه‌نگار، خطای API و نبود کلید، تشخیص درایور، نادیده‌گرفتن کانال ناشناخته)
-- سبک کد: Pint پاک روی ۱۰۳ فایل
+- **۹۶ تست فیچر** (۴۰۶ ادعا) — ۱۰ تست جدید داشبورد: گاردهای دسترسی، ریاضی شاخص‌ها با سفارش لغوشده و ماه قبل، پوشش سری نمودار، رتبه‌بندی پرفروش‌ها، درصدهای وضعیت، آستانهٔ موجودی (پیش‌فرض و override) و حالت‌های خالی
+- سبک کد: Pint پاک روی ۱۰۵ فایل
 
 <details>
 <summary>راه‌اندازی سریع (بدون تغییر)</summary>
@@ -126,16 +109,13 @@ php artisan serve            # → http://localhost:8000
 </details>
 
 <details>
-<summary>امتحان پیامک به‌صورت محلی</summary>
+<summary>دیدن آن در عمل</summary>
 
 ```bash
-# در .env (پیش‌فرض این نسخه)
-SHOP_NOTIFICATION_CHANNELS=mail,sms
-SMS_DRIVER=log
-
-# یک سفارش ثبت کنید → سپس پیام‌ها را بخوانید:
-tail -n 20 storage/logs/laravel.log
-# [sms:09123456789] دیجی‌شاپ: سفارش شما با کد DS-… ثبت شد. …
+# وارد /admin/login شوید → داشبورد اولین صفحه است:
+# چهار کارت شاخص فروش، نمودار ۱۴ روزه، تفکیک وضعیت،
+# پرفروش‌ها، هشدارهای موجودی و آخرین سفارش‌ها.
+# یک سفارش تستی ثبت کنید (درگاه mock) و رفرش کنید — اعداد امروز جابه‌جا می‌شوند.
 ```
 
 </details>

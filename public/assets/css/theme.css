@@ -572,6 +572,12 @@ a {
     font-size: 0.83rem;
 }
 
+.ds-stat-sub {
+    color: var(--ds-muted);
+    font-size: 0.72rem;
+    margin-top: 0.15rem;
+}
+
 /* ---------- جدول ---------- */
 
 .ds-table {
@@ -1058,6 +1064,14 @@ a {
 
 .ds-chart-bar:hover {
     opacity: 1;
+}
+
+.ds-chart-value {
+    font-size: 0.6rem;
+    color: var(--ds-muted);
+    text-align: center;
+    margin-bottom: 0.3rem;
+    white-space: nowrap;
 }
 
 .ds-chart-label {
