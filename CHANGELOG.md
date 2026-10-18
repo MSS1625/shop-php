@@ -5,11 +5,23 @@ All notable changes to this project are documented in this file.
 
 <div dir="rtl" align="center">
 
-راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.5.0** ✅
+راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.6.0** ✅
 
 </div>
 
 ## 🇬🇧 English
+
+## [2.6.0] — 2026-10-18
+
+### 📊 Added — Admin Reports Dashboard
+
+- The admin dashboard is now a full reports page: revenue KPIs for **today / this month / all-time** plus **average order value** — cancelled orders are excluded from every sales figure
+- Sales chart grew from 7 days (one query per day) to a **14-day chart fed by a single grouped query** — days without sales are zero-filled so the chart is always complete; every bar carries its day's order count and amount
+- New **best-sellers table** — products ranked by units sold with per-product revenue; items belonging to cancelled orders are excluded
+- New **order-status breakdown** — count, percentage share and a progress bar per status, plus a footer line with this month's new customers and product counts
+- New `DashboardStats` service collects every dashboard query in one testable class — the controller is now a thin pass-through
+- The low-stock panel gained a separate **out-of-stock badge**, and the threshold + chart length moved to config: `SHOP_DASHBOARD_DAYS` (default 14) and `SHOP_LOW_STOCK_THRESHOLD` (default 3), documented in `.env.example`
+- 10 new tests (DashboardTest): access guards, KPI math with cancelled and previous-month orders, chart series coverage, best-seller ranking, status percentages, low-stock threshold (default and overridden), empty states — **96 tests total, 406 assertions**
 
 ## [2.5.0] — 2026-10-16
 
@@ -144,6 +156,18 @@ All notable changes to this project are documented in this file.
 ---
 
 ## 🇮🇷 فارسی
+
+## [2.6.0] — ۲۰۲۶-۱۰-۱۸
+
+### 📊 افزوده شد — داشبورد گزارش‌های مدیریت
+
+- داشبورد ادمین حالا یک صفحهٔ کامل گزارش‌ها است: شاخص‌های فروش **امروز / این ماه / کل** به‌همراه **میانگین ارزش سفارش** — سفارش‌های لغوشده از همهٔ اعداد فروش حذف هستند
+- نمودار فروش از ۷ روز (با یک کوئری برای هر روز) به **نمودار ۱۴ روزه با یک کوئری گروهی** ارتقا یافت — روزهای بدون فروش صفر پر می‌شوند تا نمودار همیشه کامل باشد؛ روی هر ستون تعداد سفارش و مبلغ همان روز هست
+- جدول جدید **پرفروش‌ترین محصولات** — رتبه‌بندی بر اساس تعداد فروش به‌همراه درآمد هر محصول؛ اقلام سفارش‌های لغوشده حساب نمی‌شوند
+- تفکیک جدید **وضعیت سفارش‌ها** — تعداد، درصد سهم و نوار پیشرفت برای هر وضعیت + سطر پایانی با کاربران جدید این ماه و تعداد محصولات
+- سرویس جدید `DashboardStats` تمام کوئری‌های داشبورد را در یک کلاس قابل‌آزمون جمع می‌کند — کنترلر فقط لاغر شده است
+- پنل موجودی کم به **بج جداگانهٔ ناموجود** مجهز شد و آستانهٔ موجودی + طول نمودار به کانفیگ رفت: `SHOP_DASHBOARD_DAYS` (پیش‌فرض ۱۴) و `SHOP_LOW_STOCK_THRESHOLD` (پیش‌فرض ۳) — در `.env.example` مستند شده‌اند
+- ۱۰ تست جدید (DashboardTest): گاردهای دسترسی، ریاضی شاخص‌ها با سفارش لغوشده و ماه قبل، پوشش سری نمودار، رتبه‌بندی پرفروش‌ها، درصدهای وضعیت، آستانهٔ موجودی (پیش‌فرض و override) و حالت‌های خالی — در مجموع **۹۶ تست، ۴۰۶ ادعا**
 
 ## [2.5.0] — ۲۰۲۶-۱۰-۱۶
 

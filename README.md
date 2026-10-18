@@ -67,7 +67,7 @@ It replicates the home page (hero, categories, product cards) with the real samp
 - 📦 **Order Management** — checkout flow, order tracking, status workflow (pending → processing → shipped → delivered / cancelled), automatic stock adjustment, customer-initiated cancellation with stock restore
 - 🔍 **Search, Filter & Sort** — live product search, category filters, price sorting, pagination
 - 🗂 **Categories** — dynamic categories with icons and product counts
-- 📊 **Admin Dashboard** — sales stats, 7-day sales chart, low-stock alerts, latest orders, payment status per order
+- 📊 **Admin Reports Dashboard** — revenue KPIs (today / this month / all-time / average order value), a 14-day sales chart fed by a single grouped query, best sellers ranked by units sold, order-status breakdown with progress bars, low-stock & out-of-stock alerts — all queries collected in one testable `DashboardStats` service
 - 🖼 **Secure Image Upload** — validated images only (JPG/PNG/WebP, max 2MB), random filenames
 - 🖼️ **Product Gallery** — multiple images per product; thumbnail strip on the detail page swaps the main view; IDOR-safe delete in admin
 - 🎟 **Discount Coupon Codes** — percent/fixed codes with usage caps, minimum-cart, expiry window; race-safe redemption inside the order transaction and a full admin management page
@@ -188,7 +188,7 @@ README.md / README.fa.md   # English | فارسی
 ## 🧪 Tests & CI
 
 ```bash
-php artisan test        # 61 feature tests
+php artisan test        # 96 feature tests
 vendor/bin/pint --test  # code style
 ```
 
@@ -204,6 +204,7 @@ Every `push` and `pull request` runs the full test matrix automatically on GitHu
 - [x] Discount codes
 - [x] Email notifications
 - [x] SMS notifications
+- [x] Admin reports dashboard (KPIs, best sellers, 14-day chart)
 
 ## 🤝 Contributing
 
