@@ -92,12 +92,23 @@
                             <a href="{{ route('account.orders.show', $order) }}" class="btn btn-ds-outline px-4">
                                 <i class="fa-solid fa-receipt ms-1"></i> پیگیری سفارش
                             </a>
+                        @else
+                            <a href="{{ route('shop.track') }}" class="btn btn-ds-outline px-4">
+                                <i class="fa-solid fa-truck-fast ms-1"></i> پیگیری سفارش
+                            </a>
                         @endauth
 
                         <a href="{{ route('shop.home') }}" class="btn btn-ds-ghost px-4">
                             <i class="fa-solid fa-house ms-1"></i> بازگشت به فروشگاه
                         </a>
                     </div>
+
+                    @guest
+                        <p class="text-muted small mt-4 mb-0">
+                            <i class="fa-solid fa-circle-info ms-1"></i>
+                            برای پیگیری بعدی، از صفحهٔ «پیگیری سفارش» با همین شماره سفارش و شماره موبایلتان وارد شوید.
+                        </p>
+                    @endguest
                 </div>
             </div>
         </div>
