@@ -12,7 +12,7 @@
                             <i class="fa-solid fa-user"></i>
                         </span>
                         <h1 class="fs-4 fw-bold mb-1">ورود به حساب کاربری</h1>
-                        <p class="text-muted small mb-0">برای پیگیری سفارش‌ها وارد شوید</p>
+                        <p class="text-muted small mb-0">برای مشاهده تاریخچهٔ سفارش‌ها وارد شوید</p>
                     </div>
 
                     <form action="{{ route('login.attempt') }}" method="POST">

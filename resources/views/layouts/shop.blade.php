@@ -48,6 +48,12 @@
                         <i class="fa-solid fa-store"></i> محصولات
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="ds-nav-link {{ request()->routeIs('shop.track') ? 'active' : '' }}"
+                       href="{{ route('shop.track') }}">
+                        <i class="fa-solid fa-truck-fast"></i> پیگیری سفارش
+                    </a>
+                </li>
             </ul>
 
             <form class="ds-search d-none d-lg-block" action="{{ route('shop.products.index') }}" method="GET" role="search">

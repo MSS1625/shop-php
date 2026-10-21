@@ -12,6 +12,7 @@ use App\Http\Controllers\Shop\AccountController;
 use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\CheckoutController;
 use App\Http\Controllers\Shop\HomeController;
+use App\Http\Controllers\Shop\OrderTrackingController;
 use App\Http\Controllers\Shop\PaymentController;
 use App\Http\Controllers\Shop\ProductController;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +32,12 @@ Route::name('shop.')->group(function () {
         ->name('products.show')
         // فقط حروف کوچک و خط تیره — جلوگیری از هر نوع تزریق مسیر
         ->where('product', '[a-z0-9-]+');
+
+    // پیگیری سفارش — عمومی و بدون نیاز به حساب کاربری
+    Route::get('/track', [OrderTrackingController::class, 'form'])->name('track');
+    Route::post('/track', [OrderTrackingController::class, 'lookup'])
+        ->middleware('throttle:10,1')
+        ->name('track.lookup');
 });
 
 // سبد خرید

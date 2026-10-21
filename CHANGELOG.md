@@ -5,11 +5,23 @@ All notable changes to this project are documented in this file.
 
 <div dir="rtl" align="center">
 
-راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.6.0** ✅
+راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.7.0** ✅
 
 </div>
 
 ## 🇬🇧 English
+
+## [2.7.0] — 2026-10-21
+
+### 🚚 Added — Guest Order Tracking
+
+- New public order-tracking page at `/track` — customers who checked out as guests can now follow their order with the **order number + the mobile number they entered at checkout**; both must match, one alone is never enough
+- The result shows the same 4-step timeline as the account area, the payment status card, the full items list with the discount line, and the cancelled state for cancelled orders
+- Payment retry for guests: after a successful lookup, an unpaid online order shows the pay / retry button — powered by the exact `viewed_orders` session mechanism checkout already uses; no new authorization surface
+- Security-first design: a uniform error message for wrong order number and wrong phone (anti-enumeration), rate limiting like the login form (10/min), a minimum-data result page (address never shown, mobile masked `۰۹۱۲***۷۸۹`), a 30-minute session TTL and a Post/Redirect/Get flow so refreshing never re-submits
+- Persian/Arabic digit normalization on both fields (same approach as coupon codes) — typing with a Persian keyboard just works
+- Navbar gained a «پیگیری سفارش» link and the order-success page now guides guests to the tracking page for future visits
+- 16 new tests (GuestTrackingTest): correct/wrong/mismatched lookups, identical-error anti-enumeration check, Persian digits, session expiry, rate limit, cancelled state, payment-retry grant, address hiding, phone masking — **112 tests total, 476 assertions**
 
 ## [2.6.0] — 2026-10-18
 
@@ -156,6 +168,18 @@ All notable changes to this project are documented in this file.
 ---
 
 ## 🇮🇷 فارسی
+
+## [2.7.0] — ۲۰۲۶-۱۰-۲۱
+
+### 🚚 افزوده شد — پیگیری سفارش مهمان
+
+- صفحهٔ عمومی پیگیری سفارش در `/track` — مشتریانی که به‌صورت مهمان خرید کرده‌اند حالا با **شماره سفارش + شماره موبایلی که هنگام خرید وارد کرده‌اند** سفارششان را دنبال می‌کنند؛ هر دو باید همزمان بخوانند، یکی به‌تنهایی کافی نیست
+- نتیجه همان تایم‌لاین ۴ مرحله‌ای بخش حساب کاربری، کارت وضعیت پرداخت، فهرست کامل اقلام با سطر تخفیف و وضعیت لغو برای سفارش‌های لغوشده را نشان می‌دهد
+- تلاش مجدد پرداخت برای مهمان‌ها: بعد از پیگیری موفق، سفارش آنلاینِ پرداخت‌نشده دکمهٔ پرداخت/تلاش مجدد را نشان می‌دهد — با دقیقاً همان مکانیزم سشن `viewed_orders` تسویه‌حساب؛ بدون هیچ سطح دسترسی جدید
+- طراحی امنیت‌محور: پیام خطای یکسان برای شماره سفارش غلط و موبایل غلط (ضد enumeration)، محدودیت نرخ مثل فرم ورود (۱۰ در دقیقه)، صفحهٔ حداقلِ داده (آدرس هرگز نمایش داده نمی‌شود، موبایل ماسک `۰۹۱۲***۷۸۹`)، اعتبار ۳۰ دقیقه‌ای سشن و جریان Post/Redirect/Get تا رفرش هرگز فرم را دوباره ارسال نکند
+- نرمال‌سازی ارقام فارسی/عربی در هر دو فیلد (همان رویکرد کد تخفیف) — با کیبورد فارسی هم کار می‌کند
+- نوبار به لینک «پیگیری سفارش» مجهز شد و صفحهٔ موفقیت سفارش مهمان‌ها را برای پیگیری‌های بعدی راهنمایی می‌کند
+- ۱۶ تست جدید (GuestTrackingTest): جستجوی درست/غلط/ناهماهنگ، پیام یکسان ضد enumeration، ارقام فارسی، انقضای سشن، محدودیت نرخ، وضعیت لغو، دسترسی تلاش مجدد، مخفی‌سازی آدرس، ماسک موبایل — در مجموع **۱۱۲ تست، ۴۷۶ ادعا**
 
 ## [2.6.0] — ۲۰۲۶-۱۰-۱۸
 
