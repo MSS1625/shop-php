@@ -93,7 +93,8 @@ class Product extends Model
     }
 
     /**
-     * مرتب‌سازی بر اساس انتخاب کاربر
+     * مرتب‌سازی بر اساس انتخاب کاربر — پرفروش‌ترین بر اساس تعداد
+     * اقلام فروخته‌شده (سفارش‌های لغوشده حساب نمی‌شوند، همان قاعدهٔ داشبورد)
      */
     public function scopeOrdered(Builder $query, string $sort = 'newest'): Builder
     {
@@ -101,8 +102,33 @@ class Product extends Model
             'oldest' => $query->oldest(),
             'cheapest' => $query->orderBy('price'),
             'expensive' => $query->orderByDesc('price'),
+            'popular' => $query
+                ->withSum([
+                    'orderItems as sold_units' => fn (Builder $q) => $q
+                        ->whereRelation('order', 'status', '!=', Order::STATUS_CANCELLED),
+                ], 'quantity')
+                ->orderByDesc('sold_units')
+                ->latest(),
             default => $query->latest(),
         };
+    }
+
+    /**
+     * فقط محصولات موجود
+     */
+    public function scopeInStock(Builder $query): Builder
+    {
+        return $query->where('stock', '>', 0);
+    }
+
+    /**
+     * محدودهٔ قیمت — هر کدام از دو حد می‌تواند به‌تنهایی بیاید
+     */
+    public function scopePriceBetween(Builder $query, ?int $min, ?int $max): Builder
+    {
+        return $query
+            ->when($min !== null, fn (Builder $q) => $q->where('price', '>=', $min))
+            ->when($max !== null, fn (Builder $q) => $q->where('price', '<=', $max));
     }
 
     public function inStock(): bool

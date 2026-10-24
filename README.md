@@ -66,7 +66,7 @@ It replicates the home page (hero, categories, product cards) with the real samp
 - 🚚 **Guest Order Tracking** — a public `/track` page where customers follow their order with just the order number + the mobile number used at checkout; same 4-step timeline, payment status and payment retry — rate-limited, uniform errors (anti-enumeration) and a minimum-data result page
 - 🛒 **Full Shopping Cart** — session-based cart with AJAX add/update/remove
 - 📦 **Order Management** — checkout flow, order tracking, status workflow (pending → processing → shipped → delivered / cancelled), automatic stock adjustment, customer-initiated cancellation with stock restore
-- 🔍 **Search, Filter & Sort** — live product search, category filters, price sorting, pagination
+- 🔍 **Search, Filter & Sort** — live product search, category filters, **price-range and in-stock filters** (Persian-digit friendly, backwards ranges are silently swapped), **best-selling sort** (cancelled orders excluded), price sorting, pagination — and related products on the detail page always show in-stock items first
 - 🗂 **Categories** — dynamic categories with icons and product counts
 - 📊 **Admin Reports Dashboard** — revenue KPIs (today / this month / all-time / average order value), a 14-day sales chart fed by a single grouped query, best sellers ranked by units sold, order-status breakdown with progress bars, low-stock & out-of-stock alerts — all queries collected in one testable `DashboardStats` service
 - 🖼 **Secure Image Upload** — validated images only (JPG/PNG/WebP, max 2MB), random filenames
@@ -189,7 +189,7 @@ README.md / README.fa.md   # English | فارسی
 ## 🧪 Tests & CI
 
 ```bash
-php artisan test        # 112 feature tests
+php artisan test        # 133 feature tests
 vendor/bin/pint --test  # code style
 ```
 
@@ -207,6 +207,7 @@ Every `push` and `pull request` runs the full test matrix automatically on GitHu
 - [x] SMS notifications
 - [x] Admin reports dashboard (KPIs, best sellers, 14-day chart)
 - [x] Guest order tracking (public /track page)
+- [x] Smart product discovery (price range, in-stock filter, best-selling sort, related-products upgrade)
 
 ## 🤝 Contributing
 
