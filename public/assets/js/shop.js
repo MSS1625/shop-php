@@ -194,4 +194,37 @@
             });
         });
     }
+
+    /* ---------- انتخاب ستاره (فرم ثبت نظر) ---------- */
+
+    document.querySelectorAll('[data-star-picker]').forEach((picker) => {
+        const labels = Array.from(picker.querySelectorAll('label'));
+
+        // همهٔ ستاره‌های کوچک‌تر یا مساوی مقدار هدف برجسته می‌شوند
+        const paint = (value) => {
+            const target = parseInt(value, 10) || 0;
+
+            labels.forEach((label) => {
+                const input = document.getElementById(label.htmlFor);
+                const on = parseInt(input.value, 10) <= target;
+
+                label.classList.toggle('picked', on);
+                label.querySelector('i').className = on ? 'fa-solid fa-star' : 'fa-regular fa-star';
+            });
+        };
+
+        const currentValue = () => picker.querySelector('input:checked')?.value || 0;
+
+        // وضعیت اولیه — مثلاً پس از خطای اعتبارسنجی با old input
+        paint(currentValue());
+
+        picker.addEventListener('mouseover', (e) => {
+            const label = e.target.closest('label');
+            if (label) paint(document.getElementById(label.htmlFor).value);
+        });
+
+        picker.addEventListener('mouseleave', () => paint(currentValue()));
+
+        picker.addEventListener('change', (e) => paint(e.target.value));
+    });
 })();

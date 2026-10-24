@@ -1359,3 +1359,242 @@ a {
     color: #4ade80;
     font-weight: 700;
 }
+
+/* ---------- نظرات و امتیازها (v2.9.0) ---------- */
+
+.ds-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    color: var(--ds-warning);
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+/* ستاره‌های لینک امتیاز زیر عنوان محصول */
+.ds-rating-link {
+    gap: 0.5rem;
+    color: var(--ds-text);
+    text-decoration: none;
+}
+
+.ds-rating-link:hover strong {
+    color: var(--ds-neon);
+}
+
+/* امتیاز روی کارت محصول */
+.ds-product-rating {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.82rem;
+    margin: 6px 0 4px;
+    color: var(--ds-warning);
+}
+
+.ds-product-rating .text-muted {
+    font-size: 0.75rem;
+}
+
+/* خلاصهٔ امتیازها بالای بخش نظرات */
+.ds-review-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.5rem 2.5rem;
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid var(--ds-border);
+}
+
+.ds-review-avg {
+    text-align: center;
+    min-width: 130px;
+}
+
+.ds-review-avg-num {
+    font-size: 2.3rem;
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--ds-warning);
+}
+
+.ds-review-avg .ds-stars {
+    font-size: 1.05rem;
+    gap: 4px;
+    margin-bottom: 0.35rem;
+}
+
+.ds-review-bars {
+    flex: 1 1 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.ds-review-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.ds-review-bar-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--ds-muted);
+    font-size: 0.78rem;
+    min-width: 44px;
+}
+
+.ds-review-bar {
+    flex: 1;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--ds-surface-2);
+    overflow: hidden;
+}
+
+.ds-review-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(270deg, var(--ds-warning), #f59e0b);
+    transition: width 0.5s ease;
+}
+
+.ds-review-bar-count {
+    min-width: 26px;
+    text-align: left;
+    color: var(--ds-muted);
+    font-size: 0.78rem;
+}
+
+/* حالت بدون نظر */
+.ds-review-none {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--ds-muted);
+    padding: 1rem 1.25rem;
+    border: 1px dashed var(--ds-border-strong);
+    border-radius: 14px;
+    margin-bottom: 1.25rem;
+}
+
+.ds-review-none i {
+    font-size: 1.6rem;
+    color: var(--ds-neon);
+}
+
+/* فهرست نظرات */
+.ds-review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ds-review {
+    background: var(--ds-bg-soft);
+    border: 1px solid var(--ds-border);
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+}
+
+.ds-review-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+}
+
+.ds-review-author {
+    font-weight: 700;
+    font-size: 0.92rem;
+}
+
+.ds-review-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--ds-success);
+    border: 1px solid rgba(52, 211, 153, 0.4);
+    background: rgba(52, 211, 153, 0.08);
+    border-radius: 999px;
+    padding: 0.18rem 0.6rem;
+}
+
+.ds-review-text {
+    color: var(--ds-text);
+    line-height: 2;
+    font-size: 0.9rem;
+}
+
+/* فرم ثبت نظر */
+.ds-review-form {
+    border-top: 1px solid var(--ds-border);
+    padding-top: 1.25rem;
+}
+
+.ds-review-form-title {
+    font-size: 1rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+}
+
+.ds-review-own {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    color: var(--ds-muted);
+    background: var(--ds-surface);
+    border: 1px dashed var(--ds-border-strong);
+    border-radius: 14px;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.9rem;
+}
+
+.ds-review-login {
+    color: var(--ds-muted);
+    background: var(--ds-surface);
+    border: 1px dashed var(--ds-border-strong);
+    border-radius: 14px;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.9rem;
+}
+
+.ds-review-login a {
+    color: var(--ds-neon);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+/* انتخاب ستاره — دکمه‌های بزرگ (5 → 1 در چیدمان RTL) */
+.ds-star-picker {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    gap: 0.25rem;
+    direction: ltr;
+}
+
+.ds-star-picker label {
+    cursor: pointer;
+    font-size: 1.7rem;
+    color: var(--ds-muted);
+    padding: 0 0.1rem;
+    transition: color 0.15s, transform 0.15s;
+    line-height: 1;
+}
+
+.ds-star-picker label:hover,
+.ds-star-picker label.picked {
+    color: var(--ds-warning);
+}
+
+.ds-star-picker input:checked + label {
+    color: var(--ds-warning);
+}
+

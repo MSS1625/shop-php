@@ -19,6 +19,14 @@
                 {{ $product->title }}
             </a>
 
+            @if($product->hasRating())
+                <div class="ds-product-rating">
+                    <i class="fa-solid fa-star"></i>
+                    <span class="fw-bold">{{ $product->avgRatingFa() }}</span>
+                    <span class="text-muted">({{ fa_num($product->reviews_count) }} نظر)</span>
+                </div>
+            @endif
+
             <div class="ds-product-price">
                 {{ fa_price($product->price) }} <small>تومان</small>
             </div>

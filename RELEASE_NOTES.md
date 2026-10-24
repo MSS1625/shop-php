@@ -1,4 +1,5 @@
-# 🔍 v2.8.0 — Smart Product Discovery
+
+# ⭐ v2.9.0 — Product Reviews & Ratings
 
 <div dir="rtl" align="center">
 
@@ -9,20 +10,21 @@ Laravel 12 · PHP 8.2+ · Bootstrap 5 RTL · MIT License
 
 ## 🇬🇧 English
 
-### 🔍 New — Price Range, Availability & Best-Selling Sort
+### ⭐ New — Product Reviews & Ratings
 
-- The products page gained a **price-range filter** — minimum and maximum, each usable on its own — plus an **in-stock-only toggle**, and both combine freely with search, category and any sort order; active filters also survive every pagination link
-- **Persian keyboard friendly, again**: price inputs normalize Persian/Arabic digits and thousands separators, so `۵۰۰٬۰۰۰`, `500,000` and `500000` all mean the same thing — the same approach as coupon codes and order tracking, now extracted into a tiny `en_num()` helper (the mirror of the existing `fa_num()`)
-- **Forgiving by design**: if the range is entered backwards (min > max) it is silently swapped instead of returning an empty grid, and non-numeric input is simply ignored — no error pages, no lost context
-- New **«پرفروش‌ترین» (best-selling)** sort: products ranked by units sold through a single `withSum` subquery — items of cancelled orders never count (the same rule the admin dashboard follows), and ties break toward the newest product
-- **Related products, upgraded**: same category and active as before, but the random shuffle is gone — **in-stock items now come first** (newest first within each group) and out-of-stock ones only fill leftover slots; the section is deterministic and fully testable
-- A «فیلتر فعال» indicator with a one-click reset sits next to the result count, and the empty state offers a filter reset too — validation lives in a dedicated `ProductFilterRequest`
+- Customers can now **rate products 1–5 stars and write a review** on the product page — every review starts as pending and only goes public after an admin approves it; nothing unmoderated ever reaches the storefront
+- **«خریدار تأییدشده» (verified buyer) badge** — a review whose author actually bought that product in a non-cancelled order gets the green badge; computed with a single query for the whole page, following the same cancelled-excluded rule as the dashboard's sales figures
+- The product page gained a **rating summary**: big Persian-decimal average («۴٫۳»), star row and a **5→1 breakdown chart** with progress bars — plus a stars+average link under the product title that jumps straight to the reviews
+- **Product cards show the rating now** (star, average, count) across the home page, listing and related products — one `withRating()` scope, two subqueries, the same pattern as the best-selling sort
+- Sensible rules baked in: one review per user per product (DB unique + friendly error + race-safe catch), the form becomes a **status box** after reviewing, guests get a login prompt, `auth` + `throttle:5,1` keep the spam out
+- A polished **RTL star picker** with hover-to-preview, and validation in a dedicated `ReviewRequest` (rating 1–5, comment 5–2000, Persian messages)
+- New **admin reviews page** at `/admin/reviews`: status tabs with counts, one-click **approve / reject / delete**, product links, and a pending badge in the sidebar — mirroring the orders workflow
 
 ### 📊 Numbers
 
-- **133 feature tests** (537 assertions) — 21 new discovery tests: price min/max/range, backwards-range swap, Persian digits & separators, graceful non-numeric input, in-stock filter, popular ranking, cancelled-item exclusion, newest tie-break, combined filters, pagination query-string, indicator/reset rendering, validation failures, inactive-product regression, and related-products ordering/exclusion/fallback
-- Code style: Pint clean across 109 files
-- Zero migrations, zero new config — drop-in upgrade
+- **162 feature tests** (632 assertions) — 29 new review tests: access guards, validation, pending-until-approved flow, rejection, one-review rule, rate limit, average/count/breakdown rendering, approved-only aggregates, verified-buyer badge (real / non-buyer / cancelled order), guest prompt, own-review status box, admin moderation flows, sidebar badge, product-deletion cascade
+- Code style: Pint clean across 110 files
+- One new migration (`reviews`) — `php artisan shop:install` or plain `migrate` handles it; zero config changes
 
 <details>
 <summary>Quick start (unchanged)</summary>
@@ -41,13 +43,14 @@ php artisan serve            # → http://localhost:8000
 <summary>Seeing it in action</summary>
 
 ```bash
-# Open http://localhost:8000/products
-# → type ۵۰۰٬۰۰۰ in «حداقل قیمت» and ۵۰۰۰۰۰۰ in «حداکثر قیمت», tick
-#   «فقط کالاهای موجود», hit اعمال — the grid narrows, the count shows
-#   «فیلتر فعال», and pagination keeps everything.
-# → Swap the two prices on purpose (big number first): same results.
-# → Pick «پرفروش‌ترین» in the sort select: best sellers first.
-# → Open any product: related items now show available ones first.
+# Register an account, open any product and scroll to «نظرات خریداران»:
+# → hover the star picker, pick 5, write a comment, «ثبت نظر» —
+#   you get the «نظر شما ثبت شد و پس از تأیید…» message and a status box.
+# → Log in as admin → نظرات: the sidebar shows a pending badge (۲);
+#   the tabs read در انتظار تأیید (۲) / تأییدشده (۶) — hit the ✓ on a
+#   pending review: it instantly appears on the product page, badge
+#   «خریدار تأییدشده» included for real buyers.
+# → The products listing now shows «★ ۴٫۳ (۴ نظر)» on rated cards.
 ```
 
 </details>
@@ -58,20 +61,21 @@ php artisan serve            # → http://localhost:8000
 
 <div dir="rtl">
 
-### 🔍 جدید — فیلتر بازهٔ قیمت، موجودی و مرتب‌سازی پرفروش‌ترین
+### ⭐ جدید — نظرات و امتیازدهی محصولات
 
-- صفحهٔ محصولات به **فیلتر بازهٔ قیمت** مجهز شد — حداقل و حداکثر، هر کدام به‌تنهایی هم کار می‌کند — به‌علاوهٔ گزینهٔ **«فقط کالاهای موجود»»؛ هر دو آزادانه با جستجو، دسته و هر مرتب‌سازی ترکیب می‌شوند و فیلترهای فعال در تمام لینک‌های صفحه‌بندی هم حفظ می‌شوند
-- **باز هم سازگار با کیبورد فارسی**: ورودی‌های قیمت ارقام فارسی/عربی و جداکنندهٔ هزارگان را نرمال می‌کنند — `۵۰۰٬۰۰۰` و `500,000` و `500000` هر سه یک معنی دارند؛ همان رویکرد کد تخفیف و پیگیری سفارش، این بار در قالب هلپر کوچک `en_num()` (قرینهٔ `fa_num()` موجود)
-- **بخشنده در طراحی**: اگر بازه برعکس وارد شود (حداقل > حداکثر) بی‌صدا جابه‌جا می‌شود تا نتیجهٔ خالی نبینید، و ورودی غیرعددی هم نادیده گرفته می‌شود — نه صفحهٔ خطا، نه بافتِ ازدست‌رفته
-- مرتب‌سازی جدید **«پرفروش‌ترین»**: رتبه‌بندی محصولات بر اساس تعداد فروش با یک زیرکوئری `withSum` — اقلام سفارش‌های لغوشده هرگز حساب نمی‌شوند (همان قاعدهٔ داشبورد مدیریت) و تساوی‌ها به نفع محصول جدیدتر می‌شکنند
-- **محصولات مشابه، ارتقا یافت**: هم‌دسته و فعال مثل قبل، اما چیدمان تصادفی حذف شد — **موارد موجود اول می‌آیند** (داخل هر گروه، جدیدترین اول) و ناموجودها فقط جاهای خالی را پر می‌کنند؛ بخش حالا قطعی و کاملاً قابل‌آزمون است
-- نشانگر «فیلتر فعال» با دکمهٔ حذف یک‌کلیکی کنار تعداد نتایج نشسته، حالت خالی هم دکمهٔ حذف فیلترها دارد — و اعتبارسنجی در `ProductFilterRequest` اختصاصی منتقل شده
+- مشتری‌ها حالا روی صفحهٔ محصول می‌توانند **از ۱ تا ۵ ستاره امتیاز بدهند و نظر بنویسند** — هر نظر با وضعیت «در انتظار تأیید» شروع می‌شود و فقط بعد از تأیید مدیر عمومی می‌شود؛ هیچ نظر بررسی‌نشده‌ای راه ویترین پیدا نمی‌کند
+- نشان **«خریدار تأییدشده»** — نویسنده‌ای که واقعاً همان محصول را در سفارشی غیرلغوشده خریده، نشان سبز می‌گیرد؛ با یک کوئری برای کل صفحه و با همان قاعدهٔ حذف سفارش‌های لغوشدهٔ داشبورد
+- صفحهٔ محصول به **خلاصهٔ امتیازها** مجهز شد: میانگین درشت با رقم اعشار فارسی («۴٫۳»)، ردیف ستاره‌ها و **نمودار تفکیک ۵ به ۱** با نوارهای پیشرفت — به‌علاوه لینک ستاره‌ها + میانگین زیر عنوان محصول که مستقیم به بخش نظرات می‌پرد
+- **کارت‌های محصول هم امتیاز نشان می‌دهند** (ستاره، میانگین، تعداد نظر) در صفحهٔ اصلی، لیست محصولات و محصولات مشابه — یک اسکوپ `withRating()`، دو زیرکوئری؛ همان الگوی پرفروش‌ترین
+- قواعد حساب‌شده: هر کاربر برای هر محصول یک نظر (کلید یکتا + پیام دوستانه + مقاوم به ثبت همزمان)، فرم بعد از ثبت به **جعبهٔ وضعیت** تبدیل می‌شود، مهمان‌ها راهنمای ورود می‌بینند و `auth` + `throttle:5,1` جلوی اسپم را می‌گیرد
+- **انتخاب ستارهٔ راست‌به‌چپِ** صیقلی با پیش‌نمایش hover و اعتبارسنجی در `ReviewRequest` اختصاصی (امتیاز ۱ تا ۵، متن ۵ تا ۲۰۰۰ کاراکتر، پیام‌های فارسی)
+- صفحهٔ جدید **مدیریت نظرات** در `/admin/reviews`: تب‌های وضعیت با شمارنده، دکمه‌های یک‌کلیکی **تأیید / رد / حذف**، لینک محصولات و بج «در انتظار تأیید» در سایدبار — قرینهٔ جریان سفارش‌ها
 
 ### 📊 اعداد
 
-- **۱۳۳ تست فیچر** (۵۳۷ ادعا) — ۲۱ تست جدید کشف محصول: حداقل/حداکثر/بازهٔ قیمت، جابه‌جایی بازهٔ معکوس، ارقام فارسی و جداکننده، ورودی غیرعددی، فیلتر موجودی، رتبه‌بندی پرفروش، حذف اقلام لغوشده، شکست تساوی با جدیدترین، ترکیب فیلترها، رشتهٔ کوئری صفحه‌بندی، نمایش نشانگر و دکمهٔ حذف، خطاهای اعتبارسنجی، رگرسیون محصولات غیرفعال و ترتیب/حذف/جانشینی محصولات مشابه
-- سبک کد: Pint پاک روی ۱۰۹ فایل
-- بدون مهاجرت دیتابیس، بدون کانفیگ جدید — ارتقای درجا
+- **۱۶۲ تست فیچر** (۶۳۲ ادعا) — ۲۹ تست جدید نظرات: گاردهای دسترسی، اعتبارسنجی، جریان تأیید تا نمایش، رد نظر، قاعدهٔ تک‌نظر، محدودیت نرخ، رندر میانگین/تعداد/تفکیک، شمارش فقط تأییدشده‌ها، نشان خریدار تأییدشده (واقعی / غیرخریدار / سفارش لغوشده)، راهنمای ورود مهمان، جعبهٔ وضعیت، جریان‌های مدیریت، بج سایدبار و حذف آبشاری
+- سبک کد: Pint پاک روی ۱۱۰ فایل
+- یک مهاجرت جدید (`reviews`) — با `php artisan shop:install` یا `migrate` ساده اعمال می‌شود؛ بدون تغییر کانفیگ
 
 <details>
 <summary>راه‌اندازی سریع (بدون تغییر)</summary>
@@ -90,14 +94,13 @@ php artisan serve            # → http://localhost:8000
 <summary>دیدن آن در عمل</summary>
 
 ```bash
-# http://localhost:8000/products را باز کنید
-# ← در «حداقل قیمت» بنویسید ۵۰۰٬۰۰۰ و در «حداکثر قیمت» ۵۰۰۰۰۰۰،
-#   «فقط کالاهای موجود» را تیک بزنید و «اعمال» را بزنید —
-#   شبکه محدود می‌شود، کنار تعداد «فیلتر فعال» می‌آید و
-#   صفحه‌بندی همه‌چیز را حفظ می‌کند.
-# ← عمداً دو قیمت را برعکس وارد کنید (عدد بزرگ اول): همان نتایج.
-# ← در مرتب‌سازی «پرفروش‌ترین» را انتخاب کنید: پرفروش‌ها اول.
-# ← یک محصول را باز کنید: مشابه‌های موجود اول نمایش داده می‌شوند.
+# ثبت‌نام کنید، یک محصول را باز کنید و به «نظرات خریداران» بروید:
+# ← روی ستاره‌ها hover کنید، ۵ ستاره را انتخاب کنید، نظر بنویسید و
+#   «ثبت نظر» را بزنید — پیام «نظر شما ثبت شد و پس از تأیید…» + جعبهٔ وضعیت.
+# ← به‌عنوان مدیر وارد شوید ← نظرات: سایدبار بج (۲) نشان می‌دهد؛
+#   تب‌ها: در انتظار تأیید (۲) / تأییدشده (۶) — روی یک نظر در انتظار ✓ بزنید:
+#   بلافاصله در صفحهٔ محصول می‌آید، با نشان «خریدار تأییدشده» برای خریداران واقعی.
+# ← لیست محصولات حالا روی کارت‌های امتیازدار «★ ۴٫۳ (۴ نظر)» نشان می‌دهد.
 ```
 
 </details>

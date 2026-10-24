@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ProductFilterRequest;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Review;
 use Illuminate\Contracts\View\View;
 
 class ProductController extends Controller
@@ -18,6 +19,7 @@ class ProductController extends Controller
         $filters = $request->filters();
 
         $products = Product::with('category')
+            ->withRating()
             ->active()
             ->search($filters['term'])
             ->when(
@@ -48,7 +50,7 @@ class ProductController extends Controller
     }
 
     /**
-     * صفحه جزئیات محصول + محصولات مشابه
+     * صفحه جزئیات محصول + محصولات مشابه + نظرات تأییدشده
      * مشابه‌ها: هم‌دسته، فعال، به‌جز خود محصول — اول محصولات موجود، بعد جدید‌ترین‌ها
      */
     public function show(Product $product): View
@@ -57,7 +59,32 @@ class ProductController extends Controller
 
         $product->load('category', 'images');
 
+        // میانگین امتیاز و تعداد نظرات تأییدشده (برای کارت بالای صفحه)
+        $product
+            ->loadCount(['reviews as reviews_count' => fn ($q) => $q
+                ->where('status', Review::STATUS_APPROVED)])
+            ->loadAvg(['reviews as avg_rating' => fn ($q) => $q
+                ->where('status', Review::STATUS_APPROVED)], 'rating');
+
+        // نظرات تأییدشده + نویسنده — صفحه‌بندی جدا از خلاصه
+        $reviews = $product->approvedReviews()
+            ->with('user:id,name')
+            ->latest()
+            ->paginate(5);
+
+        // تفکیک امتیازها برای نمودار ۵ → ۱ (یک کوئری گروهی)
+        $breakdown = $product->ratingCounts();
+
+        // خریداران تأییدشدهٔ همین صفحه — یک کوئری، بدون N+1
+        $verifiedBuyerIds = $product->verifiedBuyerIds($reviews->pluck('user_id'));
+
+        // نظر خودِ کاربر فعلی — به‌جای فرم، وضعیتش نمایش داده می‌شود
+        $userReview = auth()->check()
+            ? $product->reviews()->where('user_id', auth()->id())->first()
+            : null;
+
         $related = Product::with('category')
+            ->withRating()
             ->active()
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
@@ -66,6 +93,8 @@ class ProductController extends Controller
             ->take(4)
             ->get();
 
-        return view('shop.products.show', compact('product', 'related'));
+        return view('shop.products.show', compact(
+            'product', 'related', 'reviews', 'breakdown', 'verifiedBuyerIds', 'userReview'
+        ));
     }
 }
