@@ -1,4 +1,4 @@
-# 🚚 v2.7.0 — Guest Order Tracking
+# 🔍 v2.8.0 — Smart Product Discovery
 
 <div dir="rtl" align="center">
 
@@ -9,23 +9,20 @@ Laravel 12 · PHP 8.2+ · Bootstrap 5 RTL · MIT License
 
 ## 🇬🇧 English
 
-### 🚚 New — Order Tracking Without an Account
+### 🔍 New — Price Range, Availability & Best-Selling Sort
 
-- New public **order-tracking page** at `/track` — customers who checked out as guests (no account) can now follow their order with just two things they already have: the **order number** and the **mobile number they entered at checkout** — both must match, one alone is never enough
-- The result shows the **same 4-step timeline** as the account area (pending → processing → shipped → delivered), the payment status card, the full items list with prices and the discount line — cancelled orders show their cancelled state
-- **Payment retry for guests**: after a successful lookup, an unpaid online order shows the pay / retry button — powered by the exact `viewed_orders` session mechanism checkout already uses, so no new authorization surface was added
-- **Security-first design**:
-  - Uniform error message for a wrong order number and a wrong phone — the response never reveals which field was valid (anti-enumeration)
-  - Rate limited like the login form (10 lookups per minute) — brute-forcing order numbers is impractical
-  - Minimum-data page: the recipient's address is never shown and the mobile number is masked (`۰۹۱۲***۷۸۹`)
-  - The lookup result lives in the session for 30 minutes only, and the flow follows Post/Redirect/Get — refreshing the page never re-submits the form
-- **Persian keyboard friendly**: Persian/Arabic digits are normalized on both fields (same approach as coupon codes) — `DS-۲۶۱۰۲۱-...` typed on a Persian keyboard finds the order
-- The navbar gained a «پیگیری سفارش» link, and the order-success page now guides guests to the tracking page for future visits
+- The products page gained a **price-range filter** — minimum and maximum, each usable on its own — plus an **in-stock-only toggle**, and both combine freely with search, category and any sort order; active filters also survive every pagination link
+- **Persian keyboard friendly, again**: price inputs normalize Persian/Arabic digits and thousands separators, so `۵۰۰٬۰۰۰`, `500,000` and `500000` all mean the same thing — the same approach as coupon codes and order tracking, now extracted into a tiny `en_num()` helper (the mirror of the existing `fa_num()`)
+- **Forgiving by design**: if the range is entered backwards (min > max) it is silently swapped instead of returning an empty grid, and non-numeric input is simply ignored — no error pages, no lost context
+- New **«پرفروش‌ترین» (best-selling)** sort: products ranked by units sold through a single `withSum` subquery — items of cancelled orders never count (the same rule the admin dashboard follows), and ties break toward the newest product
+- **Related products, upgraded**: same category and active as before, but the random shuffle is gone — **in-stock items now come first** (newest first within each group) and out-of-stock ones only fill leftover slots; the section is deterministic and fully testable
+- A «فیلتر فعال» indicator with a one-click reset sits next to the result count, and the empty state offers a filter reset too — validation lives in a dedicated `ProductFilterRequest`
 
 ### 📊 Numbers
 
-- **112 feature tests** (476 assertions) — 16 new tracking tests: correct/wrong/mismatched lookups, identical-error anti-enumeration check, Persian-digit normalization, session expiry, rate limiting, cancelled state, payment-retry access grant, address-hiding, phone masking, success-page guidance
-- Code style: Pint clean across 108 files
+- **133 feature tests** (537 assertions) — 21 new discovery tests: price min/max/range, backwards-range swap, Persian digits & separators, graceful non-numeric input, in-stock filter, popular ranking, cancelled-item exclusion, newest tie-break, combined filters, pagination query-string, indicator/reset rendering, validation failures, inactive-product regression, and related-products ordering/exclusion/fallback
+- Code style: Pint clean across 109 files
+- Zero migrations, zero new config — drop-in upgrade
 
 <details>
 <summary>Quick start (unchanged)</summary>
@@ -44,11 +41,13 @@ php artisan serve            # → http://localhost:8000
 <summary>Seeing it in action</summary>
 
 ```bash
-# Place an order as a guest (checkout without logging in) and note the
-# order number (DS-YYMMDD-XXXX) and the mobile number you typed.
-# Then open http://localhost:8000/track and enter both —
-# the timeline, payment status and items appear.
-# Try a wrong phone: the same friendly error, zero order data.
+# Open http://localhost:8000/products
+# → type ۵۰۰٬۰۰۰ in «حداقل قیمت» and ۵۰۰۰۰۰۰ in «حداکثر قیمت», tick
+#   «فقط کالاهای موجود», hit اعمال — the grid narrows, the count shows
+#   «فیلتر فعال», and pagination keeps everything.
+# → Swap the two prices on purpose (big number first): same results.
+# → Pick «پرفروش‌ترین» in the sort select: best sellers first.
+# → Open any product: related items now show available ones first.
 ```
 
 </details>
@@ -59,23 +58,20 @@ php artisan serve            # → http://localhost:8000
 
 <div dir="rtl">
 
-### 🚚 جدید — پیگیری سفارش بدون حساب کاربری
+### 🔍 جدید — فیلتر بازهٔ قیمت، موجودی و مرتب‌سازی پرفروش‌ترین
 
-- صفحهٔ عمومی **پیگیری سفارش** در آدرس `/track` — مشتریانی که به‌صورت مهمان (بدون حساب) خرید کرده‌اند حالا با همان دو چیزی که از قبل دارند سفارششان را دنبال می‌کنند: **شماره سفارش** و **شماره موبایلی که هنگام خرید وارد کرده‌اند** — هر دو باید همزمان بخوانند، یکی به‌تنهایی هرگز کافی نیست
-- نتیجه همان **تایم‌لاین ۴ مرحله‌ای** بخش حساب کاربری را نشان می‌دهد (در انتظار بررسی ← در حال پردازش ← ارسال شده ← تحویل داده شده)، به‌همراه کارت وضعیت پرداخت، فهرست کامل اقلام با قیمت و سطر تخفیف — سفارش‌های لغوشده هم وضعیت لغو خود را نشان می‌دهند
-- **تلاش مجدد پرداخت برای مهمان‌ها**: بعد از پیگیری موفق، سفارش آنلاینِ پرداخت‌نشده دکمهٔ پرداخت/تلاش مجدد را نشان می‌دهد — با دقیقاً همان مکانیزم سشن `viewed_orders` که تسویه‌حساب استفاده می‌کند؛ یعنی هیچ سطح دسترسی جدیدی به پروژه اضافه نشد
-- **طراحی امنیت‌محور**:
-  - پیام خطای یکسان برای شماره سفارش غلط و موبایل غلط — پاسخ هرگز لو نمی‌دهد کدام فیلد درست بوده (ضد enumeration)
-  - محدودیت نرخ مثل فرم ورود (۱۰ جستجو در دقیقه) — حدس زدن شماره سفارش‌ها عملاً بی‌فایده است
-  - صفحهٔ حداقلِ داده: آدرس گیرنده هرگز نمایش داده نمی‌شود و شماره موبایل ماسک می‌شود (`۰۹۱۲***۷۸۹`)
-  - نتیجهٔ پیگیری فقط ۳۰ دقیقه در سشن می‌ماند و جریان Post/Redirect/Get است — رفرش صفحه هرگز فرم را دوباره ارسال نمی‌کند
-- **سازگار با کیبورد فارسی**: ارقام فارسی/عربی هر دو فیلد نرمال می‌شوند (همان رویکرد کد تخفیف) — با کیبورد فارسی هم `DS-۲۶۱۰۲۱-...` پیدا می‌شود
-- نوبار به لینک «پیگیری سفارش» مجهز شد و صفحهٔ موفقیت سفارش حالا مهمان‌ها را برای پیگیری‌های بعدی راهنمایی می‌کند
+- صفحهٔ محصولات به **فیلتر بازهٔ قیمت** مجهز شد — حداقل و حداکثر، هر کدام به‌تنهایی هم کار می‌کند — به‌علاوهٔ گزینهٔ **«فقط کالاهای موجود»»؛ هر دو آزادانه با جستجو، دسته و هر مرتب‌سازی ترکیب می‌شوند و فیلترهای فعال در تمام لینک‌های صفحه‌بندی هم حفظ می‌شوند
+- **باز هم سازگار با کیبورد فارسی**: ورودی‌های قیمت ارقام فارسی/عربی و جداکنندهٔ هزارگان را نرمال می‌کنند — `۵۰۰٬۰۰۰` و `500,000` و `500000` هر سه یک معنی دارند؛ همان رویکرد کد تخفیف و پیگیری سفارش، این بار در قالب هلپر کوچک `en_num()` (قرینهٔ `fa_num()` موجود)
+- **بخشنده در طراحی**: اگر بازه برعکس وارد شود (حداقل > حداکثر) بی‌صدا جابه‌جا می‌شود تا نتیجهٔ خالی نبینید، و ورودی غیرعددی هم نادیده گرفته می‌شود — نه صفحهٔ خطا، نه بافتِ ازدست‌رفته
+- مرتب‌سازی جدید **«پرفروش‌ترین»**: رتبه‌بندی محصولات بر اساس تعداد فروش با یک زیرکوئری `withSum` — اقلام سفارش‌های لغوشده هرگز حساب نمی‌شوند (همان قاعدهٔ داشبورد مدیریت) و تساوی‌ها به نفع محصول جدیدتر می‌شکنند
+- **محصولات مشابه، ارتقا یافت**: هم‌دسته و فعال مثل قبل، اما چیدمان تصادفی حذف شد — **موارد موجود اول می‌آیند** (داخل هر گروه، جدیدترین اول) و ناموجودها فقط جاهای خالی را پر می‌کنند؛ بخش حالا قطعی و کاملاً قابل‌آزمون است
+- نشانگر «فیلتر فعال» با دکمهٔ حذف یک‌کلیکی کنار تعداد نتایج نشسته، حالت خالی هم دکمهٔ حذف فیلترها دارد — و اعتبارسنجی در `ProductFilterRequest` اختصاصی منتقل شده
 
 ### 📊 اعداد
 
-- **۱۱۲ تست فیچر** (۴۷۶ ادعا) — ۱۶ تست جدید پیگیری: جستجوی درست/غلط/ناهماهنگ، بررسی پیام یکسان ضد enumeration، نرمال‌سازی ارقام فارسی، انقضای سشن، محدودیت نرخ، وضعیت لغو، دسترسی تلاش مجدد پرداخت، مخفی‌سازی آدرس، ماسک موبایل و راهنمای صفحه موفقیت
-- سبک کد: Pint پاک روی ۱۰۸ فایل
+- **۱۳۳ تست فیچر** (۵۳۷ ادعا) — ۲۱ تست جدید کشف محصول: حداقل/حداکثر/بازهٔ قیمت، جابه‌جایی بازهٔ معکوس، ارقام فارسی و جداکننده، ورودی غیرعددی، فیلتر موجودی، رتبه‌بندی پرفروش، حذف اقلام لغوشده، شکست تساوی با جدیدترین، ترکیب فیلترها، رشتهٔ کوئری صفحه‌بندی، نمایش نشانگر و دکمهٔ حذف، خطاهای اعتبارسنجی، رگرسیون محصولات غیرفعال و ترتیب/حذف/جانشینی محصولات مشابه
+- سبک کد: Pint پاک روی ۱۰۹ فایل
+- بدون مهاجرت دیتابیس، بدون کانفیگ جدید — ارتقای درجا
 
 <details>
 <summary>راه‌اندازی سریع (بدون تغییر)</summary>
@@ -94,11 +90,14 @@ php artisan serve            # → http://localhost:8000
 <summary>دیدن آن در عمل</summary>
 
 ```bash
-# بدون ورود، یک سفارش ثبت کنید و شماره سفارش (DS-YYMMDD-XXXX)
-# و موبایلی که وارد کردید را یادداشت کنید.
-# سپس http://localhost:8000/track را باز کنید و هر دو را وارد کنید —
-# تایم‌لاین، وضعیت پرداخت و اقلام ظاهر می‌شوند.
-# یک بار هم موبایل اشتباه بزنید: همان پیام دوستانه، بدون هیچ داده‌ای از سفارش.
+# http://localhost:8000/products را باز کنید
+# ← در «حداقل قیمت» بنویسید ۵۰۰٬۰۰۰ و در «حداکثر قیمت» ۵۰۰۰۰۰۰،
+#   «فقط کالاهای موجود» را تیک بزنید و «اعمال» را بزنید —
+#   شبکه محدود می‌شود، کنار تعداد «فیلتر فعال» می‌آید و
+#   صفحه‌بندی همه‌چیز را حفظ می‌کند.
+# ← عمداً دو قیمت را برعکس وارد کنید (عدد بزرگ اول): همان نتایج.
+# ← در مرتب‌سازی «پرفروش‌ترین» را انتخاب کنید: پرفروش‌ها اول.
+# ← یک محصول را باز کنید: مشابه‌های موجود اول نمایش داده می‌شوند.
 ```
 
 </details>

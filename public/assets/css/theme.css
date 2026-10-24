@@ -968,6 +968,73 @@ a {
     color: var(--ds-muted);
 }
 
+/* ---------- فیلترهای لیست محصولات ---------- */
+
+.ds-filter {
+    background: var(--ds-surface);
+    border: 1px solid var(--ds-border);
+    border-radius: 16px;
+    padding: 0.85rem 1rem;
+}
+
+.ds-filter-title {
+    color: var(--ds-muted);
+    font-size: 0.88rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.ds-filter-label {
+    display: block;
+    color: var(--ds-muted);
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+}
+
+.ds-filter-input {
+    background: var(--ds-bg-soft);
+    border: 1px solid var(--ds-border);
+    border-radius: 12px;
+    color: var(--ds-text);
+    transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.ds-filter-input:focus {
+    background: var(--ds-bg-soft);
+    border-color: var(--ds-primary);
+    box-shadow: 0 0 0 0.22rem rgba(139, 92, 246, 0.18);
+    color: var(--ds-text);
+}
+
+.ds-filter-input::placeholder {
+    color: #5d6478;
+    font-size: 0.78rem;
+}
+
+.ds-filter-check .form-check-input {
+    background-color: var(--ds-bg-soft);
+    border-color: var(--ds-border-strong);
+}
+
+.ds-filter-check .form-check-input:checked {
+    background-color: var(--ds-primary);
+    border-color: var(--ds-primary);
+}
+
+.ds-filter-check .form-check-label {
+    color: var(--ds-text);
+    font-size: 0.88rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.ds-filter-on {
+    color: var(--ds-neon);
+    font-weight: 700;
+}
+
 /* ---------- خالی بودن ---------- */
 
 .ds-empty {

@@ -5,11 +5,23 @@ All notable changes to this project are documented in this file.
 
 <div dir="rtl" align="center">
 
-راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.7.0** ✅
+راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.8.0** ✅
 
 </div>
 
 ## 🇬🇧 English
+
+## [2.8.0] — 2026-10-24
+
+### 🔍 Added — Smart Product Discovery
+
+- The products page gained a **price-range filter** (min / max, each usable on its own) and an **in-stock-only filter** — both combine freely with search, category and sorting, and survive pagination links (`withQueryString`)
+- Price inputs understand **Persian/Arabic digits and thousands separators** (`۵۰۰٬۰۰۰` = `500,000` = `500000`) — the same normalization approach as coupon codes and order tracking, via the new `en_num()` helper (the mirror of `fa_num`)
+- If the range is entered backwards (min > max) it is **silently swapped** instead of showing an empty result — the user never loses the page over a typo; non-numeric input is gracefully ignored
+- New **«پرفروش‌ترین» (best-selling) sort** — products ranked by units sold with a single `withSum` subquery; items of cancelled orders never count, the same rule as the dashboard, and ties break toward the newest product
+- **Related products upgraded**: still same category and active, but now **in-stock items come first** (newest first within each group) instead of a random shuffle — the section is deterministic, testable, and shows available items while out-of-stock ones only fill leftover slots
+- Validation moved to a dedicated `ProductFilterRequest` form request; an active-filter indicator («فیلتر فعال») with a one-click reset appears next to the result count, and the empty state now offers filter reset as well
+- 21 new tests (ProductDiscoveryTest): price min/max/range, backwards-range swap, Persian digits and separators, graceful non-numeric input, in-stock filter, popular ranking, cancelled-item exclusion, newest tie-break, combined filters, pagination query-string, indicator/reset rendering, validation failures, inactive-product regression, related-products ordering/exclusion/fallback — **133 tests total, 537 assertions**
 
 ## [2.7.0] — 2026-10-21
 
@@ -168,6 +180,18 @@ All notable changes to this project are documented in this file.
 ---
 
 ## 🇮🇷 فارسی
+
+## [2.8.0] — ۲۰۲۶-۱۰-۲۴
+
+### 🔍 افزوده شد — کشف هوشمند محصولات
+
+- صفحهٔ محصولات به **فیلتر بازهٔ قیمت** (حداقل/حداکثر، هر کدام به‌تنهایی هم کار می‌کند) و **فیلتر «فقط کالاهای موجود»** مجهز شد — هر دو آزادانه با جستجو، دسته و مرتب‌سازی ترکیب می‌شوند و در لینک‌های صفحه‌بندی هم حفظ می‌شوند (`withQueryString`)
+- ورودی قیمت **ارقام فارسی/عربی و جداکنندهٔ هزارگان** را می‌فهمد (`۵۰۰٬۰۰۰` = `500,000` = `500000`) — همان رویکرد نرمال‌سازی کد تخفیف و پیگیری سفارش، این بار با هلپر جدید `en_num()` (قرینهٔ `fa_num`)
+- اگر بازه برعکس وارد شود (حداقل > حداکثر) **بی‌صدا جابه‌جا می‌شود** تا کاربر به‌خاطر یک اشتباه تایپی نتیجهٔ خالی نبیند؛ ورودی غیرعددی هم نادیده گرفته می‌شود
+- مرتب‌سازی جدید **«پرفروش‌ترین»** — رتبه‌بندی بر اساس تعداد فروش با یک زیرکوئری `withSum`؛ اقلام سفارش‌های لغوشده هرگز حساب نمی‌شوند (همان قاعدهٔ داشبورد) و تساوی‌ها به نفع محصول جدید‌تر می‌شکنند
+- **ارتقای محصولات مشابه**: همچنان هم‌دسته و فعال، اما حالا **موارد موجود اول می‌آیند** (داخل هر گروه، جدیدترین اول) به‌جای چیدمان تصادفی — بخشش قطعی و قابل‌آزمون شد و ناموجودها فقط جاهای خالی را پر می‌کنند
+- اعتبارسنجی به فرم‌ریکوئست اختصاصی `ProductFilterRequest` منتقل شد؛ نشانگر «فیلتر فعال» با دکمهٔ حذف یک‌کلیکی کنار تعداد نتایج اضافه شد و حالت خالی هم دکمهٔ حذف فیلترها دارد
+- ۲۱ تست جدید (ProductDiscoveryTest): حداقل/حداکثر/بازهٔ قیمت، جابه‌جایی بازهٔ معکوس، ارقام فارسی و جداکننده، ورودی غیرعددی، فیلتر موجودی، رتبه‌بندی پرفروش، حذف اقلام لغوشده، شکست تساوی با جدیدترین، ترکیب فیلترها، رشتهٔ کوئری صفحه‌بندی، نمایش نشانگر و دکمهٔ حذف، خطاهای اعتبارسنجی، رگرسیون محصولات غیرفعال، ترتیب/حذف/جانشینی محصولات مشابه — در مجموع **۱۳۳ تست، ۵۳۷ ادعا**
 
 ## [2.7.0] — ۲۰۲۶-۱۰-۲۱
 
