@@ -1,4 +1,4 @@
-# 🔍 v2.8.0 — Smart Product Discovery
+# ❤️ v2.10.0 — Customer Wishlist
 
 <div dir="rtl" align="center">
 
@@ -9,20 +9,22 @@ Laravel 12 · PHP 8.2+ · Bootstrap 5 RTL · MIT License
 
 ## 🇬🇧 English
 
-### 🔍 New — Price Range, Availability & Best-Selling Sort
+### ❤️ New — Customer Wishlist
 
-- The products page gained a **price-range filter** — minimum and maximum, each usable on its own — plus an **in-stock-only toggle**, and both combine freely with search, category and any sort order; active filters also survive every pagination link
-- **Persian keyboard friendly, again**: price inputs normalize Persian/Arabic digits and thousands separators, so `۵۰۰٬۰۰۰`, `500,000` and `500000` all mean the same thing — the same approach as coupon codes and order tracking, now extracted into a tiny `en_num()` helper (the mirror of the existing `fa_num()`)
-- **Forgiving by design**: if the range is entered backwards (min > max) it is silently swapped instead of returning an empty grid, and non-numeric input is simply ignored — no error pages, no lost context
-- New **«پرفروش‌ترین» (best-selling)** sort: products ranked by units sold through a single `withSum` subquery — items of cancelled orders never count (the same rule the admin dashboard follows), and ties break toward the newest product
-- **Related products, upgraded**: same category and active as before, but the random shuffle is gone — **in-stock items now come first** (newest first within each group) and out-of-stock ones only fill leftover slots; the section is deterministic and fully testable
-- A «فیلتر فعال» indicator with a one-click reset sits next to the result count, and the empty state offers a filter reset too — validation lives in a dedicated `ProductFilterRequest`
+- Customers can now **save products with one click on the heart** — the button sits on every product card and next to add-to-cart on the product page; a second click removes it (toggle), and with JavaScript the heart flips in place with a toast, no reload
+- **Progressive enhancement, not JavaScript-dependence**: the heart is a real POST form with a Post/Redirect/Get fallback, so it works even with scripting disabled — the same philosophy as the rest of the storefront
+- New **`/wishlist` page**: saved products on the familiar product cards, newest saved first, 12 per page — linked from the navbar heart (with a live count badge) and the account dropdown; a friendly empty state guides new users to the shop
+- Hearts stay in sync across the whole storefront (listings, product page, related products) via a new **`Wishlist` singleton service — the exact pattern the cart already uses**: one memoized query per request, no per-card queries, no N+1
+- **One row per user per product, enforced by the database** (unique constraint + idempotent toggle) — double-clicks and double-tab submits can't create duplicates
+- Only **active products** count: something the admin deactivated quietly disappears from the wishlist and the badge; deleting a product cascades its wishlist rows away
+- Guests clicking a heart land on the login page with a hint — never a dead button
+- 19 new tests (WishlistTest) covering access, toggle flows, Ajax JSON, inactive guards, ordering, pagination, navbar badge states and cascade integrity
 
 ### 📊 Numbers
 
-- **133 feature tests** (537 assertions) — 21 new discovery tests: price min/max/range, backwards-range swap, Persian digits & separators, graceful non-numeric input, in-stock filter, popular ranking, cancelled-item exclusion, newest tie-break, combined filters, pagination query-string, indicator/reset rendering, validation failures, inactive-product regression, and related-products ordering/exclusion/fallback
-- Code style: Pint clean across 109 files
-- Zero migrations, zero new config — drop-in upgrade
+- **181 feature tests** (~690 assertions) — 19 new wishlist tests: guest access, add/remove toggle, JSON responses, inactive-product guard, newest-first ordering, own-items-only, inactive hiding, empty state, 12-per-page pagination, navbar badge (Persian numeral, active-only, hidden for guests), solid/outline heart states, product-page form, account dropdown link, product-deletion cascade
+- Code style: Pint clean
+- One new migration (`wishlists`) — `php artisan shop:install` or plain `migrate` handles it; zero config changes
 
 <details>
 <summary>Quick start (unchanged)</summary>
@@ -41,13 +43,13 @@ php artisan serve            # → http://localhost:8000
 <summary>Seeing it in action</summary>
 
 ```bash
-# Open http://localhost:8000/products
-# → type ۵۰۰٬۰۰۰ in «حداقل قیمت» and ۵۰۰۰۰۰۰ in «حداکثر قیمت», tick
-#   «فقط کالاهای موجود», hit اعمال — the grid narrows, the count shows
-#   «فیلتر فعال», and pagination keeps everything.
-# → Swap the two prices on purpose (big number first): same results.
-# → Pick «پرفروش‌ترین» in the sort select: best sellers first.
-# → Open any product: related items now show available ones first.
+# Register an account, browse the products listing:
+# → click the heart on a card — it fills in red, the navbar heart
+#   gains a count badge (۱) and a toast confirms «به علاقه‌مندی‌ها اضافه شد».
+# → click the navbar heart: the /wishlist page lists your saved
+#   products, newest first — click the heart again to remove one,
+#   the card fades and the badge counts down.
+# → Log out: hearts become login links — no dead buttons for guests.
 ```
 
 </details>
@@ -58,20 +60,22 @@ php artisan serve            # → http://localhost:8000
 
 <div dir="rtl">
 
-### 🔍 جدید — فیلتر بازهٔ قیمت، موجودی و مرتب‌سازی پرفروش‌ترین
+### ❤️ جدید — علاقه‌مندی‌های مشتری
 
-- صفحهٔ محصولات به **فیلتر بازهٔ قیمت** مجهز شد — حداقل و حداکثر، هر کدام به‌تنهایی هم کار می‌کند — به‌علاوهٔ گزینهٔ **«فقط کالاهای موجود»»؛ هر دو آزادانه با جستجو، دسته و هر مرتب‌سازی ترکیب می‌شوند و فیلترهای فعال در تمام لینک‌های صفحه‌بندی هم حفظ می‌شوند
-- **باز هم سازگار با کیبورد فارسی**: ورودی‌های قیمت ارقام فارسی/عربی و جداکنندهٔ هزارگان را نرمال می‌کنند — `۵۰۰٬۰۰۰` و `500,000` و `500000` هر سه یک معنی دارند؛ همان رویکرد کد تخفیف و پیگیری سفارش، این بار در قالب هلپر کوچک `en_num()` (قرینهٔ `fa_num()` موجود)
-- **بخشنده در طراحی**: اگر بازه برعکس وارد شود (حداقل > حداکثر) بی‌صدا جابه‌جا می‌شود تا نتیجهٔ خالی نبینید، و ورودی غیرعددی هم نادیده گرفته می‌شود — نه صفحهٔ خطا، نه بافتِ ازدست‌رفته
-- مرتب‌سازی جدید **«پرفروش‌ترین»**: رتبه‌بندی محصولات بر اساس تعداد فروش با یک زیرکوئری `withSum` — اقلام سفارش‌های لغوشده هرگز حساب نمی‌شوند (همان قاعدهٔ داشبورد مدیریت) و تساوی‌ها به نفع محصول جدیدتر می‌شکنند
-- **محصولات مشابه، ارتقا یافت**: هم‌دسته و فعال مثل قبل، اما چیدمان تصادفی حذف شد — **موارد موجود اول می‌آیند** (داخل هر گروه، جدیدترین اول) و ناموجودها فقط جاهای خالی را پر می‌کنند؛ بخش حالا قطعی و کاملاً قابل‌آزمون است
-- نشانگر «فیلتر فعال» با دکمهٔ حذف یک‌کلیکی کنار تعداد نتایج نشسته، حالت خالی هم دکمهٔ حذف فیلترها دارد — و اعتبارسنجی در `ProductFilterRequest` اختصاصی منتقل شده
+- مشتری‌ها حالا می‌توانند **محصولات را با یک کلیک روی قلب ذخیره کنند** — دکمه روی همهٔ کارت‌های محصول و کنار «افزودن به سبد» در صفحهٔ جزئیات هست؛ کلیک دوم همان محصول را حذف می‌کند (toggle) و با جاوااسکریپت قلب همان‌جا می‌چرخد، بدون رفرش
+- **بهبود تدریجی، نه وابستگی به جاوااسکریپت**: قلب یک فرم POST واقعی با جریان Post/Redirect/Get است و حتی با خاموش‌بودن اسکریپت‌ها کار می‌کند — همان فلسفهٔ بقیهٔ فروشگاه
+- صفحهٔ جدید **/wishlist**: محصولات ذخیره‌شده روی همان کارت‌های آشنا، جدیدترین ذخیره اول، ۱۲تا در صفحه — از قلب ناوبار (با شمارندهٔ زنده) و منوی حساب در دسترس؛ حالت خالیِ دوستانه کاربر تازه‌وارد را به فروشگاه می‌فرستد
+- قلب‌ها در کل فروشگاه (لیست، صفحهٔ جزئیات، محصولات مشابه) همگام می‌مانند از طریق **سرویس singleton جدید `Wishlist` — دقیقاً همان الگویی که سبد خرید از قبل دارد**: یک کوئری memoize در هر درخواست، بدون کوئری برای هر کارت، بدون N+1
+- **یک ردیف برای هر کاربر/محصول، با پشتیبان دیتابیس** (قید یکتا + toggle پیش‌فرض) — دابل‌کلیک و سابمیت همزمان از دو تب تکراری نمی‌سازد
+- فقط **محصولات فعال** حساب می‌شوند: محصولی که مدیر غیرفعال کند بی‌صدا از فهرست و شمارنده کنار می‌رود؛ حذف محصول هم ردیف‌های علاقه‌مندی‌اش را آبشاری پاک می‌کند
+- مهمان‌ها با کلیک روی قلب با یک راهنما به صفحهٔ ورود می‌رسند — هرگز دکمهٔ مرده نمی‌بینند
+- ۱۹ تست جدید (WishlistTest): دسترسی، جریان‌های toggle، پاسخ Ajax، گاردهای غیرفعال، ترتیب، صفحه‌بندی، وضعیت‌های شمارندهٔ ناوبار و یکپارچگی آبشاری
 
 ### 📊 اعداد
 
-- **۱۳۳ تست فیچر** (۵۳۷ ادعا) — ۲۱ تست جدید کشف محصول: حداقل/حداکثر/بازهٔ قیمت، جابه‌جایی بازهٔ معکوس، ارقام فارسی و جداکننده، ورودی غیرعددی، فیلتر موجودی، رتبه‌بندی پرفروش، حذف اقلام لغوشده، شکست تساوی با جدیدترین، ترکیب فیلترها، رشتهٔ کوئری صفحه‌بندی، نمایش نشانگر و دکمهٔ حذف، خطاهای اعتبارسنجی، رگرسیون محصولات غیرفعال و ترتیب/حذف/جانشینی محصولات مشابه
-- سبک کد: Pint پاک روی ۱۰۹ فایل
-- بدون مهاجرت دیتابیس، بدون کانفیگ جدید — ارتقای درجا
+- **۱۸۱ تست فیچر** (۶۸۵ ادعا) — ۱۹ تست جدید علاقه‌مندی: دسترسی مهمان، افزودن/حذف، پاسخ JSON، محافظ محصول غیرفعال، ترتیب جدیدترین‌اول، فقط-آیتم‌های-خود، مخفی‌شدن غیرفعال‌ها، حالت خالی، صفحه‌بندی ۱۲تایی، شمارندهٔ ناوبار (عدد فارسی، فعال-فقط، مخفی برای مهمان)، وضعیت پر/خالی قلب، فرم صفحهٔ جزئیات، لینک منوی حساب، cascade حذف
+- سبک کد: Pint پاک
+- یک مهاجرت جدید (`wishlists`) — با `php artisan shop:install` یا `migrate` ساده اعمال می‌شود؛ بدون تغییر کانفیگ
 
 <details>
 <summary>راه‌اندازی سریع (بدون تغییر)</summary>
@@ -90,14 +94,13 @@ php artisan serve            # → http://localhost:8000
 <summary>دیدن آن در عمل</summary>
 
 ```bash
-# http://localhost:8000/products را باز کنید
-# ← در «حداقل قیمت» بنویسید ۵۰۰٬۰۰۰ و در «حداکثر قیمت» ۵۰۰۰۰۰۰،
-#   «فقط کالاهای موجود» را تیک بزنید و «اعمال» را بزنید —
-#   شبکه محدود می‌شود، کنار تعداد «فیلتر فعال» می‌آید و
-#   صفحه‌بندی همه‌چیز را حفظ می‌کند.
-# ← عمداً دو قیمت را برعکس وارد کنید (عدد بزرگ اول): همان نتایج.
-# ← در مرتب‌سازی «پرفروش‌ترین» را انتخاب کنید: پرفروش‌ها اول.
-# ← یک محصول را باز کنید: مشابه‌های موجود اول نمایش داده می‌شوند.
+# ثبت‌نام کنید و لیست محصولات را باز کنید:
+# ← روی قلب یک کارت کلیک کنید — قرمز پر می‌شود، قلب ناوبار
+#   شمارندهٔ (۱) می‌گیرد و پیام «به علاقه‌مندی‌ها اضافه شد» می‌آید.
+# ← روی قلب ناوبار کلیک کنید: صفحهٔ /wishlist محصولات ذخیره‌شده را
+#   جدیدترین‌اول نشان می‌دهد — قلب را دوباره بزنید تا حذف شود،
+#   کارت محو می‌شود و شمارنده کم می‌شود.
+# ← خارج شوید: قلب‌ها لینک ورود می‌شوند — مهمان دکمهٔ مرده نمی‌بیند.
 ```
 
 </details>

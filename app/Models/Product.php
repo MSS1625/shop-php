@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class Product extends Model
@@ -73,6 +74,22 @@ class Product extends Model
     }
 
     /**
+     * همهٔ نظرات این محصول (هر وضعیت)
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    /**
+     * فقط نظرات تأییدشده — همان چیزی که مشتری می‌بیند
+     */
+    public function approvedReviews(): HasMany
+    {
+        return $this->reviews()->where('status', Review::STATUS_APPROVED);
+    }
+
+    /**
      * فقط محصولات فعال و نمایش‌داده‌شونده
      */
     public function scopeActive(Builder $query): Builder
@@ -114,6 +131,19 @@ class Product extends Model
     }
 
     /**
+     * میانگین امتیاز و تعداد نظرات تأییدشده —
+     * دو subquery کنار لیست/کارت‌ها (همان الگوی «پرفروش‌ترین»)
+     */
+    public function scopeWithRating(Builder $query): Builder
+    {
+        return $query
+            ->withAvg(['reviews as avg_rating' => fn (Builder $q) => $q
+                ->where('status', Review::STATUS_APPROVED)], 'rating')
+            ->withCount(['reviews as reviews_count' => fn (Builder $q) => $q
+                ->where('status', Review::STATUS_APPROVED)]);
+    }
+
+    /**
      * فقط محصولات موجود
      */
     public function scopeInStock(Builder $query): Builder
@@ -134,6 +164,63 @@ class Product extends Model
     public function inStock(): bool
     {
         return $this->stock > 0;
+    }
+
+    /**
+     * آیا این محصول نظرِ تأییدشده‌ای دارد؟
+     * (فقط وقتی معنا دارد که withRating/aggregate بارگذاری شده باشد)
+     */
+    public function hasRating(): bool
+    {
+        return $this->reviews_count !== null && $this->reviews_count > 0;
+    }
+
+    /**
+     * میانگین امتیاز با یک رقم اعشار فارسی — ۴٫۵
+     */
+    public function avgRatingFa(): string
+    {
+        return str_replace('.', '٫', fa_num(number_format((float) $this->avg_rating, 1)));
+    }
+
+    /**
+     * تعداد نظرات تأییدشده به تفکیک ستاره — [5 => 3, 4 => 1, …]
+     * برای نمودار تفکیک امتیازها در صفحهٔ محصول (یک کوئری گروهی)
+     *
+     * @return array<int, int>
+     */
+    public function ratingCounts(): array
+    {
+        return $this->approvedReviews()
+            ->selectRaw('rating, count(*) as total')
+            ->groupBy('rating')
+            ->pluck('total', 'rating')
+            ->map(fn ($total) => (int) $total)
+            ->all();
+    }
+
+    /**
+     * شناسهٔ کاربران (از میان فهرست داده‌شده) که این محصول را در سفارشِ
+     * غیرلغوشده خریده‌اند — برای نشان «خریدار تأییدشده» کنار نظرها
+     * (یک کوئری برای کل صفحه، بدون N+1)
+     *
+     * @param  iterable<int, int|null>  $userIds
+     * @return Collection<int, int>
+     */
+    public function verifiedBuyerIds(iterable $userIds): Collection
+    {
+        $ids = collect($userIds)->filter()->unique()->values();
+
+        if ($ids->isEmpty()) {
+            return collect();
+        }
+
+        return Order::query()
+            ->whereNot('status', Order::STATUS_CANCELLED)
+            ->whereHas('items', fn (Builder $q) => $q->where('product_id', $this->getKey()))
+            ->whereIn('user_id', $ids)
+            ->distinct()
+            ->pluck('user_id');
     }
 
     /**

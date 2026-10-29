@@ -62,9 +62,17 @@
             </form>
 
             <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+                <a href="{{ auth()->check() ? route('wishlist.index') : route('login') }}"
+                   class="ds-cart-btn" title="علاقه‌مندی‌ها" aria-label="علاقه‌مندی‌ها">
+                    <i class="{{ ($wishlistCount ?? 0) > 0 ? 'fa-solid' : 'fa-regular' }} fa-heart" data-nav-wish-icon></i>
+                    <span class="ds-cart-count" id="dsWishlistCount"@if(($wishlistCount ?? 0) === 0) style="display:none"@endif>
+                        {{ fa_num($wishlistCount ?? 0) }}
+                    </span>
+                </a>
+
                 <a href="{{ route('cart.index') }}" class="ds-cart-btn" title="سبد خرید" aria-label="سبد خرید">
                     <i class="fa-solid fa-cart-shopping"></i>
-                    <span class="ds-cart-count" {{ $cartCount ?? 0 > 0 ? '' : 'style="display:none"' }}>
+                    <span class="ds-cart-count"@if(($cartCount ?? 0) === 0) style="display:none"@endif>
                         {{ fa_num($cartCount ?? 0) }}
                     </span>
                 </a>
@@ -93,6 +101,11 @@
                             <li>
                                 <a class="dropdown-item" href="{{ route('account.orders') }}">
                                     <i class="fa-solid fa-box-open ms-1"></i> سفارش‌های من
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('wishlist.index') }}">
+                                    <i class="fa-solid fa-heart ms-1"></i> علاقه‌مندی‌ها
                                 </a>
                             </li>
                             <li><hr class="dropdown-divider"></li>

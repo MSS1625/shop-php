@@ -50,6 +50,14 @@
             @endif
         </a>
 
+        <a class="ds-nav-link {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}" href="{{ route('admin.reviews.index') }}">
+            <i class="fa-solid fa-star-half-stroke"></i> نظرات
+            @php($pendingReviews = \App\Models\Review::where('status', \App\Models\Review::STATUS_PENDING)->count())
+            @if($pendingReviews > 0)
+                <span class="badge rounded-pill text-bg-warning me-auto">{{ fa_num($pendingReviews) }}</span>
+            @endif
+        </a>
+
         <hr class="border-secondary-subtle mx-2">
 
         <a class="ds-nav-link" href="{{ route('shop.home') }}">

@@ -5,11 +5,40 @@ All notable changes to this project are documented in this file.
 
 <div dir="rtl" align="center">
 
-راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.8.0** ✅
+راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.10.0** ✅
 
 </div>
 
 ## 🇬🇧 English
+
+## [2.10.0] — 2026-10-27
+
+### ❤️ Added — Customer Wishlist
+
+- Customers can now **save products to a wishlist** with a single click on the heart — the button appears on every product card and next to the add-to-cart button on the product page; clicking it **toggles** between add and remove, no page reload needed
+- **Progressive enhancement**: the heart is a real POST form (Post/Redirect/Get), so it works without JavaScript; with JavaScript the toggle goes through the existing Ajax helper — every heart of the same product on the page flips at once, the navbar counter updates live, and on the wishlist page itself a removal fades the card out
+- New **`/wishlist` page** (login-only, linked from the navbar heart and the account dropdown): saved products on the same familiar product cards — newest saved first (ordered by the pivot timestamp), 12 per page, with an empty state that guides users to the shop
+- The **navbar gained a heart button with a live count badge** next to the cart; the heart fills in when the list is non-empty — mirroring the cart button design
+- Wishlist state is shared across the whole storefront through a new **`Wishlist` singleton service** (the same pattern as the cart): one memoized query per request keeps the hearts in sync on listings, the product page and related products — no N+1, no per-card queries
+- Same **one-row rule as reviews, backed by the database**: a unique (user, product) constraint plus idempotent toggle logic — double-clicks and double-tabs can't create duplicates
+- Only **active products** count: an item the admin deactivated quietly disappears from the wishlist page and the navbar counter (the same active-only rule as every other storefront surface); deleting a product cascades its wishlist rows away
+- Guests clicking any heart land on the login page with a hint, instead of a dead button
+- Hardened the **empty navbar badges** (cart + wishlist): the hidden-state markup now renders as a real `style` attribute instead of an HTML-escaped string — same look in browsers, strictly correct markup
+- 19 new tests (WishlistTest): guest access, add/remove toggle flow, JSON responses for Ajax, inactive-product guard, newest-first ordering, own-items-only, inactive hiding, empty state, 12-per-page pagination, navbar badge (Persian numeral, active-only, hidden for guests), solid/outline heart states, product-page toggle form, account dropdown link, product-deletion cascade — **181 tests total, 685 assertions**
+
+## [2.9.0] — 2026-10-24
+
+### ⭐ Added — Product Reviews & Ratings
+
+- Customers can now **rate products 1–5 stars and write a review** right on the product page — reviews start as «در انتظار تأیید» (pending) and only appear publicly after an admin approves them, so nothing unmoderated ever reaches the storefront
+- Every review carries the **«خریدار تأییدشده» (verified buyer) badge** when its author actually bought that product in a non-cancelled order — computed for the whole page with a single query (no N+1), reusing the same cancelled-excluded rule as the dashboard's sales figures
+- The product page gained a **rating summary**: big average (one Persian decimal, e.g. «۴٫۳»), star row, and a 5→1 **breakdown chart** with progress bars and per-star counts — plus a stars+average link under the product title that anchors straight to the reviews
+- **Product cards now show the rating** (star, average, review count) on the home page, the products listing and related products — via a single `withRating()` scope adding two subqueries, the same pattern as the best-selling sort
+- One review per user per product (DB unique constraint + a friendly error for repeats and even a race-safe catch for double-tab submissions); the form turns into a **status box** («نظر شما ثبت شده است…») once the user has already reviewed; guests see a login prompt instead of the form
+- A polished **RTL star picker** (hover-to-preview, keyboard-free radios) ships in `shop.js`, and validation lives in a dedicated `ReviewRequest` (rating 1–5, comment 5–2000 chars, Persian messages)
+- New **admin reviews page** (`/admin/reviews`) with status tabs and counts (همه / در انتظار تأیید / تأییدشده / ردشده), one-click **approve / reject / delete**, product links, and a pending-count badge in the sidebar next to «نظرات» — mirroring the orders workflow
+- Anti-spam by design: `auth` + `throttle:5,1` on submission, moderation before visibility, and cascade-on-delete keeps the data tidy when a product goes away
+- 29 new tests (ReviewTest): guest/auth access, rating and comment validation, pending-until-approved flow, rejection, one-review rule, different products allowed, rate limit, inactive product, average/count/breakdown rendering, aggregates counting only approved reviews, card rating, verified-buyer badge (real buyer / non-buyer / cancelled order), guest login prompt, own-review status box, admin access guards, status tabs, approve/reject/delete flows, customer 403s, sidebar badge, product-deletion cascade — **162 tests total, 632 assertions**
 
 ## [2.8.0] — 2026-10-24
 
@@ -180,6 +209,35 @@ All notable changes to this project are documented in this file.
 ---
 
 ## 🇮🇷 فارسی
+
+## [2.10.0] — ۲۰۲۶-۱۰-۲۷
+
+### ❤️ افزوده شد — علاقه‌مندی‌های مشتری
+
+- مشتری‌ها حالا می‌توانند محصولات را با **یک کلیک روی قلب** در علاقه‌مندی‌ها ذخیره کنند — دکمه روی همهٔ کارت‌های محصول و کنار دکمهٔ افزودن به سبد در صفحهٔ جزئیات هست؛ کلیک دوم همان محصول را **حذف می‌کند** (toggle)، بدون رفرش صفحه
+- **بهبود تدریجی**: قلب یک فرم POST واقعی است (Post/Redirect/Get) و بدون جاوااسکریپت هم کار می‌کند؛ با جاوااسکریپت همان helper موجود Ajax را می‌گیرد — همهٔ قلب‌های یک محصول در صفحه با هم می‌چرخند، شمارندهٔ ناوبار همان لحظه به‌روز می‌شود و روی خود صفحهٔ علاقه‌مندی‌ها حذف یعنی محو شدن کارت
+- صفحهٔ جدید **/wishlist** (فقط با ورود، از قلب ناوبار و منوی حساب در دسترس): محصولات ذخیره‌شده روی همان کارت‌های آشنا — جدیدترین ذخیره اول (مرتب‌سازی روی تاریخ پیوت)، ۱۲تا در هر صفحه، با حالت خالی که کاربر را به فروشگاه راهنمایی می‌کند
+- ناوبار **دکمهٔ قلب با شمارندهٔ زنده** کنار سبد گرفت؛ با پر شدن فهرست، قلب ناوبار هم پر می‌شود — قرینهٔ طراحی دکمهٔ سبد
+- وضعیت علاقه‌مندی از طریق **سرویس singleton جدید `Wishlist`** (همان الگوی سبد خرید) در کل فروشگاه به اشتراک گذاشته می‌شود: یک کوئری memoize در هر درخواست، قلب‌های لیست، صفحهٔ جزئیات و محصولات مشابه را همگام نگه می‌دارد — بدون N+1، بدون کوئری برای هر کارت
+- همان **قانون «یک ردیف» نظرات، با پشتیبان دیتابیس**: قید یکتای (کاربر، محصول) + منطق toggle پیش‌فرض — دابل‌کلیک و سابمیت همزمان از دو تب نمی‌تواند تکراری بسازد
+- فقط **محصولات فعال** حساب می‌شوند: محصولی که مدیر غیرفعال کند بی‌صدا از صفحه و شمارنده کنار می‌رود (همان قاعدهٔ فعال-فقط بقیهٔ ویترین)؛ حذف محصول هم ردیف‌های علاقه‌مندی‌اش را cascade می‌کند
+- مهمان‌ها با کلیک روی هر قلب با یک راهنما به صفحهٔ ورود می‌رسند، نه دکمهٔ مرده
+- **بج‌های خالی ناوبار** (سبد + علاقه‌مندی) سخت‌تر شد: مارک‌آپ حالت مخفی حالا به‌صورت `style` واقعی رندر می‌شود، نه رشتهٔ HTML-escaped — ظاهر همان است، مارک‌آپ اصولاً درست
+- ۱۹ تست جدید (WishlistTest): دسترسی مهمان، جریان افزودن/حذف، پاسخ JSON برای Ajax، محافظ محصول غیرفعال، ترتیب جدیدترین‌اول، فقط-آیتم‌های-خود، مخفی‌شدن غیرفعال‌ها، حالت خالی، صفحه‌بندی ۱۲تایی، شمارندهٔ ناوبار (عدد فارسی، فعال-فقط، مخفی برای مهمان)، وضعیت پر/خالی قلب، فرم toggle صفحهٔ جزئیات، لینک منوی حساب، cascade حذف محصول — **جمع ۱۸۱ تست، ۶۸۵ ادعا**
+
+## [2.9.0] — ۲۰۲۶-۱۰-۲۴
+
+### ⭐ افزوده شد — نظرات و امتیازدهی محصولات
+
+- مشتری‌ها حالا می‌توانند روی صفحهٔ محصول **از ۱ تا ۵ ستاره امتیاز بدهند و نظر بنویسند** — نظرها با وضعیت «در انتظار تأیید» شروع می‌شوند و فقط بعد از تأیید مدیر برای همه نمایش داده می‌شوند؛ هیچ نظر بدون بررسی‌ای راه ویترین پیدا نمی‌کند
+- کنار نظر هر نویسنده‌ای که واقعاً آن محصول را در سفارشی غیرلغوشده خریده نشان **«خریدار تأییدشده»** می‌خورد — با یک کوئری برای کل صفحه (بدون N+1) و با همان قاعدهٔ حذف سفارش‌های لغوشده که در اعداد فروش داشبورد استفاده می‌شود
+- صفحهٔ محصول به **خلاصهٔ امتیازها** مجهز شد: میانگین درشت با یک رقم اعشار فارسی (مثل «۴٫۳»)، ردیف ستاره‌ها و **نمودار تفکیک ۵ به ۱** با نوار پیشرفت و تعداد هر ستاره — به‌علاوه لینک ستاره‌ها + میانگین زیر عنوان محصول که مستقیم به بخش نظرات می‌پرد
+- **کارت‌های محصول هم امتیاز نشان می‌دهند** (ستاره، میانگین، تعداد نظر) در صفحهٔ اصلی، لیست محصولات و محصولات مشابه — با اسکوپ واحد `withRating()` که دو زیرکوئری اضافه می‌کند؛ همان الگوی مرتب‌سازی پرفروش‌ترین
+- هر کاربر برای هر محصول فقط یک نظر (کلید یکتای دیتابیس + پیام خطای دوستانه برای تکرار و حتی catch مقاوم در برابر ثبت همزمان از دو تب)؛ بعد از ثبت، فرم به **جعبهٔ وضعیت** («نظر شما ثبت شده است…») تبدیل می‌شود؛ مهمان‌ها به‌جای فرم راهنمای ورود می‌بینند
+- **انتخاب ستارهٔ راست‌به‌چپِ** صیقلی (پیش‌نمایش با hover) در `shop.js` و اعتبارسنجی در `ReviewRequest` اختصاصی (امتیاز ۱ تا ۵، متن ۵ تا ۲۰۰۰ کاراکتر، پیام‌های فارسی)
+- صفحهٔ جدید **مدیریت نظرات** در `/admin/reviews` با تب‌های وضعیت و شمارنده (همه / در انتظار تأیید / تأییدشده / ردشده)، دکمه‌های یک‌کلیکی **تأیید / رد / حذف**، لینک محصولات و بج تعداد در انتظار در سایدبار کنار «نظرات» — قرینهٔ جریان سفارش‌ها
+- ضداسپم از پایه: `auth` + `throttle:5,1` روی ثبت نظر، بررسی پیش از نمایش و cascade-on-delete برای مرتب‌بودن داده‌ها بعد از حذف محصول
+- ۲۹ تست جدید (ReviewTest): دسترسی مهمان/کاربر، اعتبارسنجی امتیاز و متن، جریان تأیید تا نمایش، رد نظر، قاعدهٔ تک‌نظر، مجاز بودن نظرات برای محصولات مختلف، محدودیت نرخ، محصول غیرفعال، رندر میانگین/تعداد/تفکیک، شمارش فقط تأییدشده‌ها در آمار، امتیاز کارت محصول، نشان خریدار تأییدشده (خریدار واقعی / غیرخریدار / سفارش لغوشده)، راهنمای ورود مهمان، جعبهٔ وضعیت نظر خودِ کاربر، گاردهای دسترسی ادمین، تب‌های وضعیت، جریان‌های تأیید/رد/حذف، 403 برای مشتری، بج سایدبار و حذف آبشاری با محصول — در مجموع **۱۶۲ تست، ۶۳۲ ادعا**
 
 ## [2.8.0] — ۲۰۲۶-۱۰-۲۴
 

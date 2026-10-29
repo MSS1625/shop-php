@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Auth\AdminLoginController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -15,6 +16,8 @@ use App\Http\Controllers\Shop\HomeController;
 use App\Http\Controllers\Shop\OrderTrackingController;
 use App\Http\Controllers\Shop\PaymentController;
 use App\Http\Controllers\Shop\ProductController;
+use App\Http\Controllers\Shop\ReviewController;
+use App\Http\Controllers\Shop\WishlistController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -38,6 +41,12 @@ Route::name('shop.')->group(function () {
     Route::post('/track', [OrderTrackingController::class, 'lookup'])
         ->middleware('throttle:10,1')
         ->name('track.lookup');
+
+    // ثبت نظر برای محصول — فقط کاربران واردشده، با محدودیت نرخ ضد اسپم
+    Route::post('/products/{product:slug}/reviews', [ReviewController::class, 'store'])
+        ->middleware(['auth', 'throttle:5,1'])
+        ->name('reviews.store')
+        ->where('product', '[a-z0-9-]+');
 });
 
 // سبد خرید
@@ -56,6 +65,14 @@ Route::prefix('cart')->name('cart.')->group(function () {
     // کد تخفیف سبد
     Route::post('/coupon', [CartController::class, 'applyCoupon'])->name('coupon.apply');
     Route::delete('/coupon', [CartController::class, 'removeCoupon'])->name('coupon.remove');
+});
+
+// علاقه‌مندی‌ها — فقط کاربران واردشده
+Route::middleware('auth')->prefix('wishlist')->name('wishlist.')->group(function () {
+    Route::get('/', [WishlistController::class, 'index'])->name('index');
+    Route::post('/{product:slug}', [WishlistController::class, 'toggle'])
+        ->name('toggle')
+        ->where('product', '[a-z0-9-]+');
 });
 
 // تکمیل خرید
@@ -169,4 +186,13 @@ Route::middleware(['auth', 'admin'])
         Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
         Route::patch('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])
             ->name('orders.status');
+
+        // مدیریت نظرات (بررسی / تأیید / رد / حذف)
+        Route::get('reviews', [AdminReviewController::class, 'index'])->name('reviews.index');
+        Route::patch('reviews/{review}/approve', [AdminReviewController::class, 'approve'])
+            ->name('reviews.approve');
+        Route::patch('reviews/{review}/reject', [AdminReviewController::class, 'reject'])
+            ->name('reviews.reject');
+        Route::delete('reviews/{review}', [AdminReviewController::class, 'destroy'])
+            ->name('reviews.destroy');
     });

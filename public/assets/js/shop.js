@@ -90,6 +90,69 @@
             });
     });
 
+    /* ---------- علاقه‌مندی‌ها ---------- */
+
+    function updateWishlistCount(count) {
+        const el = document.querySelector('#dsWishlistCount');
+
+        if (el) {
+            el.textContent = count.toLocaleString('fa-IR');
+            el.style.display = count > 0 ? 'grid' : 'none';
+        }
+
+        const navIcon = document.querySelector('[data-nav-wish-icon]');
+
+        if (navIcon) {
+            navIcon.className = count > 0 ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
+        }
+    }
+
+    // قلب روی کارت‌ها و صفحهٔ جزئیات — افزودن/حذف بدون رفرش؛
+    // بدون جاوااسکریپت همان فرم به‌صورت عادی سابمیت می‌شود (PRG)
+    document.addEventListener('submit', function (e) {
+        const form = e.target.closest('form[data-wishlist-toggle]');
+        if (!form) return;
+
+        e.preventDefault();
+
+        const btn = form.querySelector('.ds-wish-btn');
+        if (btn) btn.disabled = true;
+
+        post(form.getAttribute('action'))
+            .then((res) => {
+                if (!res.success) {
+                    dsToast(res.message || 'خطایی رخ داد.', 'error');
+                    return;
+                }
+
+                const slug = form.dataset.wishlistProduct;
+                const active = res.inWishlist;
+
+                // همهٔ قلب‌های همین محصول در صفحه با هم می‌چرخند
+                document.querySelectorAll(`[data-wishlist-product="${slug}"]`).forEach((f) => {
+                    const b = f.querySelector('.ds-wish-btn');
+                    if (!b) return;
+
+                    b.classList.toggle('active', active);
+
+                    const icon = b.querySelector('i');
+                    if (icon) icon.className = active ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
+                });
+
+                updateWishlistCount(res.count);
+                dsToast(res.message);
+
+                // روی خود صفحهٔ علاقه‌مندی‌ها، حذف یعنی رفتن کارت
+                if (document.querySelector('[data-wishlist-page]') && !active) {
+                    setTimeout(() => window.location.reload(), 300);
+                }
+            })
+            .catch(() => dsToast('ارتباط با سرور برقرار نشد.', 'error'))
+            .finally(() => {
+                if (btn) btn.disabled = false;
+            });
+    });
+
     /* ---------- انتخاب تعداد (جزئیات محصول) ---------- */
 
     document.querySelectorAll('[data-qty]').forEach((group) => {
@@ -194,4 +257,37 @@
             });
         });
     }
+
+    /* ---------- انتخاب ستاره (فرم ثبت نظر) ---------- */
+
+    document.querySelectorAll('[data-star-picker]').forEach((picker) => {
+        const labels = Array.from(picker.querySelectorAll('label'));
+
+        // همهٔ ستاره‌های کوچک‌تر یا مساوی مقدار هدف برجسته می‌شوند
+        const paint = (value) => {
+            const target = parseInt(value, 10) || 0;
+
+            labels.forEach((label) => {
+                const input = document.getElementById(label.htmlFor);
+                const on = parseInt(input.value, 10) <= target;
+
+                label.classList.toggle('picked', on);
+                label.querySelector('i').className = on ? 'fa-solid fa-star' : 'fa-regular fa-star';
+            });
+        };
+
+        const currentValue = () => picker.querySelector('input:checked')?.value || 0;
+
+        // وضعیت اولیه — مثلاً پس از خطای اعتبارسنجی با old input
+        paint(currentValue());
+
+        picker.addEventListener('mouseover', (e) => {
+            const label = e.target.closest('label');
+            if (label) paint(document.getElementById(label.htmlFor).value);
+        });
+
+        picker.addEventListener('mouseleave', () => paint(currentValue()));
+
+        picker.addEventListener('change', (e) => paint(e.target.value));
+    });
 })();

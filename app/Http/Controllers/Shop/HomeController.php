@@ -19,6 +19,7 @@ class HomeController extends Controller
             ->get();
 
         $latestProducts = Product::with('category')
+            ->withRating()
             ->active()
             ->latest()
             ->take(8)
