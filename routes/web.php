@@ -17,6 +17,7 @@ use App\Http\Controllers\Shop\OrderTrackingController;
 use App\Http\Controllers\Shop\PaymentController;
 use App\Http\Controllers\Shop\ProductController;
 use App\Http\Controllers\Shop\ReviewController;
+use App\Http\Controllers\Shop\WishlistController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -64,6 +65,14 @@ Route::prefix('cart')->name('cart.')->group(function () {
     // کد تخفیف سبد
     Route::post('/coupon', [CartController::class, 'applyCoupon'])->name('coupon.apply');
     Route::delete('/coupon', [CartController::class, 'removeCoupon'])->name('coupon.remove');
+});
+
+// علاقه‌مندی‌ها — فقط کاربران واردشده
+Route::middleware('auth')->prefix('wishlist')->name('wishlist.')->group(function () {
+    Route::get('/', [WishlistController::class, 'index'])->name('index');
+    Route::post('/{product:slug}', [WishlistController::class, 'toggle'])
+        ->name('toggle')
+        ->where('product', '[a-z0-9-]+');
 });
 
 // تکمیل خرید

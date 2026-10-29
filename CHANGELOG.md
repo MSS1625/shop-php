@@ -5,11 +5,26 @@ All notable changes to this project are documented in this file.
 
 <div dir="rtl" align="center">
 
-راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.9.0** ✅
+راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.10.0** ✅
 
 </div>
 
 ## 🇬🇧 English
+
+## [2.10.0] — 2026-10-27
+
+### ❤️ Added — Customer Wishlist
+
+- Customers can now **save products to a wishlist** with a single click on the heart — the button appears on every product card and next to the add-to-cart button on the product page; clicking it **toggles** between add and remove, no page reload needed
+- **Progressive enhancement**: the heart is a real POST form (Post/Redirect/Get), so it works without JavaScript; with JavaScript the toggle goes through the existing Ajax helper — every heart of the same product on the page flips at once, the navbar counter updates live, and on the wishlist page itself a removal fades the card out
+- New **`/wishlist` page** (login-only, linked from the navbar heart and the account dropdown): saved products on the same familiar product cards — newest saved first (ordered by the pivot timestamp), 12 per page, with an empty state that guides users to the shop
+- The **navbar gained a heart button with a live count badge** next to the cart; the heart fills in when the list is non-empty — mirroring the cart button design
+- Wishlist state is shared across the whole storefront through a new **`Wishlist` singleton service** (the same pattern as the cart): one memoized query per request keeps the hearts in sync on listings, the product page and related products — no N+1, no per-card queries
+- Same **one-row rule as reviews, backed by the database**: a unique (user, product) constraint plus idempotent toggle logic — double-clicks and double-tabs can't create duplicates
+- Only **active products** count: an item the admin deactivated quietly disappears from the wishlist page and the navbar counter (the same active-only rule as every other storefront surface); deleting a product cascades its wishlist rows away
+- Guests clicking any heart land on the login page with a hint, instead of a dead button
+- Hardened the **empty navbar badges** (cart + wishlist): the hidden-state markup now renders as a real `style` attribute instead of an HTML-escaped string — same look in browsers, strictly correct markup
+- 19 new tests (WishlistTest): guest access, add/remove toggle flow, JSON responses for Ajax, inactive-product guard, newest-first ordering, own-items-only, inactive hiding, empty state, 12-per-page pagination, navbar badge (Persian numeral, active-only, hidden for guests), solid/outline heart states, product-page toggle form, account dropdown link, product-deletion cascade — **181 tests total, 685 assertions**
 
 ## [2.9.0] — 2026-10-24
 
@@ -194,6 +209,21 @@ All notable changes to this project are documented in this file.
 ---
 
 ## 🇮🇷 فارسی
+
+## [2.10.0] — ۲۰۲۶-۱۰-۲۷
+
+### ❤️ افزوده شد — علاقه‌مندی‌های مشتری
+
+- مشتری‌ها حالا می‌توانند محصولات را با **یک کلیک روی قلب** در علاقه‌مندی‌ها ذخیره کنند — دکمه روی همهٔ کارت‌های محصول و کنار دکمهٔ افزودن به سبد در صفحهٔ جزئیات هست؛ کلیک دوم همان محصول را **حذف می‌کند** (toggle)، بدون رفرش صفحه
+- **بهبود تدریجی**: قلب یک فرم POST واقعی است (Post/Redirect/Get) و بدون جاوااسکریپت هم کار می‌کند؛ با جاوااسکریپت همان helper موجود Ajax را می‌گیرد — همهٔ قلب‌های یک محصول در صفحه با هم می‌چرخند، شمارندهٔ ناوبار همان لحظه به‌روز می‌شود و روی خود صفحهٔ علاقه‌مندی‌ها حذف یعنی محو شدن کارت
+- صفحهٔ جدید **/wishlist** (فقط با ورود، از قلب ناوبار و منوی حساب در دسترس): محصولات ذخیره‌شده روی همان کارت‌های آشنا — جدیدترین ذخیره اول (مرتب‌سازی روی تاریخ پیوت)، ۱۲تا در هر صفحه، با حالت خالی که کاربر را به فروشگاه راهنمایی می‌کند
+- ناوبار **دکمهٔ قلب با شمارندهٔ زنده** کنار سبد گرفت؛ با پر شدن فهرست، قلب ناوبار هم پر می‌شود — قرینهٔ طراحی دکمهٔ سبد
+- وضعیت علاقه‌مندی از طریق **سرویس singleton جدید `Wishlist`** (همان الگوی سبد خرید) در کل فروشگاه به اشتراک گذاشته می‌شود: یک کوئری memoize در هر درخواست، قلب‌های لیست، صفحهٔ جزئیات و محصولات مشابه را همگام نگه می‌دارد — بدون N+1، بدون کوئری برای هر کارت
+- همان **قانون «یک ردیف» نظرات، با پشتیبان دیتابیس**: قید یکتای (کاربر، محصول) + منطق toggle پیش‌فرض — دابل‌کلیک و سابمیت همزمان از دو تب نمی‌تواند تکراری بسازد
+- فقط **محصولات فعال** حساب می‌شوند: محصولی که مدیر غیرفعال کند بی‌صدا از صفحه و شمارنده کنار می‌رود (همان قاعدهٔ فعال-فقط بقیهٔ ویترین)؛ حذف محصول هم ردیف‌های علاقه‌مندی‌اش را cascade می‌کند
+- مهمان‌ها با کلیک روی هر قلب با یک راهنما به صفحهٔ ورود می‌رسند، نه دکمهٔ مرده
+- **بج‌های خالی ناوبار** (سبد + علاقه‌مندی) سخت‌تر شد: مارک‌آپ حالت مخفی حالا به‌صورت `style` واقعی رندر می‌شود، نه رشتهٔ HTML-escaped — ظاهر همان است، مارک‌آپ اصولاً درست
+- ۱۹ تست جدید (WishlistTest): دسترسی مهمان، جریان افزودن/حذف، پاسخ JSON برای Ajax، محافظ محصول غیرفعال، ترتیب جدیدترین‌اول، فقط-آیتم‌های-خود، مخفی‌شدن غیرفعال‌ها، حالت خالی، صفحه‌بندی ۱۲تایی، شمارندهٔ ناوبار (عدد فارسی، فعال-فقط، مخفی برای مهمان)، وضعیت پر/خالی قلب، فرم toggle صفحهٔ جزئیات، لینک منوی حساب، cascade حذف محصول — **جمع ۱۸۱ تست، ۶۸۵ ادعا**
 
 ## [2.9.0] — ۲۰۲۶-۱۰-۲۴
 

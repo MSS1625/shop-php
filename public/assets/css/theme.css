@@ -1598,3 +1598,60 @@ a {
     color: var(--ds-warning);
 }
 
+
+/* ---------- علاقه‌مندی‌ها ---------- */
+
+.ds-wish-form {
+    display: inline-flex;
+    margin: 0;
+}
+
+/* روی کارت محصول: قلب گوشهٔ تصویر، قرینهٔ جای بج موجودی */
+.ds-product-card > .ds-wish-form,
+.ds-product-card > a.ds-wish-btn {
+    position: absolute;
+    top: 0.8rem;
+    inset-inline-end: 0.8rem;
+    z-index: 2;
+}
+
+.ds-wish-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    background: rgba(11, 13, 20, 0.72);
+    border: 1px solid var(--ds-border);
+    color: var(--ds-muted);
+    font-size: 1rem;
+    backdrop-filter: blur(6px);
+    transition: color 0.25s, border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+}
+
+.ds-wish-btn:hover {
+    color: var(--ds-danger);
+    border-color: var(--ds-danger);
+    transform: scale(1.06);
+}
+
+.ds-wish-btn.active {
+    color: var(--ds-danger);
+    border-color: rgba(248, 113, 113, 0.45);
+}
+
+.ds-wish-btn.active i {
+    text-shadow: 0 0 12px rgba(248, 113, 113, 0.55);
+}
+
+.ds-wish-btn:disabled {
+    opacity: 0.6;
+}
+
+/* نسخهٔ بزرگ کنار دکمهٔ سبد در صفحهٔ جزئیات */
+.ds-wish-btn-lg {
+    width: 46px;
+    height: 46px;
+    font-size: 1.15rem;
+    border-radius: 13px;
+}

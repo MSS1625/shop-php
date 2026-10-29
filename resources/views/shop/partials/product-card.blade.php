@@ -10,6 +10,9 @@
             <img src="{{ $product->imageUrl() }}" alt="{{ $product->title }}" loading="lazy">
         </a>
 
+        {{-- قلب علاقه‌مندی روی گوشهٔ تصویر — مهمان: لینک ورود --}}
+        @include('shop.partials.wishlist-button')
+
         <div class="ds-product-body">
             @if($product->category)
                 <span class="ds-product-cat">{{ $product->category->name }}</span>

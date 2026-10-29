@@ -1,5 +1,4 @@
-
-# ⭐ v2.9.0 — Product Reviews & Ratings
+# ❤️ v2.10.0 — Customer Wishlist
 
 <div dir="rtl" align="center">
 
@@ -10,21 +9,22 @@ Laravel 12 · PHP 8.2+ · Bootstrap 5 RTL · MIT License
 
 ## 🇬🇧 English
 
-### ⭐ New — Product Reviews & Ratings
+### ❤️ New — Customer Wishlist
 
-- Customers can now **rate products 1–5 stars and write a review** on the product page — every review starts as pending and only goes public after an admin approves it; nothing unmoderated ever reaches the storefront
-- **«خریدار تأییدشده» (verified buyer) badge** — a review whose author actually bought that product in a non-cancelled order gets the green badge; computed with a single query for the whole page, following the same cancelled-excluded rule as the dashboard's sales figures
-- The product page gained a **rating summary**: big Persian-decimal average («۴٫۳»), star row and a **5→1 breakdown chart** with progress bars — plus a stars+average link under the product title that jumps straight to the reviews
-- **Product cards show the rating now** (star, average, count) across the home page, listing and related products — one `withRating()` scope, two subqueries, the same pattern as the best-selling sort
-- Sensible rules baked in: one review per user per product (DB unique + friendly error + race-safe catch), the form becomes a **status box** after reviewing, guests get a login prompt, `auth` + `throttle:5,1` keep the spam out
-- A polished **RTL star picker** with hover-to-preview, and validation in a dedicated `ReviewRequest` (rating 1–5, comment 5–2000, Persian messages)
-- New **admin reviews page** at `/admin/reviews`: status tabs with counts, one-click **approve / reject / delete**, product links, and a pending badge in the sidebar — mirroring the orders workflow
+- Customers can now **save products with one click on the heart** — the button sits on every product card and next to add-to-cart on the product page; a second click removes it (toggle), and with JavaScript the heart flips in place with a toast, no reload
+- **Progressive enhancement, not JavaScript-dependence**: the heart is a real POST form with a Post/Redirect/Get fallback, so it works even with scripting disabled — the same philosophy as the rest of the storefront
+- New **`/wishlist` page**: saved products on the familiar product cards, newest saved first, 12 per page — linked from the navbar heart (with a live count badge) and the account dropdown; a friendly empty state guides new users to the shop
+- Hearts stay in sync across the whole storefront (listings, product page, related products) via a new **`Wishlist` singleton service — the exact pattern the cart already uses**: one memoized query per request, no per-card queries, no N+1
+- **One row per user per product, enforced by the database** (unique constraint + idempotent toggle) — double-clicks and double-tab submits can't create duplicates
+- Only **active products** count: something the admin deactivated quietly disappears from the wishlist and the badge; deleting a product cascades its wishlist rows away
+- Guests clicking a heart land on the login page with a hint — never a dead button
+- 19 new tests (WishlistTest) covering access, toggle flows, Ajax JSON, inactive guards, ordering, pagination, navbar badge states and cascade integrity
 
 ### 📊 Numbers
 
-- **162 feature tests** (632 assertions) — 29 new review tests: access guards, validation, pending-until-approved flow, rejection, one-review rule, rate limit, average/count/breakdown rendering, approved-only aggregates, verified-buyer badge (real / non-buyer / cancelled order), guest prompt, own-review status box, admin moderation flows, sidebar badge, product-deletion cascade
-- Code style: Pint clean across 110 files
-- One new migration (`reviews`) — `php artisan shop:install` or plain `migrate` handles it; zero config changes
+- **181 feature tests** (~690 assertions) — 19 new wishlist tests: guest access, add/remove toggle, JSON responses, inactive-product guard, newest-first ordering, own-items-only, inactive hiding, empty state, 12-per-page pagination, navbar badge (Persian numeral, active-only, hidden for guests), solid/outline heart states, product-page form, account dropdown link, product-deletion cascade
+- Code style: Pint clean
+- One new migration (`wishlists`) — `php artisan shop:install` or plain `migrate` handles it; zero config changes
 
 <details>
 <summary>Quick start (unchanged)</summary>
@@ -43,14 +43,13 @@ php artisan serve            # → http://localhost:8000
 <summary>Seeing it in action</summary>
 
 ```bash
-# Register an account, open any product and scroll to «نظرات خریداران»:
-# → hover the star picker, pick 5, write a comment, «ثبت نظر» —
-#   you get the «نظر شما ثبت شد و پس از تأیید…» message and a status box.
-# → Log in as admin → نظرات: the sidebar shows a pending badge (۲);
-#   the tabs read در انتظار تأیید (۲) / تأییدشده (۶) — hit the ✓ on a
-#   pending review: it instantly appears on the product page, badge
-#   «خریدار تأییدشده» included for real buyers.
-# → The products listing now shows «★ ۴٫۳ (۴ نظر)» on rated cards.
+# Register an account, browse the products listing:
+# → click the heart on a card — it fills in red, the navbar heart
+#   gains a count badge (۱) and a toast confirms «به علاقه‌مندی‌ها اضافه شد».
+# → click the navbar heart: the /wishlist page lists your saved
+#   products, newest first — click the heart again to remove one,
+#   the card fades and the badge counts down.
+# → Log out: hearts become login links — no dead buttons for guests.
 ```
 
 </details>
@@ -61,21 +60,22 @@ php artisan serve            # → http://localhost:8000
 
 <div dir="rtl">
 
-### ⭐ جدید — نظرات و امتیازدهی محصولات
+### ❤️ جدید — علاقه‌مندی‌های مشتری
 
-- مشتری‌ها حالا روی صفحهٔ محصول می‌توانند **از ۱ تا ۵ ستاره امتیاز بدهند و نظر بنویسند** — هر نظر با وضعیت «در انتظار تأیید» شروع می‌شود و فقط بعد از تأیید مدیر عمومی می‌شود؛ هیچ نظر بررسی‌نشده‌ای راه ویترین پیدا نمی‌کند
-- نشان **«خریدار تأییدشده»** — نویسنده‌ای که واقعاً همان محصول را در سفارشی غیرلغوشده خریده، نشان سبز می‌گیرد؛ با یک کوئری برای کل صفحه و با همان قاعدهٔ حذف سفارش‌های لغوشدهٔ داشبورد
-- صفحهٔ محصول به **خلاصهٔ امتیازها** مجهز شد: میانگین درشت با رقم اعشار فارسی («۴٫۳»)، ردیف ستاره‌ها و **نمودار تفکیک ۵ به ۱** با نوارهای پیشرفت — به‌علاوه لینک ستاره‌ها + میانگین زیر عنوان محصول که مستقیم به بخش نظرات می‌پرد
-- **کارت‌های محصول هم امتیاز نشان می‌دهند** (ستاره، میانگین، تعداد نظر) در صفحهٔ اصلی، لیست محصولات و محصولات مشابه — یک اسکوپ `withRating()`، دو زیرکوئری؛ همان الگوی پرفروش‌ترین
-- قواعد حساب‌شده: هر کاربر برای هر محصول یک نظر (کلید یکتا + پیام دوستانه + مقاوم به ثبت همزمان)، فرم بعد از ثبت به **جعبهٔ وضعیت** تبدیل می‌شود، مهمان‌ها راهنمای ورود می‌بینند و `auth` + `throttle:5,1` جلوی اسپم را می‌گیرد
-- **انتخاب ستارهٔ راست‌به‌چپِ** صیقلی با پیش‌نمایش hover و اعتبارسنجی در `ReviewRequest` اختصاصی (امتیاز ۱ تا ۵، متن ۵ تا ۲۰۰۰ کاراکتر، پیام‌های فارسی)
-- صفحهٔ جدید **مدیریت نظرات** در `/admin/reviews`: تب‌های وضعیت با شمارنده، دکمه‌های یک‌کلیکی **تأیید / رد / حذف**، لینک محصولات و بج «در انتظار تأیید» در سایدبار — قرینهٔ جریان سفارش‌ها
+- مشتری‌ها حالا می‌توانند **محصولات را با یک کلیک روی قلب ذخیره کنند** — دکمه روی همهٔ کارت‌های محصول و کنار «افزودن به سبد» در صفحهٔ جزئیات هست؛ کلیک دوم همان محصول را حذف می‌کند (toggle) و با جاوااسکریپت قلب همان‌جا می‌چرخد، بدون رفرش
+- **بهبود تدریجی، نه وابستگی به جاوااسکریپت**: قلب یک فرم POST واقعی با جریان Post/Redirect/Get است و حتی با خاموش‌بودن اسکریپت‌ها کار می‌کند — همان فلسفهٔ بقیهٔ فروشگاه
+- صفحهٔ جدید **/wishlist**: محصولات ذخیره‌شده روی همان کارت‌های آشنا، جدیدترین ذخیره اول، ۱۲تا در صفحه — از قلب ناوبار (با شمارندهٔ زنده) و منوی حساب در دسترس؛ حالت خالیِ دوستانه کاربر تازه‌وارد را به فروشگاه می‌فرستد
+- قلب‌ها در کل فروشگاه (لیست، صفحهٔ جزئیات، محصولات مشابه) همگام می‌مانند از طریق **سرویس singleton جدید `Wishlist` — دقیقاً همان الگویی که سبد خرید از قبل دارد**: یک کوئری memoize در هر درخواست، بدون کوئری برای هر کارت، بدون N+1
+- **یک ردیف برای هر کاربر/محصول، با پشتیبان دیتابیس** (قید یکتا + toggle پیش‌فرض) — دابل‌کلیک و سابمیت همزمان از دو تب تکراری نمی‌سازد
+- فقط **محصولات فعال** حساب می‌شوند: محصولی که مدیر غیرفعال کند بی‌صدا از فهرست و شمارنده کنار می‌رود؛ حذف محصول هم ردیف‌های علاقه‌مندی‌اش را آبشاری پاک می‌کند
+- مهمان‌ها با کلیک روی قلب با یک راهنما به صفحهٔ ورود می‌رسند — هرگز دکمهٔ مرده نمی‌بینند
+- ۱۹ تست جدید (WishlistTest): دسترسی، جریان‌های toggle، پاسخ Ajax، گاردهای غیرفعال، ترتیب، صفحه‌بندی، وضعیت‌های شمارندهٔ ناوبار و یکپارچگی آبشاری
 
 ### 📊 اعداد
 
-- **۱۶۲ تست فیچر** (۶۳۲ ادعا) — ۲۹ تست جدید نظرات: گاردهای دسترسی، اعتبارسنجی، جریان تأیید تا نمایش، رد نظر، قاعدهٔ تک‌نظر، محدودیت نرخ، رندر میانگین/تعداد/تفکیک، شمارش فقط تأییدشده‌ها، نشان خریدار تأییدشده (واقعی / غیرخریدار / سفارش لغوشده)، راهنمای ورود مهمان، جعبهٔ وضعیت، جریان‌های مدیریت، بج سایدبار و حذف آبشاری
-- سبک کد: Pint پاک روی ۱۱۰ فایل
-- یک مهاجرت جدید (`reviews`) — با `php artisan shop:install` یا `migrate` ساده اعمال می‌شود؛ بدون تغییر کانفیگ
+- **۱۸۱ تست فیچر** (۶۸۵ ادعا) — ۱۹ تست جدید علاقه‌مندی: دسترسی مهمان، افزودن/حذف، پاسخ JSON، محافظ محصول غیرفعال، ترتیب جدیدترین‌اول، فقط-آیتم‌های-خود، مخفی‌شدن غیرفعال‌ها، حالت خالی، صفحه‌بندی ۱۲تایی، شمارندهٔ ناوبار (عدد فارسی، فعال-فقط، مخفی برای مهمان)، وضعیت پر/خالی قلب، فرم صفحهٔ جزئیات، لینک منوی حساب، cascade حذف
+- سبک کد: Pint پاک
+- یک مهاجرت جدید (`wishlists`) — با `php artisan shop:install` یا `migrate` ساده اعمال می‌شود؛ بدون تغییر کانفیگ
 
 <details>
 <summary>راه‌اندازی سریع (بدون تغییر)</summary>
@@ -94,13 +94,13 @@ php artisan serve            # → http://localhost:8000
 <summary>دیدن آن در عمل</summary>
 
 ```bash
-# ثبت‌نام کنید، یک محصول را باز کنید و به «نظرات خریداران» بروید:
-# ← روی ستاره‌ها hover کنید، ۵ ستاره را انتخاب کنید، نظر بنویسید و
-#   «ثبت نظر» را بزنید — پیام «نظر شما ثبت شد و پس از تأیید…» + جعبهٔ وضعیت.
-# ← به‌عنوان مدیر وارد شوید ← نظرات: سایدبار بج (۲) نشان می‌دهد؛
-#   تب‌ها: در انتظار تأیید (۲) / تأییدشده (۶) — روی یک نظر در انتظار ✓ بزنید:
-#   بلافاصله در صفحهٔ محصول می‌آید، با نشان «خریدار تأییدشده» برای خریداران واقعی.
-# ← لیست محصولات حالا روی کارت‌های امتیازدار «★ ۴٫۳ (۴ نظر)» نشان می‌دهد.
+# ثبت‌نام کنید و لیست محصولات را باز کنید:
+# ← روی قلب یک کارت کلیک کنید — قرمز پر می‌شود، قلب ناوبار
+#   شمارندهٔ (۱) می‌گیرد و پیام «به علاقه‌مندی‌ها اضافه شد» می‌آید.
+# ← روی قلب ناوبار کلیک کنید: صفحهٔ /wishlist محصولات ذخیره‌شده را
+#   جدیدترین‌اول نشان می‌دهد — قلب را دوباره بزنید تا حذف شود،
+#   کارت محو می‌شود و شمارنده کم می‌شود.
+# ← خارج شوید: قلب‌ها لینک ورود می‌شوند — مهمان دکمهٔ مرده نمی‌بیند.
 ```
 
 </details>

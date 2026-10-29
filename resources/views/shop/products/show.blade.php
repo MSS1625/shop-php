@@ -111,11 +111,17 @@
                                     data-add-to-cart="{{ route('cart.store', $product) }}">
                                 <i class="fa-solid fa-cart-plus ms-1"></i> افزودن به سبد
                             </button>
+
+                            @include('shop.partials.wishlist-button', ['big' => true])
                         </div>
                     @else
-                        <button class="btn btn-ds px-4" disabled>
-                            <i class="fa-solid fa-ban ms-1"></i> ناموجود
-                        </button>
+                        <div class="d-flex align-items-center gap-3 flex-wrap">
+                            <button class="btn btn-ds px-4" disabled>
+                                <i class="fa-solid fa-ban ms-1"></i> ناموجود
+                            </button>
+
+                            @include('shop.partials.wishlist-button', ['big' => true])
+                        </div>
                     @endif
                 </div>
             </div>

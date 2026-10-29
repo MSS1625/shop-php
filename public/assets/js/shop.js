@@ -90,6 +90,69 @@
             });
     });
 
+    /* ---------- علاقه‌مندی‌ها ---------- */
+
+    function updateWishlistCount(count) {
+        const el = document.querySelector('#dsWishlistCount');
+
+        if (el) {
+            el.textContent = count.toLocaleString('fa-IR');
+            el.style.display = count > 0 ? 'grid' : 'none';
+        }
+
+        const navIcon = document.querySelector('[data-nav-wish-icon]');
+
+        if (navIcon) {
+            navIcon.className = count > 0 ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
+        }
+    }
+
+    // قلب روی کارت‌ها و صفحهٔ جزئیات — افزودن/حذف بدون رفرش؛
+    // بدون جاوااسکریپت همان فرم به‌صورت عادی سابمیت می‌شود (PRG)
+    document.addEventListener('submit', function (e) {
+        const form = e.target.closest('form[data-wishlist-toggle]');
+        if (!form) return;
+
+        e.preventDefault();
+
+        const btn = form.querySelector('.ds-wish-btn');
+        if (btn) btn.disabled = true;
+
+        post(form.getAttribute('action'))
+            .then((res) => {
+                if (!res.success) {
+                    dsToast(res.message || 'خطایی رخ داد.', 'error');
+                    return;
+                }
+
+                const slug = form.dataset.wishlistProduct;
+                const active = res.inWishlist;
+
+                // همهٔ قلب‌های همین محصول در صفحه با هم می‌چرخند
+                document.querySelectorAll(`[data-wishlist-product="${slug}"]`).forEach((f) => {
+                    const b = f.querySelector('.ds-wish-btn');
+                    if (!b) return;
+
+                    b.classList.toggle('active', active);
+
+                    const icon = b.querySelector('i');
+                    if (icon) icon.className = active ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
+                });
+
+                updateWishlistCount(res.count);
+                dsToast(res.message);
+
+                // روی خود صفحهٔ علاقه‌مندی‌ها، حذف یعنی رفتن کارت
+                if (document.querySelector('[data-wishlist-page]') && !active) {
+                    setTimeout(() => window.location.reload(), 300);
+                }
+            })
+            .catch(() => dsToast('ارتباط با سرور برقرار نشد.', 'error'))
+            .finally(() => {
+                if (btn) btn.disabled = false;
+            });
+    });
+
     /* ---------- انتخاب تعداد (جزئیات محصول) ---------- */
 
     document.querySelectorAll('[data-qty]').forEach((group) => {
