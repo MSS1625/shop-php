@@ -58,6 +58,14 @@
             @endif
         </a>
 
+        <a class="ds-nav-link {{ request()->routeIs('admin.questions.*') ? 'active' : '' }}" href="{{ route('admin.questions.index') }}">
+            <i class="fa-solid fa-circle-question"></i> پرسش‌ها
+            @php($pendingQuestions = \App\Models\Question::where('status', \App\Models\Question::STATUS_PENDING)->count())
+            @if($pendingQuestions > 0)
+                <span class="badge rounded-pill text-bg-warning me-auto">{{ fa_num($pendingQuestions) }}</span>
+            @endif
+        </a>
+
         <hr class="border-secondary-subtle mx-2">
 
         <a class="ds-nav-link" href="{{ route('shop.home') }}">

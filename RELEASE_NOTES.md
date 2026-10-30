@@ -1,4 +1,4 @@
-# ❤️ v2.10.0 — Customer Wishlist
+# ❓ v2.11.0 — Product Questions & Answers
 
 <div dir="rtl" align="center">
 
@@ -9,22 +9,21 @@ Laravel 12 · PHP 8.2+ · Bootstrap 5 RTL · MIT License
 
 ## 🇬🇧 English
 
-### ❤️ New — Customer Wishlist
+### ❓ New — Product Questions & Answers
 
-- Customers can now **save products with one click on the heart** — the button sits on every product card and next to add-to-cart on the product page; a second click removes it (toggle), and with JavaScript the heart flips in place with a toast, no reload
-- **Progressive enhancement, not JavaScript-dependence**: the heart is a real POST form with a Post/Redirect/Get fallback, so it works even with scripting disabled — the same philosophy as the rest of the storefront
-- New **`/wishlist` page**: saved products on the familiar product cards, newest saved first, 12 per page — linked from the navbar heart (with a live count badge) and the account dropdown; a friendly empty state guides new users to the shop
-- Hearts stay in sync across the whole storefront (listings, product page, related products) via a new **`Wishlist` singleton service — the exact pattern the cart already uses**: one memoized query per request, no per-card queries, no N+1
-- **One row per user per product, enforced by the database** (unique constraint + idempotent toggle) — double-clicks and double-tab submits can't create duplicates
-- Only **active products** count: something the admin deactivated quietly disappears from the wishlist and the badge; deleting a product cascades its wishlist rows away
-- Guests clicking a heart land on the login page with a hint — never a dead button
-- 19 new tests (WishlistTest) covering access, toggle flows, Ajax JSON, inactive guards, ordering, pagination, navbar badge states and cascade integrity
+- Customers can now **ask a question right on the product page** — a new «پرسش و پاسخ» section sits below the reviews; questions start as «در انتظار پاسخ» and stay private until answered, so nothing unanswered ever reaches the storefront
+- **The store answers with one voice**: the new `/admin/questions` panel lists every question with status tabs and counts (همه / در انتظار پاسخ / پاسخ داده شد / ردشده) — and the answer box sits **right inside the table row**, so answering is one textarea + one click, no page jumps
+- **Publishing and notifying in a single step**: the moment an admin answers, the question goes public and the asker receives a **«پاسخ پرسش شما» email** — built on the same mail design as the order notifications, question and answer side by side with a link back to the product; editing an answer later is silent, and an SMTP failure never blocks the answering itself (logged, not thrown)
+- The public Q&A cards carry the same **«خریدار تأییدشده» (verified buyer) badge** as reviews — computed for the whole page with a single query (no N+1), reusing the same cancelled-excluded rule
+- Unlike reviews, **one user may ask several questions** about the same product — real buyers ask follow-ups; anti-spam stays intact via `auth` + `throttle:5,1` plus admin reject/delete
+- The admin sidebar gained a **«پرسش‌ها» link with a pending-count badge** next to «نظرات» — mirroring the orders and reviews workflows
+- 35 new tests (QuestionTest): submission guards and validation, visibility rules, pagination, verified badges, email lifecycle (sent once, silent on edit, never breaking on failure), moderation flows, access guards and cascade integrity
 
 ### 📊 Numbers
 
-- **181 feature tests** (~690 assertions) — 19 new wishlist tests: guest access, add/remove toggle, JSON responses, inactive-product guard, newest-first ordering, own-items-only, inactive hiding, empty state, 12-per-page pagination, navbar badge (Persian numeral, active-only, hidden for guests), solid/outline heart states, product-page form, account dropdown link, product-deletion cascade
+- **216 feature tests** (778 assertions) — 35 new Q&A tests: guest redirect, body required/min-length, pending start + trim, multiple questions per user, inactive 404, rate limit 429, pending/rejected invisible, answered visible + count heading, 5-per-page pagination (newest first), verified badge (real buyer / non-buyer / cancelled-order asker), guest login prompt vs authed form, empty state, admin access guards, tabs + counts, answer flow + publishing, answer validation, email sent / not on reject / not resent on edit / never breaking, first answered_at preserved on edit, rejected-question revival, reject, delete, customer moderation 403, sidebar badge, product/user cascade, excerpt
 - Code style: Pint clean
-- One new migration (`wishlists`) — `php artisan shop:install` or plain `migrate` handles it; zero config changes
+- One new migration (`questions`) — `php artisan shop:install` or plain `migrate` handles it; zero config changes
 
 <details>
 <summary>Quick start (unchanged)</summary>
@@ -43,13 +42,16 @@ php artisan serve            # → http://localhost:8000
 <summary>Seeing it in action</summary>
 
 ```bash
-# Register an account, browse the products listing:
-# → click the heart on a card — it fills in red, the navbar heart
-#   gains a count badge (۱) and a toast confirms «به علاقه‌مندی‌ها اضافه شد».
-# → click the navbar heart: the /wishlist page lists your saved
-#   products, newest first — click the heart again to remove one,
-#   the card fades and the badge counts down.
-# → Log out: hearts become login links — no dead buttons for guests.
+# Register an account, open any product page:
+# → scroll below the reviews — the «پرسش و پاسخ» section:
+#   type «گارانتی این محصول چند سال است؟» and hit «ثبت پرسش».
+# → Log in as admin → /admin/questions: the question waits in
+#   «در انتظار پاسخ» with a yellow sidebar badge. Type the answer
+#   right inside the row and click «ثبت پاسخ».
+# → Back on the product page the question + «پاسخ دیجی‌شاپ» are now
+#   public — and the asker's inbox has the «پاسخ پرسش شما» email.
+# → Edit the answer in admin: the page updates, but no second
+#   email goes out — edits are silent.
 ```
 
 </details>
@@ -60,22 +62,21 @@ php artisan serve            # → http://localhost:8000
 
 <div dir="rtl">
 
-### ❤️ جدید — علاقه‌مندی‌های مشتری
+### ❓ جدید — پرسش و پاسخ محصولات
 
-- مشتری‌ها حالا می‌توانند **محصولات را با یک کلیک روی قلب ذخیره کنند** — دکمه روی همهٔ کارت‌های محصول و کنار «افزودن به سبد» در صفحهٔ جزئیات هست؛ کلیک دوم همان محصول را حذف می‌کند (toggle) و با جاوااسکریپت قلب همان‌جا می‌چرخد، بدون رفرش
-- **بهبود تدریجی، نه وابستگی به جاوااسکریپت**: قلب یک فرم POST واقعی با جریان Post/Redirect/Get است و حتی با خاموش‌بودن اسکریپت‌ها کار می‌کند — همان فلسفهٔ بقیهٔ فروشگاه
-- صفحهٔ جدید **/wishlist**: محصولات ذخیره‌شده روی همان کارت‌های آشنا، جدیدترین ذخیره اول، ۱۲تا در صفحه — از قلب ناوبار (با شمارندهٔ زنده) و منوی حساب در دسترس؛ حالت خالیِ دوستانه کاربر تازه‌وارد را به فروشگاه می‌فرستد
-- قلب‌ها در کل فروشگاه (لیست، صفحهٔ جزئیات، محصولات مشابه) همگام می‌مانند از طریق **سرویس singleton جدید `Wishlist` — دقیقاً همان الگویی که سبد خرید از قبل دارد**: یک کوئری memoize در هر درخواست، بدون کوئری برای هر کارت، بدون N+1
-- **یک ردیف برای هر کاربر/محصول، با پشتیبان دیتابیس** (قید یکتا + toggle پیش‌فرض) — دابل‌کلیک و سابمیت همزمان از دو تب تکراری نمی‌سازد
-- فقط **محصولات فعال** حساب می‌شوند: محصولی که مدیر غیرفعال کند بی‌صدا از فهرست و شمارنده کنار می‌رود؛ حذف محصول هم ردیف‌های علاقه‌مندی‌اش را آبشاری پاک می‌کند
-- مهمان‌ها با کلیک روی قلب با یک راهنما به صفحهٔ ورود می‌رسند — هرگز دکمهٔ مرده نمی‌بینند
-- ۱۹ تست جدید (WishlistTest): دسترسی، جریان‌های toggle، پاسخ Ajax، گاردهای غیرفعال، ترتیب، صفحه‌بندی، وضعیت‌های شمارندهٔ ناوبار و یکپارچگی آبشاری
+- مشتری‌ها حالا می‌توانند **مستقیم در صفحهٔ محصول سؤال بپرسند** — بخش جدید «پرسش و پاسخ» زیر نظرات قرار دارد؛ پرسش‌ها «در انتظار پاسخ» شروع می‌شوند و تا پاسخ‌گرفتن خصوصی می‌مانند؛ هیچ پرسش بی‌پاسخی به فروشگاه نمی‌رسد
+- **فروشگاه با یک صدا جواب می‌دهد**: پنل جدید `/admin/questions` همهٔ پرسش‌ها را با تب‌های وضعیت و شمارنده نشان می‌دهد (همه / در انتظار پاسخ / پاسخ داده شد / ردشده) — و جعبهٔ پاسخ **داخل خود ردیف جدول** است؛ پاسخ‌دادن یعنی یک textarea و یک کلیک، بدون پرش صفحه
+- **انتشار و خبررسانی در یک قدم**: به محض پاسخ مدیر، پرسش عمومی می‌شود و پرسنده **ایمیل «پاسخ پرسش شما»** را می‌گیرد — با همان طراحی ایمیل‌های سفارش، پرسش و پاسخ کنار هم و لینک برگشت به محصول؛ ویرایش بعدی بی‌صداست و خطای SMTP هرگز پاسخ‌دادن را نمی‌شکند (لاگ می‌شود، نه خطا)
+- کارت‌های عمومی پرسش و پاسخ همان **نشان «خریدار تأییدشده»** نظرات را دارند — با یک کوئری برای کل صفحه (بدون N+1) و همان قانونِ عدم‌شمول سفارش‌های لغوشده
+- برخلاف نظرات، **یک کاربر می‌تواند چند پرسش** دربارهٔ همان محصول بپرسد — خریدارهای واقعی سؤال بعدی هم دارند؛ ضداسپم با `auth` + `throttle:5,1` و رد/حذف مدیر سر جایش است
+- نوار کناری پنل هم لینک **«پرسش‌ها» با نشان زرد در انتظار** کنار «نظرات» گرفت — قرینهٔ جریان سفارش‌ها و نظرات
+- ۳۵ تست جدید (QuestionTest): گاردهای ثبت و اعتبارسنجی، قوانین نمایش، صفحه‌بندی، نشان‌های خریدار، چرخهٔ ایمیل (یک‌بار ارسال، بی‌صدا در ویرایش، بی‌اثر در خطا)، جریان‌های نظارت، گاردهای دسترسی و یکپارچگی آبشاری
 
 ### 📊 اعداد
 
-- **۱۸۱ تست فیچر** (۶۸۵ ادعا) — ۱۹ تست جدید علاقه‌مندی: دسترسی مهمان، افزودن/حذف، پاسخ JSON، محافظ محصول غیرفعال، ترتیب جدیدترین‌اول، فقط-آیتم‌های-خود، مخفی‌شدن غیرفعال‌ها، حالت خالی، صفحه‌بندی ۱۲تایی، شمارندهٔ ناوبار (عدد فارسی، فعال-فقط، مخفی برای مهمان)، وضعیت پر/خالی قلب، فرم صفحهٔ جزئیات، لینک منوی حساب، cascade حذف
+- **۲۱۶ تست فیچر** (۷۷۸ ادعا) — ۳۵ تست جدید پرسش و پاسخ: ریدایرکت مهمان، الزامی/حداقل متن، شروع در انتظار + trim، چند پرسش برای هر کاربر، ۴۰۴ غیرفعال، محدودیت نرخ، نامرئی‌بودن در انتظار/ردشده، دیده‌شدن پاسخ + شمارنده، صفحه‌بندی ۵تایی (جدیدترین اول)، نشان خریدار (واقعی / غیرخریدار / لغوشده)، راهنمای ورود در برابر فرم، حالت خالی، گاردهای ادمین، تب‌ها، جریان پاسخ + انتشار، اعتبارسنجی پاسخ، ایمیل (ارسال / عدم ارسال در رد / عدم تکرار در ویرایش / بی‌شکستن در خطا)، حفظ تاریخ پاسخ اول، احیای ردشده، رد، حذف، 403 مشتری، نشان نوار کناری، cascade محصول/کاربر، برش متن
 - سبک کد: Pint پاک
-- یک مهاجرت جدید (`wishlists`) — با `php artisan shop:install` یا `migrate` ساده اعمال می‌شود؛ بدون تغییر کانفیگ
+- یک مهاجرت جدید (`questions`) — با `php artisan shop:install` یا `migrate` ساده اعمال می‌شود؛ بدون تغییر کانفیگ
 
 <details>
 <summary>راه‌اندازی سریع (بدون تغییر)</summary>
@@ -94,13 +95,16 @@ php artisan serve            # → http://localhost:8000
 <summary>دیدن آن در عمل</summary>
 
 ```bash
-# ثبت‌نام کنید و لیست محصولات را باز کنید:
-# ← روی قلب یک کارت کلیک کنید — قرمز پر می‌شود، قلب ناوبار
-#   شمارندهٔ (۱) می‌گیرد و پیام «به علاقه‌مندی‌ها اضافه شد» می‌آید.
-# ← روی قلب ناوبار کلیک کنید: صفحهٔ /wishlist محصولات ذخیره‌شده را
-#   جدیدترین‌اول نشان می‌دهد — قلب را دوباره بزنید تا حذف شود،
-#   کارت محو می‌شود و شمارنده کم می‌شود.
-# ← خارج شوید: قلب‌ها لینک ورود می‌شوند — مهمان دکمهٔ مرده نمی‌بیند.
+# ثبت‌نام کنید و صفحهٔ یک محصول را باز کنید:
+# ← زیر نظرات، بخش «پرسش و پاسخ» را پیدا کنید:
+#   «گارانتی این محصول چند سال است؟» را بنویسید و «ثبت پرسش» را بزنید.
+# ← به‌عنوان مدیر وارد شوید → /admin/questions: پرسش در تب
+#   «در انتظار پاسخ» با نشان زرد نوار کناری منتظر است. پاسخ را
+#   داخل خود ردیف بنویسید و «ثبت پاسخ» را بزنید.
+# ← در صفحهٔ محصول، پرسش + «پاسخ دیجی‌شاپ» حالا عمومی است —
+#   و صندوق پرسنده ایمیل «پاسخ پرسش شما» را گرفته.
+# ← پاسخ را در پنل ویرایش کنید: صفحه به‌روز می‌شود ولی ایمیل
+#   دوم نمی‌رود — ویرایش بی‌صداست.
 ```
 
 </details>

@@ -78,6 +78,15 @@ class ProductController extends Controller
         // خریداران تأییدشدهٔ همین صفحه — یک کوئری، بدون N+1
         $verifiedBuyerIds = $product->verifiedBuyerIds($reviews->pluck('user_id'));
 
+        // پرسش‌های پاسخ‌داده‌شده + پرسنده — صفحه‌بندی جدا از نظرات
+        $questions = $product->answeredQuestions()
+            ->with('user:id,name')
+            ->latest()
+            ->paginate(5);
+
+        // خریداران تأییدشدهٔ پرسش‌ها — همان یک-کوئری، بدون N+1
+        $questionBuyerIds = $product->verifiedBuyerIds($questions->pluck('user_id'));
+
         // نظر خودِ کاربر فعلی — به‌جای فرم، وضعیتش نمایش داده می‌شود
         $userReview = auth()->check()
             ? $product->reviews()->where('user_id', auth()->id())->first()
@@ -94,7 +103,8 @@ class ProductController extends Controller
             ->get();
 
         return view('shop.products.show', compact(
-            'product', 'related', 'reviews', 'breakdown', 'verifiedBuyerIds', 'userReview'
+            'product', 'related', 'reviews', 'breakdown', 'verifiedBuyerIds', 'userReview',
+            'questions', 'questionBuyerIds'
         ));
     }
 }

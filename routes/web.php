@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\QuestionController as AdminQuestionController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Auth\AdminLoginController;
 use App\Http\Controllers\Auth\LoginController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Shop\HomeController;
 use App\Http\Controllers\Shop\OrderTrackingController;
 use App\Http\Controllers\Shop\PaymentController;
 use App\Http\Controllers\Shop\ProductController;
+use App\Http\Controllers\Shop\QuestionController as ShopQuestionController;
 use App\Http\Controllers\Shop\ReviewController;
 use App\Http\Controllers\Shop\WishlistController;
 use Illuminate\Support\Facades\Route;
@@ -46,6 +48,12 @@ Route::name('shop.')->group(function () {
     Route::post('/products/{product:slug}/reviews', [ReviewController::class, 'store'])
         ->middleware(['auth', 'throttle:5,1'])
         ->name('reviews.store')
+        ->where('product', '[a-z0-9-]+');
+
+    // پرسش از محصول — فقط کاربران واردشده، با محدودیت نرخ ضد اسپم
+    Route::post('/products/{product:slug}/questions', [ShopQuestionController::class, 'store'])
+        ->middleware(['auth', 'throttle:5,1'])
+        ->name('questions.store')
         ->where('product', '[a-z0-9-]+');
 });
 
@@ -195,4 +203,13 @@ Route::middleware(['auth', 'admin'])
             ->name('reviews.reject');
         Route::delete('reviews/{review}', [AdminReviewController::class, 'destroy'])
             ->name('reviews.destroy');
+
+        // مدیریت پرسش‌ها (پاسخ / رد / حذف)
+        Route::get('questions', [AdminQuestionController::class, 'index'])->name('questions.index');
+        Route::patch('questions/{question}/answer', [AdminQuestionController::class, 'answer'])
+            ->name('questions.answer');
+        Route::patch('questions/{question}/reject', [AdminQuestionController::class, 'reject'])
+            ->name('questions.reject');
+        Route::delete('questions/{question}', [AdminQuestionController::class, 'destroy'])
+            ->name('questions.destroy');
     });
