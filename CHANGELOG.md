@@ -5,11 +5,23 @@ All notable changes to this project are documented in this file.
 
 <div dir="rtl" align="center">
 
-راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.10.0** ✅
+راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.11.0** ✅
 
 </div>
 
 ## 🇬🇧 English
+
+## [2.11.0] — 2026-10-30
+
+### ❓ Added — Product Questions & Answers
+
+- Customers can now **ask a question right on the product page** — the ask form sits below the reviews in a new «پرسش و پاسخ» section; questions start as «در انتظار پاسخ» (pending) and stay private until an admin answers, so nothing unanswered ever reaches the storefront
+- **The admin answers, the store speaks with one voice**: a new `/admin/questions` panel lists every question with status tabs and counts (همه / در انتظار پاسخ / پاسخ داده شد / ردشده) — the answer box sits **right inside the table row**, so answering takes one textarea + one click, no page jumps; answered questions can be edited in place and a rejected question can always be revived by answering it
+- **Answering publishes and notifies in one step**: the moment an admin submits an answer the question goes public on the product page and the asker receives a **«پاسخ پرسش شما» email** built on the same mail design as the order notifications — question and answer side by side with a link back to the product; editing an answer later is silent (no re-email), and an SMTP failure never blocks the answering itself (errors are logged, not thrown)
+- The product page Q&A section shows the **question with its store answer** in paired cards — asker name, date, the same **«خریدار تأییدشده» (verified buyer) badge** as reviews (one query for the whole page, no N+1), and «پاسخ دیجی‌شاپ» branding on every answer; the section heading carries the answered count in Persian numerals and paginates 5 per page
+- Unlike reviews, **one user may ask several questions** about the same product (real buyers ask follow-ups) — anti-spam stays intact via `auth` + `throttle:5,1` and the admin's reject/delete actions; validation lives in a dedicated `QuestionRequest` (5–1000 chars, Persian messages) and the answer box validates its own 2–2000 chars
+- The admin sidebar gained a **«پرسش‌ها» link with a pending-count warning badge** next to «نظرات» — mirroring the orders and reviews workflows; `cascadeOnDelete` on both foreign keys keeps the data tidy when a product or user goes away
+- 35 new tests (QuestionTest): guest redirect, body required/min-length, pending start + trim, multiple questions per user, inactive 404, rate limit 429, pending/rejected invisible, answered visible + count heading, 5-per-page pagination (newest first), verified badge for real buyers/non-buyers/cancelled-order askers, guest login prompt vs authed form, empty state, admin access guards (guest → admin.login, customer 403), tabs + counts, answer flow + becomes visible, answer validation, answer email sent to asker, no email on reject, no re-email on edit, email failure never breaks answering, first `answered_at` preserved on edit, rejected question revival, reject flow, delete, customer moderation 403, sidebar badge, product/user cascade, excerpt truncation — **216 tests total, 778 assertions**
 
 ## [2.10.0] — 2026-10-27
 
@@ -209,6 +221,18 @@ All notable changes to this project are documented in this file.
 ---
 
 ## 🇮🇷 فارسی
+
+## [2.11.0] — ۲۰۲۶-۱۰-۳۰
+
+### ❓ افزوده شد — پرسش و پاسخ محصولات
+
+- مشتری‌ها حالا می‌توانند **مستقیم در صفحهٔ محصول سؤال بپرسند** — فرم پرسش، زیر نظرات در بخش جدید «پرسش و پاسخ» قرار دارد؛ پرسش‌ها با وضعیت «در انتظار پاسخ» شروع می‌شوند و تا وقتی مدیر پاسخ ندهد خصوصی می‌مانند؛ یعنی هیچ پرسش بی‌پاسخی به فروشگاه نمی‌رسد
+- **مدیر پاسخ می‌دهد، فروشگاه با یک صدا حرف می‌زند**: پنل جدید `/admin/questions` همهٔ پرسش‌ها را با تب‌های وضعیت و شمارنده نشان می‌دهد (همه / در انتظار پاسخ / پاسخ داده شد / ردشده) — جعبهٔ پاسخ **داخل خود ردیف جدول** است؛ پاسخ‌دادن یعنی یک textarea و یک کلیک، بدون پرش صفحه؛ پاسخ‌های ثبت‌شده در همان‌جا ویرایش می‌شوند و پرسش ردشده هم هر لحظه با پاسخ‌دادن احیا می‌شود
+- **پاسخ هم منتشر می‌کند هم خبر می‌دهد**: به محض ثبت پاسخ، پرسش در صفحهٔ محصول عمومی می‌شود و پرسنده **ایمیل «پاسخ پرسش شما»** را دریافت می‌کند — با همان طراحی ایمیل‌های سفارش، پرسش و پاسخ کنار هم و لینک برگشت به محصول؛ ویرایش بعدی پاسخ بی‌صداست (ایمیل تکراری نمی‌رود) و خطای SMTP هرگز جریان پاسخ‌دادن را نمی‌شکند (فقط لاگ می‌شود)
+- بخش پرسش و پاسخ صفحهٔ محصول، **پرسش را با پاسخ فروشگاه** در کارت‌های جفتی نشان می‌دهد — نام پرسنده، تاریخ، همان **نشان «خریدار تأییدشده»** نظرات (یک کوئری برای کل صفحه، بدون N+1) و برند «پاسخ دیجی‌شاپ» روی هر پاسخ؛ عنوان بخش شمارندهٔ پرسش‌های پاسخ‌داده‌شده را با عدد فارسی دارد و ۵ پرسش در هر صفحه می‌آید
+- برخلاف نظرات، **یک کاربر می‌تواند چند پرسش** دربارهٔ همان محصول بپرسد (خریدارهای واقعی سؤال بعدی هم می‌پرسند) — ضداسپم با `auth` + `throttle:5,1` و عملیات رد/حذف مدیر سر جایش است؛ اعتبارسنجی در `QuestionRequest` جداگانه است (۵ تا ۱۰۰۰ کاراکتر، پیام‌های فارسی) و جعبهٔ پاسخ هم ۲ تا ۲۰۰۰ کاراکتر خودش را جدا اعتبارسنجی می‌کند
+- نوار کناری پنل هم لینک **«پرسش‌ها» با نشان زرد شمارندهٔ در انتظار** کنار «نظرات» گرفت — قرینهٔ جریان سفارش‌ها و نظرات؛ `cascadeOnDelete` روی هر دو کلید خارجی، داده‌ها را با حذف محصول یا کاربر مرتب نگه می‌دارد
+- ۳۵ تست جدید (QuestionTest): ریدایرکت مهمان، الزامی/حداقل متن پرسش، شروع در انتظار + trim، چند پرسش برای هر کاربر، ۴۰۴ محصول غیرفعال، محدودیت نرخ 429، نامرئی‌بودن در انتظار/ردشده، دیده‌شدن پاسخ‌داده + شمارندهٔ عنوان، صفحه‌بندی ۵تایی (جدیدترین اول)، نشان خریدار تأییدشده برای خریدار واقعی/غیرخریدار/سفارش لغوشده، راهنمای ورود مهمان در برابر فرم کاربر، حالت خالی، گاردهای دسترسی ادمین (مهمان → admin.login، مشتری 403)، تب‌ها و شمارنده‌ها، جریان پاسخ + عمومی‌شدن، اعتبارسنجی پاسخ، ارسال ایمیل به پرسنده، عدم ارسال ایمیل هنگام رد، عدم تکرار ایمیل هنگام ویرایش، شکستن‌نشدن پاسخ با خطای ایمیل، حفظ تاریخ پاسخ اول هنگام ویرایش، احیای پرسش ردشده، جریان رد، حذف، 403 نظارت مشتری، نشان نوار کناری، cascade محصول/کاربر، برش excerpt — **جمع ۲۱۶ تست، ۷۷۸ ادعا**
 
 ## [2.10.0] — ۲۰۲۶-۱۰-۲۷
 

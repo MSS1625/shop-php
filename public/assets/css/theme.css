@@ -1599,6 +1599,86 @@ a {
 }
 
 
+/* ---------- پرسش و پاسخ ---------- */
+
+/* شمارندهٔ کنار عنوان بخش */
+.ds-qa-count {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--ds-muted);
+}
+
+/* فهرست پرسش‌های پاسخ‌داده‌شده */
+.ds-qa-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ds-qa {
+    background: var(--ds-bg-soft);
+    border: 1px solid var(--ds-border);
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* سطر پرسش و پاسخ — آیکن + متن */
+.ds-qa-q,
+.ds-qa-a {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+}
+
+.ds-qa-q > i {
+    color: var(--ds-neon);
+    font-size: 1.05rem;
+    margin-top: 0.3rem;
+}
+
+.ds-qa-a > i {
+    color: var(--ds-success);
+    font-size: 1.05rem;
+    margin-top: 0.3rem;
+}
+
+.ds-qa-q p,
+.ds-qa-a p {
+    color: var(--ds-text);
+    line-height: 2;
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+.ds-qa-a {
+    padding-right: 0.9rem;
+    border-right: 2px solid rgba(52, 211, 153, 0.35);
+}
+
+/* ردیف متادیتا: نویسنده + نشان + تاریخ */
+.ds-qa-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+}
+
+.ds-qa-author {
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.ds-qa-store {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--ds-success);
+}
+
+
 /* ---------- علاقه‌مندی‌ها ---------- */
 
 .ds-wish-form {

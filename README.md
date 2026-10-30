@@ -66,6 +66,7 @@ It replicates the home page (hero, categories, product cards) with the real samp
 - 🚚 **Guest Order Tracking** — a public `/track` page where customers follow their order with just the order number + the mobile number used at checkout; same 4-step timeline, payment status and payment retry — rate-limited, uniform errors (anti-enumeration) and a minimum-data result page
 - 🛒 **Full Shopping Cart** — session-based cart with AJAX add/update/remove
 - ❤️ **Wishlist** — one click on the heart saves a product for later (card corner + product page); a second click removes it — Ajax flip with a live navbar counter, PRG fallback without JavaScript, a dedicated `/wishlist` page (newest first, 12 per page) and one row per user/product backed by a DB unique constraint
+- ❓ **Product Q&A** — customers ask questions right on the product page; questions stay private until an admin answers them from the `/admin/questions` panel (answer box right inside the table row), then go public with «پاسخ دیجی‌شاپ» branding and the same verified-buyer badge as reviews — plus a «پاسخ پرسش شما» email to the asker, sent once (edits are silent) and never breaking on SMTP failure
 - 📦 **Order Management** — checkout flow, order tracking, status workflow (pending → processing → shipped → delivered / cancelled), automatic stock adjustment, customer-initiated cancellation with stock restore
 - 🔍 **Search, Filter & Sort** — live product search, category filters, **price-range and in-stock filters** (Persian-digit friendly, backwards ranges are silently swapped), **best-selling sort** (cancelled orders excluded), price sorting, pagination — and related products on the detail page always show in-stock items first
 - ⭐ **Reviews & Ratings** — 1–5 star reviews on the product page with a big average, 5→1 breakdown chart and the **«خریدار تأییدشده» (verified buyer) badge** for authors who actually bought the product; every review waits for admin approval, cards show the rating everywhere, and one review per user per product is enforced
@@ -191,7 +192,7 @@ README.md / README.fa.md   # English | فارسی
 ## 🧪 Tests & CI
 
 ```bash
-php artisan test        # 181 feature tests
+php artisan test        # 216 feature tests
 vendor/bin/pint --test  # code style
 ```
 
@@ -212,6 +213,7 @@ Every `push` and `pull request` runs the full test matrix automatically on GitHu
 - [x] Smart product discovery (price range, in-stock filter, best-selling sort, related-products upgrade)
 - [x] Product reviews & ratings (verified-buyer badge, moderation workflow, rating summary + breakdown)
 - [x] Customer wishlist (heart toggle, /wishlist page, live navbar badge)
+- [x] Product Q&A (ask on the product page, admin answer workflow, answer email)
 
 ## 🤝 Contributing
 

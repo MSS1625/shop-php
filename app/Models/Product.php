@@ -90,6 +90,22 @@ class Product extends Model
     }
 
     /**
+     * همهٔ پرسش‌های این محصول (هر وضعیت)
+     */
+    public function questions(): HasMany
+    {
+        return $this->hasMany(Question::class);
+    }
+
+    /**
+     * فقط پرسش‌های پاسخ‌داده‌شده — همان چیزی که مشتری می‌بیند
+     */
+    public function answeredQuestions(): HasMany
+    {
+        return $this->questions()->answered();
+    }
+
+    /**
      * فقط محصولات فعال و نمایش‌داده‌شونده
      */
     public function scopeActive(Builder $query): Builder

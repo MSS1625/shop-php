@@ -255,6 +255,95 @@
             </div>
         </section>
 
+        {{-- پرسش و پاسخ --}}
+        <section class="mt-5" id="questions" aria-labelledby="questions-title">
+            <h2 class="ds-section-title mb-4" id="questions-title">
+                پرسش و پاسخ
+                <span class="ds-qa-count">({{ fa_num($questions->total()) }} پرسش پاسخ‌داده‌شده)</span>
+            </h2>
+            <div class="ds-card p-4">
+
+                {{-- فهرست پرسش‌های پاسخ‌داده‌شده --}}
+                @if($questions->isNotEmpty())
+                    <div class="ds-qa-list">
+                        @foreach($questions as $question)
+                            <article class="ds-qa">
+                                <div class="ds-qa-q">
+                                    <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+                                    <div class="flex-grow-1">
+                                        <div class="ds-qa-meta">
+                                            <span class="ds-qa-author">{{ $question->user?->name ?? 'کاربر حذف‌شده' }}</span>
+                                            @if($questionBuyerIds->contains($question->user_id))
+                                                <span class="ds-review-badge">
+                                                    <i class="fa-solid fa-circle-check ms-1"></i> خریدار تأییدشده
+                                                </span>
+                                            @endif
+                                            <time class="text-muted small" dir="ltr">{{ $question->created_at->format('Y-m-d') }}</time>
+                                        </div>
+                                        <p class="mb-0">{{ $question->body }}</p>
+                                    </div>
+                                </div>
+                                <div class="ds-qa-a">
+                                    <i class="fa-solid fa-store" aria-hidden="true"></i>
+                                    <div class="flex-grow-1">
+                                        <div class="ds-qa-meta">
+                                            <span class="ds-qa-store">پاسخ دیجی‌شاپ</span>
+                                            @if($question->answered_at)
+                                                <time class="text-muted small" dir="ltr">{{ $question->answered_at->format('Y-m-d') }}</time>
+                                            @endif
+                                        </div>
+                                        <p class="mb-0">{{ $question->answer }}</p>
+                                    </div>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+
+                    <div class="mt-3 d-flex justify-content-center">
+                        {{ $questions->onEachSide(1)->links() }}
+                    </div>
+                @else
+                    <div class="ds-review-none">
+                        <i class="fa-regular fa-circle-question"></i>
+                        هنوز پرسشی برای این محصول پاسخ داده نشده است — اولین نفری باشید که می‌پرسد!
+                    </div>
+                @endif
+
+                {{-- ثبت پرسش جدید --}}
+                <div class="ds-review-form mt-4">
+                    <h3 class="ds-review-form-title">پرسش شما از این محصول</h3>
+
+                    @if(auth()->check())
+                        <form action="{{ route('shop.questions.store', $product) }}" method="POST" novalidate>
+                            @csrf
+
+                            <div class="mb-3">
+                                <label for="question-body" class="ds-filter-label d-block mb-2">متن پرسش</label>
+                                <textarea name="body"
+                                          id="question-body"
+                                          rows="3"
+                                          class="ds-filter-input w-100"
+                                          placeholder="هر چیزی که دربارهٔ این محصول می‌دانستن‌اش برایتان مهم است، بپرسید…">{{ old('body') }}</textarea>
+                                @error('body')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <button class="btn btn-ds px-4">
+                                <i class="fa-solid fa-paper-plane ms-1"></i> ثبت پرسش
+                            </button>
+                        </form>
+                    @else
+                        <div class="ds-review-login">
+                            برای پرسیدن، ابتدا
+                            <a href="{{ route('login') }}">وارد حساب کاربری</a>
+                            شوید.
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </section>
+
         {{-- محصولات مشابه --}}
         @if($related->isNotEmpty())
             <section class="mt-5">
