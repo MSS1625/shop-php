@@ -141,8 +141,8 @@ class CouponTest extends TestCase
             ->assertSee('TEST10')
             ->assertSee('جمع اقلام')
             ->assertSee('مبلغ قابل پرداخت')
-            ->assertSee('۴۰,۰۰۰')  // تخفیف ۱۰٪
-            ->assertSee('۳۶۰,۰۰۰'); // قابل پرداخت
+            ->assertSee('۴۰٬۰۰۰')  // تخفیف ۱۰٪
+            ->assertSee('۳۶۰٬۰۰۰'); // قابل پرداخت
     }
 
     public function test_fixed_coupon_discount_is_capped_at_subtotal(): void
@@ -154,7 +154,7 @@ class CouponTest extends TestCase
 
         $this->get('/cart')
             ->assertOk()
-            ->assertSee('۴۰۰,۰۰۰')  // تخفیف = کل سبد
+            ->assertSee('۴۰۰٬۰۰۰')  // تخفیف = کل سبد
             ->assertSee('۰');       // قابل پرداخت = ۰
     }
 
@@ -195,7 +195,7 @@ class CouponTest extends TestCase
         $this->get(route('checkout.index'))
             ->assertOk()
             ->assertSee('TEST10')
-            ->assertSee('۳۶۰,۰۰۰');
+            ->assertSee('۳۶۰٬۰۰۰');
     }
 
     public function test_invalid_coupon_at_checkout_redirects_to_cart(): void

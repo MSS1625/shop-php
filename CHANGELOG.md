@@ -5,11 +5,28 @@ All notable changes to this project are documented in this file.
 
 <div dir="rtl" align="center">
 
-راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.11.0** ✅
+راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.12.0** ✅
 
 </div>
 
 ## 🇬🇧 English
+
+## [2.12.0] — 2026-10-30
+
+### 📡 Added — REST API v1 (Sanctum, mobile-ready)
+
+- The store can now be browsed, shopped and managed **from a mobile app or any external client**: a complete REST API lives under `/api/v1` — 18 endpoints covering auth, catalog, reviews, questions, wishlist and orders, authenticated with **Laravel Sanctum personal access tokens** (`Authorization: Bearer …`); no sessions, no cookies — the web shop keeps its session flow untouched
+- **Token auth that behaves like a phone**: `POST /auth/register` and `POST /auth/login` issue a token named after the optional `device_name` (default «api»); `POST /auth/logout` revokes **only the current device's token** — signing out on the phone leaves the tablet logged in; login errors are deliberately generic («اطلاعات ورود نادرست است») so the response never reveals whether the email exists; tokens are stored hashed, never in plain text
+- **The whole catalog, with the same rules as the web**: `GET /products` runs the exact same `ProductFilterRequest` as the storefront — search, category, price range (Persian digits «۵۰۰٬۰۰۰» and thousand separators normalize just like the web form), in-stock filter and all five sort orders including best-selling (`withSum`); `GET /categories` lists only categories that carry active products, with counts
+- **`GET /products/{slug}` fills an entire mobile product screen in one call**: gallery, category, rating summary (`average` + Persian `average_fa` + count), the 5→1 star **breakdown map**, first page of approved reviews **with the «خریدار تأییدشده» verified-buyer badge (same one-query, no-N+1 rule)**, first page of answered questions, and 4 related products — the very same queries the Blade page runs
+- **Orders can be placed straight from the app**: `POST /orders` takes `items: [{slug, quantity}]` (duplicate slugs merge, just like the session cart), customer details with the same validation messages as the web checkout, payment method and an optional `coupon_code`; the entire placement runs through the **new shared `PlaceOrder` service** — the web `CheckoutController` was refactored to use it too, so «یک قانون، همه جا» now literally means one service: final stock re-validation, row-locked coupon redemption, price/title snapshots, stock decrement and the mail/SMS notification all behave identically on both surfaces
+- **`payment_url` for online orders**: a ZarinPal order answers with the payment start URL so the app can hand off to a WebView; order responses carry raw values for logic (`status`, `total`) **and** ready-made Persian labels for display (`status_label`, `total_fa`) — no client-side mapping tables needed
+- **Reading and writing the social layer**: `GET /products/{slug}/reviews` and `GET /products/{slug}/questions` (paginated, verified badges included); the `POST` endpoints enforce the same rules as the web — one review per user/product (422 on repeats), reviews start «در انتظار تأیید», questions start «در انتظار پاسخ», `throttle:5,1` anti-spam
+- **Wishlist endpoints are idempotent by design**: `POST /wishlist/{slug}` and `DELETE /wishlist/{slug}` always return the final state — a retry after a flaky connection can never error; `GET /wishlist` reuses the same active-only, newest-first rule as the web page, and every product response for a logged-in token carries `is_in_wishlist` (computed in **one query per page**, no N+1)
+- **Order history & cancellation**: `GET /orders` (10 per page, newest first), `GET /orders/{order_number}` and `POST /orders/{order_number}/cancel` — ownership is enforced with 404s (an order number that isn't yours doesn't exist for you), cancellation follows the same pending+unpaid rule with atomic restock
+- **Guardrails**: the whole API group runs at **60 req/min** per token (per IP for guests) via `throttle:api`; login/register attempts are limited to 10/min; validation failures return the standard Laravel 422 shape; the existing `StockUnavailableException` JSON branch answers `409` with the Persian message; slug patterns reuse the web's `[a-z0-9-]+` anti-injection constraint
+- Housekeeping: `laravel/sanctum` ^4.3 added (one migration — `personal_access_tokens`, picked up by `shop:install` automatically); `symfony/mime` bumped past CVE-2026-45070 (composer audit clean); `fa_price()` now uses the Persian thousands separator «٬» instead of a Latin comma — `۲٬۰۰۰٬۰۰۰` everywhere, web and API alike
+- 48 new tests across 5 API suites (ApiAuthTest, ApiCatalogTest, ApiWishlistTest, ApiReviewQuestionTest, ApiOrderTest): register/login/logout flows, wrong-password message consistency, single-device token revocation, me guards, pagination meta, all filters + Persian-digit price parsing, inactive 404s, one-call detail shape, verified badges, wishlist idempotency, ownership isolation, direct orders with coupon math, 409 stock conflicts, restock on cancel, forbidden cancels, email delivery — **264 tests total, 990 assertions**
 
 ## [2.11.0] — 2026-10-30
 
@@ -221,6 +238,23 @@ All notable changes to this project are documented in this file.
 ---
 
 ## 🇮🇷 فارسی
+
+## [2.12.0] — ۲۰۲۶-۱۰-۳۰
+
+### 📡 افزوده شد — REST API نسخهٔ ۱ (Sanctum، آمادهٔ موبایل)
+
+- فروشگاه حالا از **اپلیکیشن موبایل یا هر کلاینت بیرونی** قابل مرور و خرید است: یک REST API کامل زیر `/api/v1` — ۱۸ نقطهٔ اتصال شامل احراز هویت، کاتالوگ، نظرات، پرسش‌ها، علاقه‌مندی‌ها و سفارش‌ها، با توکن دسترسی شخصی **Laravel Sanctum** (`Authorization: Bearer …`)؛ بدون سشن و کوکی — جریان سشن خودِ وب دست‌نخورده ماند
+- **توکنی که مثل گوشی رفتار می‌کند**: `POST /auth/register` و `POST /auth/login` توکنی به نام `device_name` اختیاری صادر می‌کنند (پیش‌فرض «api»)؛ `POST /auth/logout` **فقط توکن همین دستگاه** را باطل می‌کند — خروج از گوشی، تبلت را لاگین نگه می‌دارد؛ پیام خطای ورود عمداً کلی است («اطلاعات ورود نادرست است») تا پاسخ لو ندهد ایمیل وجود دارد یا نه؛ توکن‌ها هش‌شده ذخیره می‌شوند نه متنی
+- **کل کاتالوگ، با همان قواعد وب**: `GET /products` دقیقاً همان `ProductFilterRequest` ویترین را اجرا می‌کند — جستجو، دسته، بازهٔ قیمت (ارقام فارسی «۵۰۰٬۰۰۰» و جداکنندهٔ هزارگان مثل فرم وب نرمال می‌شوند)، فیلتر موجودی و هر پنج ترتیب از جمله پرفروش‌ترین (`withSum`)؛ `GET /categories` فقط دسته‌های دارای محصول فعال را با شمارنده می‌دهد
+- **`GET /products/{slug}` کل صفحهٔ محصول موبایل را در یک فراخوانی پر می‌کند**: گالری، دسته، خلاصهٔ امتیاز (`average` + `average_fa` فارسی + تعداد)، **نقشهٔ تفکیک ستاره‌های ۵→۱**، اولین صفحهٔ نظرات تأییدشده **با نشان «خریدار تأییدشده» (همان قاعدهٔ یک‌کوئری، بدون N+1)**، اولین صفحهٔ پرسش‌های پاسخ‌داده و ۴ محصول مشابه — همان کوئری‌هایی که صفحهٔ Blade اجرا می‌کند
+- **سفارش مستقیم از اپ**: `POST /orders` با `items: [{slug, quantity}]` (اسلاگ تکراری ادغام می‌شود، درست مثل سبد سشن)، اطلاعات مشتری با همان پیام‌های اعتبارسنجی فرم خرید وب، روش پرداخت و `coupon_code` اختیاری؛ کل ثبت سفارش از **سرویس مشترک جدید `PlaceOrder`** می‌گذرد — `CheckoutController` وب هم برای استفاده از آن بازآرایی شد؛ پس «یک قانون، همه جا» حالا یعنی واقعاً یک سرویس: اعتبارسنجی نهایی موجودی، نقد کردن کوپن با قفل ردیف، اسنپ‌شات قیمت/عنوان، کاهش انبار و اطلاع‌رسانی ایمیل/پیامک روی هر دو سطح یکسان است
+- **`payment_url` برای سفارش آنلاین**: سفارش زرین‌پال، لینک شروع پرداخت را برمی‌گرداند تا اپ آن را به یک WebView بسپارد؛ پاسخ سفارش هم مقدار خام برای منطق دارد (`status`, `total`) **هم** برچسب فارسی آمادهٔ نمایش (`status_label`, `total_fa`) — دیگر جدول نگاشت سمت کلاینت لازم نیست
+- **خواندن و نوشتن لایهٔ اجتماعی**: `GET /products/{slug}/reviews` و `GET /products/{slug}/questions` (صفحه‌بندی‌شده، با نشان خریدار تأییدشده)؛ نسخه‌های `POST` همان قواعد وب را دارند — یک نظر برای هر کاربر/محصول (تکرار = 422)، نظرها «در انتظار تأیید» شروع می‌شوند، پرسش‌ها «در انتظار پاسخ»، ضداسپم `throttle:5,1`
+- **نقاط اتصال علاقه‌مندی idempotent طراحی شده‌اند**: `POST /wishlist/{slug}` و `DELETE /wishlist/{slug}` همیشه وضعیت نهایی را برمی‌گردانند — تلاش دوباره بعد از قطع اینترنت هرگز خطا نمی‌دهد؛ `GET /wishlist` همان قاعدهٔ فقط-فعال و جدیدترین-اول صفحهٔ وب را دارد و هر پاسخ محصول برای توکن لاگین‌شده `is_in_wishlist` را دارد (**یک کوئری برای کل صفحه**، بدون N+1)
+- **تاریخچه و لغو سفارش**: `GET /orders` (۱۰تایی، جدیدترین اول)، `GET /orders/{order_number}` و `POST /orders/{order_number}/cancel` — مالکیت با 404 اعمال می‌شود (شمارهٔ سفارشی که مال شما نیست برای شما وجود ندارد)، لغو هم همان قاعدهٔ در-انتظار+پرداخت‌نشده با بازگشت اتمیک موجودی است
+- **حفاظت‌ها**: کل گروه API با **۶۰ درخواست در دقیقه** برای هر توکن (مهمان: هر IP) با `throttle:api`؛ تلاش ورود/ثبت‌نام ۱۰ در دقیقه؛ خطای اعتبارسنجی همان شکل استاندارد 422 لاراول؛ شاخهٔ JSON موجودِ `StockUnavailableException` با پیام فارسی `409` جواب می‌دهد؛ الگوی اسلاگ همان قید ضدتزریق `[a-z0-9-]+` وب است
+- کارهای جانبی: `laravel/sanctum` نسخهٔ ^4.3 اضافه شد (یک مایگریشن — `personal_access_tokens` — که `shop:install` خودش اجرا می‌کند)؛ `symfony/mime` از CVE-2026-45070 عبور داده شد (composer audit پاک)؛ `fa_price()` حالا جداکنندهٔ هزارگان فارسی «٬» می‌گذارد نه کامای لاتین — `۲٬۰۰۰٬۰۰۰` همه‌جا (وب و API)
+- ۴۸ تست جدید در ۵ مجموعهٔ API (ApiAuthTest و ApiCatalogTest و ApiWishlistTest و ApiReviewQuestionTest و ApiOrderTest): جریان‌های ثبت‌نام/ورود/خروج، یکسانی پیام رمز غلط، باطل‌کردن توکن تک‌دستگاه، گاردهای me، متای صفحه‌بندی، همهٔ فیلترها + پارس قیمت با ارقام فارسی، 404 غیرفعال، شکل پاسخ جزئیات یک‌فراخوانی، نشان‌های خریدار تأییدشده، idempotency علاقه‌مندی، جداسازی مالکیت، سفارش مستقیم با محاسبهٔ کوپن، تعارض 409 موجودی، بازگشت موجودی هنگام لغو، لغوهای ممنوع، ارسال ایمیل — **جمع ۲۶۴ تست، ۹۹۰ ادعا**
 
 ## [2.11.0] — ۲۰۲۶-۱۰-۳۰
 

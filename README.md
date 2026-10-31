@@ -49,6 +49,10 @@ A complete online shop with admin panel, shopping cart, ZarinPal online payment 
 |:---:|:---:|
 | ![Coupon](screenshots/04-cart-coupon.png) | ![Admin Coupons](screenshots/admin-coupons.png) |
 
+| REST API (Sanctum) |
+|:---:|
+| ![API](screenshots/16-api-json.png) |
+
 </div>
 
 ## 🌐 Live Preview (GitHub Pages)
@@ -61,6 +65,7 @@ It replicates the home page (hero, categories, product cards) with the real samp
 
 ## ✨ Features
 
+- 📡 **REST API v1 (Sanctum, mobile-ready)** — the whole store behind 18 token-authenticated endpoints under `/api/v1`: register/login/logout (per-device tokens), catalog with the same filters as the storefront (Persian-digit price ranges included), one-call product detail (gallery + rating breakdown + verified-badge reviews + answered questions + related), **direct order placement with coupons** through the same `PlaceOrder` service as the web checkout, order history/cancel, idempotent wishlist and review/question submission — 60 req/min rate limit, standard 422/401/409 responses
 - 💳 **Online Payment (ZarinPal)** — full payment-gateway integration (ZarinPal v4 API) with server-side verification, retry-on-failure, plus Cash-on-Delivery option; ships with a local **mock gateway** so you can test the whole payment flow without a merchant account
 - 👤 **Customer Accounts** — registration/login, personal dashboard with purchase stats, full order history and order tracking timeline; guests can still checkout
 - 🚚 **Guest Order Tracking** — a public `/track` page where customers follow their order with just the order number + the mobile number used at checkout; same 4-step timeline, payment status and payment retry — rate-limited, uniform errors (anti-enumeration) and a minimum-data result page
@@ -80,6 +85,49 @@ It replicates the home page (hero, categories, product cards) with the real samp
 - 🌐 **Persian-first** — RTL layout, Vazirmatn font, Persian digits (۰۱۲۳۴۵۶۷۸۹), Toman currency
 - 🌙 **Dark Modern UI** — neon violet theme built on Bootstrap 5 RTL
 - 🔐 **Security Hardened** — CSRF protection, rate-limited login, XSS-safe templating, mass-assignment protection, security headers, atomic payments
+
+## 📡 REST API v1 (Mobile-Ready)
+
+All endpoints live under `/api/v1` and return JSON. Authenticate with a Sanctum token: send `Authorization: Bearer <token>` (get one from login/register). Rate limit: 60 req/min per token.
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/auth/register` | — | Create account + token (`device_name` optional) |
+| POST | `/auth/login` | — | Issue token (generic error message, 10/min) |
+| GET | `/auth/me` | ✅ | Current profile |
+| POST | `/auth/logout` | ✅ | Revoke **current device's token only** |
+| GET | `/categories` | — | Categories with active-product counts |
+| GET | `/products` | — | Same filters as the shop: `q`, `category`, `min`, `max` (Persian digits OK), `in_stock`, `sort` (incl. `popular`) |
+| GET | `/products/{slug}` | — | One-call product screen: gallery, rating summary + 5→1 breakdown, reviews + questions (first page, verified badges), 4 related |
+| GET | `/products/{slug}/reviews` | — | Approved reviews, paginated (10/page) |
+| POST | `/products/{slug}/reviews` | ✅ | Submit review (starts pending; one per user/product) |
+| GET | `/products/{slug}/questions` | — | Answered questions, paginated (10/page) |
+| POST | `/products/{slug}/questions` | ✅ | Ask a question (starts pending) |
+| GET | `/wishlist` | ✅ | Saved products (active only, newest first, 12/page) |
+| POST | `/wishlist/{slug}` | ✅ | Add (idempotent) |
+| DELETE | `/wishlist/{slug}` | ✅ | Remove (idempotent) |
+| GET | `/orders` | ✅ | My orders (10/page, newest first) |
+| POST | `/orders` | ✅ | **Place an order directly** — `items[{slug,quantity}]`, customer fields, `payment_method`, `coupon_code`; ZarinPal orders return `payment_url` |
+| GET | `/orders/{order_number}` | ✅ | Order details (own orders only → 404) |
+| POST | `/orders/{order_number}/cancel` | ✅ | Cancel a pending unpaid order (atomic restock) |
+
+```bash
+# Login and grab a token
+curl -s -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Accept: application/json" -H "Content-Type: application/json" \
+  -d '{"email":"you@example.com","password":"secret","device_name":"Pixel 8"}'
+
+# Place an order from the app, with a coupon
+curl -s -X POST http://localhost:8000/api/v1/orders \
+  -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{"items":[{"slug":"network-switch","quantity":1}],
+       "customer_name":"سارا محمدی","customer_phone":"09123456789",
+       "customer_address":"تهران، خیابان ولیعصر، پلاک ۱۲",
+       "payment_method":"cod","coupon_code":"WELCOME10"}'
+```
+
+Order responses carry raw values for your app logic (`status`, `total`) **and** ready-made Persian labels for display (`status_label`, `total_fa`) — plus `payment_url` for online orders (open it in a WebView).
 
 ## 🚀 Quick Start (SQLite — zero config)
 
@@ -192,7 +240,7 @@ README.md / README.fa.md   # English | فارسی
 ## 🧪 Tests & CI
 
 ```bash
-php artisan test        # 216 feature tests
+php artisan test        # 264 feature tests
 vendor/bin/pint --test  # code style
 ```
 
@@ -214,6 +262,7 @@ Every `push` and `pull request` runs the full test matrix automatically on GitHu
 - [x] Product reviews & ratings (verified-buyer badge, moderation workflow, rating summary + breakdown)
 - [x] Customer wishlist (heart toggle, /wishlist page, live navbar badge)
 - [x] Product Q&A (ask on the product page, admin answer workflow, answer email)
+- [x] REST API v1 with Sanctum (mobile-ready: token auth, catalog, direct orders, wishlist, reviews, questions)
 
 ## 🤝 Contributing
 

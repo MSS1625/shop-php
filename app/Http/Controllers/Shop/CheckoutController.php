@@ -2,22 +2,19 @@
 
 namespace App\Http\Controllers\Shop;
 
-use App\Contracts\OrderNotifier;
-use App\Exceptions\StockUnavailableException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CheckoutRequest;
-use App\Models\Coupon;
 use App\Models\Order;
 use App\Services\Cart;
+use App\Services\PlaceOrder;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\DB;
 
 class CheckoutController extends Controller
 {
     public function __construct(
         protected Cart $cart,
-        protected OrderNotifier $notifier,
+        protected PlaceOrder $placeOrder,
     ) {}
 
     /**
@@ -62,78 +59,25 @@ class CheckoutController extends Controller
                 ->with('error', 'کد تخفیف «'.$sessionCoupon->code.'» دیگر برای این سبد معتبر نیست: '.$reason);
         }
 
-        $droppedCouponCode = null;
+        // ثبت سفارش — منطق مشترک وب و API (PlaceOrder)
+        $result = $this->placeOrder->handle($items, [
+            'user_id' => auth()->id(),
+            'customer_name' => trim($request->validated('customer_name')),
+            'customer_phone' => $request->validated('customer_phone'),
+            'customer_email' => strtolower(trim((string) $request->validated('customer_email'))) ?: null,
+            'customer_address' => trim($request->validated('customer_address')),
+            'note' => $request->validated('note'),
+            'payment_method' => $request->paymentMethod(),
+        ], $sessionCoupon);
 
-        $order = DB::transaction(function () use ($request, $items, $subtotal, $sessionCoupon, &$droppedCouponCode) {
-            // اعتبارسنجی نهایی موجودی انبار قبل از ثبت
-            foreach ($items as $item) {
-                $fresh = $item['product']->fresh();
-
-                if (! $fresh || ! $fresh->is_active || $fresh->stock < $item['quantity']) {
-                    throw new StockUnavailableException(
-                        'موجودی «'.$item['product']->title.'» کافی نیست. سبد خود را بروزرسانی کنید.'
-                    );
-                }
-            }
-
-            // کوپن دوباره با قفل ردیف اعتبارسنجی می‌شود (ضد رقابت روی سقف مصرف)
-            $discount = 0;
-            $couponCode = null;
-
-            if ($sessionCoupon) {
-                $locked = Coupon::whereKey($sessionCoupon->getKey())->lockForUpdate()->first();
-
-                if ($locked && $locked->isValidFor($subtotal)) {
-                    $discount = $locked->discountFor($subtotal);
-                    $couponCode = $locked->code;
-                    $locked->increment('used_count');
-                } else {
-                    // پنجره میلی‌ثانیه‌ای بین دو اعتبارسنجی — سفارش بدون تخفیف ثبت می‌شود
-                    $droppedCouponCode = $sessionCoupon->code;
-                }
-            }
-
-            $order = Order::create([
-                'order_number' => Order::generateOrderNumber(),
-                'user_id' => auth()->id(),
-                'customer_name' => trim($request->validated('customer_name')),
-                'customer_phone' => $request->validated('customer_phone'),
-                'customer_email' => strtolower(trim((string) $request->validated('customer_email'))) ?: null,
-                'customer_address' => trim($request->validated('customer_address')),
-                'note' => $request->validated('note'),
-                'subtotal' => $subtotal,
-                'discount_amount' => $discount,
-                'coupon_code' => $couponCode,
-                'total' => max(0, $subtotal - $discount),
-                'status' => Order::STATUS_PENDING,
-                'payment_method' => $request->paymentMethod(),
-                'payment_status' => Order::PAYMENT_PENDING,
-            ]);
-
-            foreach ($items as $item) {
-                $order->items()->create([
-                    'product_id' => $item['product']->id,
-                    'product_title' => $item['product']->title,
-                    'unit_price' => $item['product']->price,
-                    'quantity' => $item['quantity'],
-                ]);
-
-                // کاهش موجودی انبار
-                $item['product']->decrement('stock', $item['quantity']);
-            }
-
-            return $order;
-        });
+        $order = $result['order'];
 
         $this->cart->clear();
 
-        // اطلاع‌رسانی ثبت سفارش — خارج از تراکنش و هرگز مانع ثبت نمی‌شود
-        $this->notifier->orderPlaced($order);
-
-        if ($droppedCouponCode !== null) {
+        if ($result['droppedCouponCode'] !== null) {
             session()->flash(
                 'warning',
-                'کد تخفیف «'.$droppedCouponCode.'» در لحظه پایانی معتبر نبود و سفارش بدون تخفیف ثبت شد.'
+                'کد تخفیف «'.$result['droppedCouponCode'].'» در لحظه پایانی معتبر نبود و سفارش بدون تخفیف ثبت شد.'
             );
         }
 
