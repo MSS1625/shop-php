@@ -153,6 +153,60 @@
             });
     });
 
+    /* ---------- مقایسهٔ محصولات ---------- */
+
+    function updateCompareCount(count) {
+        const el = document.querySelector('#dsCompareCount');
+
+        if (el) {
+            el.textContent = count.toLocaleString('fa-IR');
+            el.style.display = count > 0 ? 'grid' : 'none';
+        }
+    }
+
+    // ترازو روی کارت‌ها و صفحهٔ جزئیات — افزودن/حذف بدون رفرش؛
+    // بدون جاوااسکریپت همان فرم به‌صورت عادی سابمیت می‌شود (PRG)
+    document.addEventListener('submit', function (e) {
+        const form = e.target.closest('form[data-compare-toggle]');
+        if (!form) return;
+
+        e.preventDefault();
+
+        const btn = form.querySelector('.ds-compare-btn, .ds-compare-remove');
+        if (btn) btn.disabled = true;
+
+        post(form.getAttribute('action'))
+            .then((res) => {
+                if (!res.success) {
+                    dsToast(res.message || 'خطایی رخ داد.', 'error');
+                    return;
+                }
+
+                const slug = form.dataset.compareProduct;
+                const active = res.inCompare;
+
+                // همهٔ ترازوهای همین محصول در صفحه با هم می‌چرخند
+                document.querySelectorAll(`[data-compare-product="${slug}"]`).forEach((f) => {
+                    const b = f.querySelector('.ds-compare-btn');
+                    if (!b) return;
+
+                    b.classList.toggle('active', active);
+                });
+
+                updateCompareCount(res.count);
+                dsToast(res.message, res.full ? 'error' : 'success');
+
+                // روی خود صفحهٔ مقایسه، حذف یعنی رفتن ستون — جدول باید دوباره چیده شود
+                if (document.querySelector('[data-compare-page]') && !active) {
+                    setTimeout(() => window.location.reload(), 300);
+                }
+            })
+            .catch(() => dsToast('ارتباط با سرور برقرار نشد.', 'error'))
+            .finally(() => {
+                if (btn) btn.disabled = false;
+            });
+    });
+
     /* ---------- انتخاب تعداد (جزئیات محصول) ---------- */
 
     document.querySelectorAll('[data-qty]').forEach((group) => {

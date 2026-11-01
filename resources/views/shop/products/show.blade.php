@@ -113,6 +113,7 @@
                             </button>
 
                             @include('shop.partials.wishlist-button', ['big' => true])
+                            @include('shop.partials.compare-button', ['big' => true])
                         </div>
                     @else
                         <div class="d-flex align-items-center gap-3 flex-wrap">
@@ -121,6 +122,7 @@
                             </button>
 
                             @include('shop.partials.wishlist-button', ['big' => true])
+                            @include('shop.partials.compare-button', ['big' => true])
                         </div>
                     @endif
                 </div>

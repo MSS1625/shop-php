@@ -32,7 +32,9 @@ if (! function_exists('en_num')) {
 
 if (! function_exists('fa_price')) {
     /**
-     * قیمت با جداکننده هزارگان + ارقام فارسی — ۲٬۰۰۰٬۰۰۰
+     * قیمت با جداکننده هزارگان فارسی + ارقام فارسی — ۲٬۰۰۰٬۰۰۰
+     * (number_format کامای لاتین می‌گذارد؛ با یک str_replace جداکنندهٔ
+     * فارسی ٬ جایگزین می‌شود تا متن فارسی یکدست بماند)
      */
     function fa_price(int|string|null $toman): string
     {
@@ -40,6 +42,6 @@ if (! function_exists('fa_price')) {
             return '۰';
         }
 
-        return fa_num(number_format((int) $toman));
+        return str_replace(',', '٬', fa_num(number_format((int) $toman)));
     }
 }
