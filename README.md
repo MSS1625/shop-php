@@ -53,9 +53,9 @@ A complete online shop with admin panel, shopping cart, ZarinPal online payment 
 |:---:|:---:|
 | ![Compare](screenshots/17-compare.png) | |
 
-| REST API (Sanctum) |
-|:---:|
-| ![API](screenshots/16-api-json.png) |
+| REST API (Sanctum) | Admin API Tokens |
+|:---:|:---:|
+| ![API](screenshots/16-api-json.png) | ![Tokens](screenshots/18-admin-tokens.png) |
 
 </div>
 
@@ -70,6 +70,7 @@ It replicates the home page (hero, categories, product cards) with the real samp
 ## ✨ Features
 
 - 📡 **REST API v1 (Sanctum, mobile-ready)** — the whole store behind 18 token-authenticated endpoints under `/api/v1`: register/login/logout (per-device tokens), catalog with the same filters as the storefront (Persian-digit price ranges included), one-call product detail (gallery + rating breakdown + verified-badge reviews + answered questions + related), **direct order placement with coupons** through the same `PlaceOrder` service as the web checkout, order history/cancel, idempotent wishlist and review/question submission — 60 req/min rate limit, standard 422/401/409 responses
+- 🔑 **Admin API Token Management** — every token in one table on `/admin/tokens`: owner (blue «مدیر» badge, «کاربر حذف‌شده» for orphans), device, issue date, last use («هرگز» badge) and expiry (red «منقضی‌شده»); **issue tokens from the panel** (user + device name + lifetime of no-expiry/7/30/90 days — Sanctum enforces the expiry at auth time), the plain token appears **exactly once** in a copyable modal and the DB keeps only the hash; **one-click revoke** with confirm dialog; tabs «همه / بدون استفاده / منقضی‌شده» point at the cleanup candidates
 - 💳 **Online Payment (ZarinPal)** — full payment-gateway integration (ZarinPal v4 API) with server-side verification, retry-on-failure, plus Cash-on-Delivery option; ships with a local **mock gateway** so you can test the whole payment flow without a merchant account
 - 👤 **Customer Accounts** — registration/login, personal dashboard with purchase stats, full order history and order tracking timeline; guests can still checkout
 - 🚚 **Guest Order Tracking** — a public `/track` page where customers follow their order with just the order number + the mobile number used at checkout; same 4-step timeline, payment status and payment retry — rate-limited, uniform errors (anti-enumeration) and a minimum-data result page
@@ -246,7 +247,7 @@ README.md / README.fa.md   # English | فارسی
 ## 🧪 Tests & CI
 
 ```bash
-php artisan test        # 283 feature tests
+php artisan test        # 297 feature tests
 vendor/bin/pint --test  # code style
 ```
 
@@ -270,6 +271,7 @@ Every `push` and `pull request` runs the full test matrix automatically on GitHu
 - [x] Product comparison (session list up to 4, /compare table with best-price badge, guest-friendly)
 - [x] Product Q&A (ask on the product page, admin answer workflow, answer email)
 - [x] REST API v1 with Sanctum (mobile-ready: token auth, catalog, direct orders, wishlist, reviews, questions)
+- [x] Admin API token management (issue from the panel with one-time display, audit table, one-click revoke)
 
 ## 🤝 Contributing
 

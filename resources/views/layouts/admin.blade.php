@@ -66,6 +66,10 @@
             @endif
         </a>
 
+        <a class="ds-nav-link {{ request()->routeIs('admin.tokens.*') ? 'active' : '' }}" href="{{ route('admin.tokens.index') }}">
+            <i class="fa-solid fa-key"></i> توکن‌های API
+        </a>
+
         <hr class="border-secondary-subtle mx-2">
 
         <a class="ds-nav-link" href="{{ route('shop.home') }}">
