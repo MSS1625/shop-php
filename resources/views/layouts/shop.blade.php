@@ -62,6 +62,14 @@
             </form>
 
             <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+                <a href="{{ route('compare.index') }}"
+                   class="ds-cart-btn" title="مقایسهٔ محصولات" aria-label="مقایسهٔ محصولات">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                    <span class="ds-cart-count" id="dsCompareCount"@if(($compareCount ?? 0) === 0) style="display:none"@endif>
+                        {{ fa_num($compareCount ?? 0) }}
+                    </span>
+                </a>
+
                 <a href="{{ auth()->check() ? route('wishlist.index') : route('login') }}"
                    class="ds-cart-btn" title="علاقه‌مندی‌ها" aria-label="علاقه‌مندی‌ها">
                     <i class="{{ ($wishlistCount ?? 0) > 0 ? 'fa-solid' : 'fa-regular' }} fa-heart" data-nav-wish-icon></i>

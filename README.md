@@ -49,6 +49,10 @@ A complete online shop with admin panel, shopping cart, ZarinPal online payment 
 |:---:|:---:|
 | ![Coupon](screenshots/04-cart-coupon.png) | ![Admin Coupons](screenshots/admin-coupons.png) |
 
+| Product Comparison | |
+|:---:|:---:|
+| ![Compare](screenshots/17-compare.png) | |
+
 | REST API (Sanctum) |
 |:---:|
 | ![API](screenshots/16-api-json.png) |
@@ -71,6 +75,7 @@ It replicates the home page (hero, categories, product cards) with the real samp
 - 🚚 **Guest Order Tracking** — a public `/track` page where customers follow their order with just the order number + the mobile number used at checkout; same 4-step timeline, payment status and payment retry — rate-limited, uniform errors (anti-enumeration) and a minimum-data result page
 - 🛒 **Full Shopping Cart** — session-based cart with AJAX add/update/remove
 - ❤️ **Wishlist** — one click on the heart saves a product for later (card corner + product page); a second click removes it — Ajax flip with a live navbar counter, PRG fallback without JavaScript, a dedicated `/wishlist` page (newest first, 12 per page) and one row per user/product backed by a DB unique constraint
+- ⚖️ **Product Comparison** — a session-based compare list capped at 4 products, so guests can compare without an account: one click on the scale (card corner, product page, or the navbar badge) and `/compare` lines them up side by side — price, category, stock, rating and answered questions in one table, with the cheapest column highlighted by a green **«بهترین قیمت»** badge; aggregates run in one query (no N+1), the table keeps insertion order, a deactivated product silently drops out and the session heals itself, and a 5th product is refused with a friendly cap warning
 - ❓ **Product Q&A** — customers ask questions right on the product page; questions stay private until an admin answers them from the `/admin/questions` panel (answer box right inside the table row), then go public with «پاسخ دیجی‌شاپ» branding and the same verified-buyer badge as reviews — plus a «پاسخ پرسش شما» email to the asker, sent once (edits are silent) and never breaking on SMTP failure
 - 📦 **Order Management** — checkout flow, order tracking, status workflow (pending → processing → shipped → delivered / cancelled), automatic stock adjustment, customer-initiated cancellation with stock restore
 - 🔍 **Search, Filter & Sort** — live product search, category filters, **price-range and in-stock filters** (Persian-digit friendly, backwards ranges are silently swapped), **best-selling sort** (cancelled orders excluded), price sorting, pagination — and related products on the detail page always show in-stock items first
@@ -228,6 +233,7 @@ app/
 ├── Models/                # Product, Category, Order, OrderItem, User
 ├── Services/
 │   ├── Cart.php           # سرویس سبد خرید مبتنی بر سشن
+│   ├── Compare.php        # سرویس مقایسهٔ محصولات (سشن، سقف ۴)
 │   └── Payments/          # ZarinPalGateway, MockGateway
 database/seeders/images/   # تصاویر نمونه محصولات
 docs/                      # صفحه دموی ایستا برای GitHub Pages
@@ -240,7 +246,7 @@ README.md / README.fa.md   # English | فارسی
 ## 🧪 Tests & CI
 
 ```bash
-php artisan test        # 264 feature tests
+php artisan test        # 283 feature tests
 vendor/bin/pint --test  # code style
 ```
 
@@ -261,6 +267,7 @@ Every `push` and `pull request` runs the full test matrix automatically on GitHu
 - [x] Smart product discovery (price range, in-stock filter, best-selling sort, related-products upgrade)
 - [x] Product reviews & ratings (verified-buyer badge, moderation workflow, rating summary + breakdown)
 - [x] Customer wishlist (heart toggle, /wishlist page, live navbar badge)
+- [x] Product comparison (session list up to 4, /compare table with best-price badge, guest-friendly)
 - [x] Product Q&A (ask on the product page, admin answer workflow, answer email)
 - [x] REST API v1 with Sanctum (mobile-ready: token auth, catalog, direct orders, wishlist, reviews, questions)
 

@@ -13,6 +13,9 @@
         {{-- قلب علاقه‌مندی روی گوشهٔ تصویر — مهمان: لینک ورود --}}
         @include('shop.partials.wishlist-button')
 
+        {{-- ترازوی مقایسه روی گوشهٔ مقابل تصویر — مهمان هم می‌تواند (سشن) --}}
+        @include('shop.partials.compare-button')
+
         <div class="ds-product-body">
             @if($product->category)
                 <span class="ds-product-cat">{{ $product->category->name }}</span>

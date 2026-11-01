@@ -1,31 +1,30 @@
-# 📡 v2.12.0 — REST API v1 (Sanctum, Mobile-Ready)
+# ⚖️ v2.13.0 — مقایسهٔ محصولات (Product Comparison)
 
 <div dir="rtl" align="center">
 
 **دیجی‌شاپ** — فروشگاه آنلاین تجهیزات شبکه | **Digi-Shop** — Online network-equipment store
-Laravel 12 · PHP 8.2+ · Sanctum 4 · Bootstrap 5 RTL · MIT License
+Laravel 12 · PHP 8.2+ · Bootstrap 5 RTL · MIT License
 
 </div>
 
 ## 🇬🇧 English
 
-### 📡 New — REST API v1, authenticated with Sanctum tokens
+### ⚖️ New — Compare up to 4 products side by side
 
-- The whole store is now available **to a mobile app or any external client**: 18 endpoints under `/api/v1` — auth, catalog, reviews, questions, wishlist and orders — authenticated with **Laravel Sanctum personal access tokens** (`Authorization: Bearer …`); the web shop keeps its session flow untouched
-- **Token auth that behaves like a phone**: `POST /auth/login` names the token after your `device_name`; `POST /auth/logout` revokes **only the current device's token** — sign out on the phone, stay logged in on the tablet; login errors are deliberately generic so the API never reveals whether an email exists; tokens are stored hashed
-- **The catalog with the same rules as the web**: `GET /products` runs the exact same filter request as the storefront — search, category, **price ranges typed in Persian digits (۵۰۰٬۰۰۰)**, in-stock filter and best-selling sort (`withSum`); `GET /products/{slug}` fills an entire product screen **in one call**: gallery, rating summary + 5→1 breakdown, first page of approved reviews **with verified-buyer badges (one query, no N+1)**, answered questions and 4 related products
-- **Orders placed straight from the app**: `POST /orders` takes `items: [{slug, quantity}]`, customer details, payment method and an optional `coupon_code` — everything runs through the **new shared `PlaceOrder` service** (the web checkout was refactored onto it too): final stock re-validation, row-locked coupon redemption, price snapshots, stock decrement and mail/SMS notifications behave identically on both surfaces; ZarinPal orders answer with a `payment_url` for WebView hand-off, and every response carries raw values (`status`, `total`) **plus** ready-made Persian labels (`status_label`, `total_fa`)
-- **The social layer, readable and writable**: paginated `GET` endpoints for reviews and questions (approved/answered only, verified badges included); `POST` endpoints enforce the web rules — one review per user/product, pending moderation on both, `throttle:5,1`
-- **Idempotent wishlist**: `POST` / `DELETE /wishlist/{slug}` always return the final state — a retry after a flaky connection never errors; product responses carry `is_in_wishlist` for logged-in tokens (one query per page)
-- **Guardrails**: 60 req/min per token (`throttle:api`), 10/min on login/register, standard 422 validation shape, `409` for stock conflicts with the Persian message, the same `[a-z0-9-]+` slug constraint as the web
-- Housekeeping: `laravel/sanctum` ^4.3 (one migration — `personal_access_tokens` — applied automatically by `shop:install`); `symfony/mime` bumped past **CVE-2026-45070** (composer audit clean); `fa_price()` now uses the Persian thousands separator «٬» — `۲٬۰۰۰٬۰۰۰` everywhere
-- 48 new tests across 5 API suites: auth flows, token revocation, filters + Persian-digit parsing, one-call detail shape, verified badges, wishlist idempotency, ownership isolation, direct orders with coupon math, 409 stock conflicts, restock on cancel, email delivery
+- Customers can now **line products up before they buy**: a session-based compare list capped at **4 products** (more columns than that and the table stops being readable) — and because it lives in the session like the cart, **guests can compare without an account**; no login wall between a visitor and a decision
+- **One click on the scale, everywhere the product appears**: the scale button sits on the corner of every product card (right under the wishlist heart), a big variant joins the price box on the product page, and the navbar gained a **compare icon with a live count badge** — the same instant-toggle Ajax pattern as the wishlist hearts (PRG fallback when JavaScript is off); the scale turns cyan while the product is in the list
+- **`/compare` — the comparison table**: one column per product, rows for price, category, stock, rating average + review count, answered-questions count and buy buttons; the cheapest column is highlighted green with a **«بهترین قیمت» (best price) badge**, so the money decision takes one glance
+- **One query for the whole table, no N+1**: rating aggregates come from `withRating()` and answered questions from a `withCount` subquery — the same one-query patterns the product cards and the admin dashboard already use
+- **The table keeps your order**: columns follow **insertion order** (the order you added the products, not their IDs) — preserved through the session and re-applied after the aggregate query, so the page reads like your own shortlist
+- **A list that heals itself**: deactivate or delete a product and it silently drops from the table **while the same request rewrites the session** — the navbar badge never counts a product the store no longer shows
+- **Guardrails**: a 5th product is refused with a friendly warning flash and, for Ajax callers, a `full` flag in the JSON; inactive products 404 on toggle; `POST /compare/clear` empties the whole list; the `/compare/clear` route is registered before the slug route so the two can never collide
+- Mobile-ready: the table scrolls horizontally inside `table-responsive` (640px floor) instead of squashing the columns; the empty state matches the wishlist page's tone and points to the catalog
 
 ### 📊 Numbers
 
-- **264 feature tests** (990 assertions) — all green; code style: Pint clean
-- One new migration (`personal_access_tokens`) — `php artisan shop:install` or plain `migrate` handles it; zero config changes
-- 18 new API endpoints under `/api/v1`; 1 new shared service (`PlaceOrder`); 7 API resources; 5 new feature-test suites
+- **283 feature tests** (1086 assertions) — all green; code style: Pint clean
+- **Zero migrations, zero config changes** — apply the zip and you're done; `shop:install` has nothing new to run
+- 1 new service (`Compare`, session-based, `MAX = 4`); 1 new controller (`CompareController`); 3 new routes (`/compare`, `/compare/{slug}`, `/compare/clear`); 19 new tests in `CompareTest`
 
 <details>
 <summary>Quick start (unchanged)</summary>
@@ -43,30 +42,35 @@ php artisan serve            # → http://localhost:8000
 <details>
 <summary>Seeing it in action</summary>
 
+Open **http://localhost:8000/products** and click the **scale icon** on the corner of
+any product card — the scale turns cyan and the navbar badge jumps to «۱».
+Add three more (try the cheapest and the most expensive in a category), then open
+**http://localhost:8000/compare**:
+
+- the four products stand side by side: price, category, stock, rating, answered questions
+- the **cheapest column glows green with a «بهترین قیمت» badge**
+- try adding a 5th product — you get the cap warning («فهرست مقایسه پر است…»), not a broken table
+- remove one with its «حذف از فهرست» button — the column disappears without a full reload
+- everything above works **logged out**; compare is a session feature, like the cart
+
+Want the state without the UI? The toggle is a plain form — any HTTP client works:
+
 ```bash
-# Log in from your "app" and grab a token:
-curl -s -X POST http://localhost:8000/api/v1/auth/login \
-  -H "Accept: application/json" -H "Content-Type: application/json" \
-  -d '{"email":"you@example.com","password":"secret","device_name":"Pixel 8"}'
-# → {"message":"خوش آمدید!","data":{…},"token":"1|abc…"}
+CSRF=$(curl -s -c /tmp/c.txt http://localhost:8000/products \
+ | grep -oP 'csrf-token" content="\K[^"]+')
 
-# Browse the catalog — Persian digits work in price filters:
-curl -s "http://localhost:8000/api/v1/products?sort=popular&min=۵۰۰٬۰۰۰" \
-  -H "Accept: application/json"
+# add a product to the compare list (Ajax branch returns JSON):
+curl -s -b /tmp/c.txt -X POST http://localhost:8000/compare/fiber-optic-cable \
+  -H "X-Requested-With: XMLHttpRequest" -H "Accept: application/json" \
+  -H "X-CSRF-TOKEN: $CSRF"
+# → {"success":true,"inCompare":true,"full":false,"count":1,"message":"«کابل فیبر نوری» به فهرست مقایسه اضافه شد."}
 
-# Place an order straight from the app, with a coupon:
-curl -s -X POST http://localhost:8000/api/v1/orders \
-  -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" \
-  -H "Content-Type: application/json" \
-  -d '{"items":[{"slug":"network-switch","quantity":1}],
-       "customer_name":"سارا محمدی","customer_phone":"09123456789",
-       "customer_address":"تهران، خیابان ولیعصر، پلاک ۱۲",
-       "payment_method":"cod","coupon_code":"WELCOME10"}'
-# → 201 + order with status_label, total_fa and payment_url when online
+curl -s -b /tmp/c.txt http://localhost:8000/compare | grep -c ds-compare-table
+# → 1  (the table renders for this session)
 
-# Sign out on just this device — the tablet keeps working:
-curl -s -X POST http://localhost:8000/api/v1/auth/logout \
-  -H "Authorization: Bearer $TOKEN" -H "Accept: application/json"
+curl -s -b /tmp/c.txt -X POST http://localhost:8000/compare/clear \
+  -H "X-CSRF-TOKEN: $CSRF" -o /dev/null -w "%{http_code}\n"
+# → 302 (list emptied, PRG back to /compare)
 ```
 
 </details>
@@ -77,23 +81,22 @@ curl -s -X POST http://localhost:8000/api/v1/auth/logout \
 
 <div dir="rtl">
 
-### 📡 جدید — REST API نسخهٔ ۱ با توکن Sanctum
+### ⚖️ جدید — مقایسهٔ حداکثر ۴ محصول، کنار-به-کنار
 
-- کل فروشگاه حالا **در دسترس اپلیکیشن موبایل یا هر کلاینت بیرونی** است: ۱۸ نقطهٔ اتصال زیر `/api/v1` — احراز هویت، کاتالوگ، نظرات، پرسش‌ها، علاقه‌مندی‌ها و سفارش‌ها — با **توکن دسترسی شخصی Sanctum** (`Authorization: Bearer …`)؛ جریان سشن وب دست‌نخورده ماند
-- **توکنی که مثل گوشی رفتار می‌کند**: `POST /auth/login` توکن را به نام `device_name` شما ثبت می‌کند؛ `POST /auth/logout` **فقط توکن همین دستگاه** را باطل می‌کند — از گوشی خارج شوید، تبلت لاگین می‌ماند؛ پیام خطای ورود عمداً کلی است تا API لو ندهد ایمیل وجود دارد یا نه؛ توکن‌ها هش‌شده ذخیره می‌شوند
-- **کاتالوگ با همان قواعد وب**: `GET /products` همان فیلترهای ویترین را اجرا می‌کند — جستجو، دسته، **بازهٔ قیمت با ارقام فارسی (۵۰۰٬۰۰۰)**، فیلتر موجودی و پرفروش‌ترین (`withSum`)؛ `GET /products/{slug}` کل صفحهٔ محصول را **در یک فراخوانی** پر می‌کند: گالری، خلاصهٔ امتیاز + تفکیک ۵→۱، اولین صفحهٔ نظرات تأییدشده **با نشان خریدار تأییدشده (یک کوئری، بدون N+1)**، پرسش‌های پاسخ‌داده و ۴ محصول مشابه
-- **سفارش مستقیم از اپ**: `POST /orders` با `items`، اطلاعات مشتری، روش پرداخت و `coupon_code` اختیاری — همه‌چیز از **سرویس مشترک جدید `PlaceOrder`** می‌گذرد (فرم خرید وب هم روی آن بازآرایی شد): اعتبارسنجی نهایی موجودی، نقد کردن کوپن با قفل ردیف، اسنپ‌شات قیمت، کاهش انبار و اطلاع‌رسانی ایمیل/پیامک روی هر دو سطح یکی است؛ سفارش زرین‌پال `payment_url` برای WebView برمی‌گرداند و هر پاسخ هم مقدار خام دارد (`status`, `total`) **هم** برچسب فارسی آماده (`status_label`, `total_fa`)
-- **لایهٔ اجتماعی، خواندنی و نوشتنی**: `GET`های صفحه‌بندی‌شدهٔ نظرات و پرسش‌ها (فقط تأییدشده/پاسخ‌داده، با نشان خریدار)؛ `POST`ها همان قواعد وب را دارند — یک نظر برای هر کاربر/محصول، شروع در انتظار تأیید، `throttle:5,1`
-- **علاقه‌مندی idempotent**: `POST` / `DELETE /wishlist/{slug}` همیشه وضعیت نهایی را برمی‌گردانند — تلاش دوباره بعد از قطع اینترنت خطا نمی‌دهد؛ پاسخ محصولات برای توکن لاگین‌شده `is_in_wishlist` دارد (یک کوئری برای کل صفحه)
-- **حفاظت‌ها**: ۶۰ درخواست در دقیقه برای هر توکن (`throttle:api`)، ۱۰ در دقیقه برای ورود/ثبت‌نام، شکل استاندارد 422 برای اعتبارسنجی، `409` برای تعارض موجودی با پیام فارسی، همان قید اسلاگ `[a-z0-9-]+` وب
-- کارهای جانبی: `laravel/sanctum` نسخهٔ ^4.3 (یک مایگریشن — `personal_access_tokens` — که `shop:install` خودش اعمال می‌کند)؛ `symfony/mime` از **CVE-2026-45070** عبور داده شد (composer audit پاک)؛ `fa_price()` حالا جداکنندهٔ هزارگان فارسی «٬» می‌گذارد — `۲٬۰۰۰٬۰۰۰` همه‌جا
-- ۴۸ تست جدید در ۵ مجموعهٔ API: جریان‌های احراز هویت، باطل‌کردن توکن، فیلترها + پارس ارقام فارسی، شکل پاسخ یک‌فراخوانی، نشان‌های خریدار، idempotency علاقه‌مندی، جداسازی مالکیت، سفارش مستقیم با محاسبهٔ کوپن، تعارض 409، بازگشت موجودی هنگام لغو، ارسال ایمیل
+- مشتری حالا می‌تواند **قبل از خرید، محصولات را کنار هم بچیند**: فهرست مقایسهٔ مبتنی بر سشن با سقف **۴ محصول** (بیشتر از آن، جدول دیگر خوانا نمی‌ماند) — و چون مثل سبد خرید روی سشن زندگی می‌کند، **مهمان هم بدون حساب کاربری مقایسه می‌کند**؛ بین بازدیدکننده و تصمیمش دیواری نیست
+- **یک کلیک روی ترازو، همه‌جایی که محصول هست**: دکمهٔ ترازو گوشهٔ کارت هر محصول است (درست زیر قلب علاقه‌مندی)، نسخهٔ بزرگش به ردیف قیمتِ صفحهٔ محصول می‌پیوندد و ناوبار **آیکون مقایسه با شمارندهٔ زنده** گرفت — همان الگوی Ajax یک‌کلیکی قلب‌های علاقه‌مندی (بدون جاوااسکریپت همان فرم عادی سابمیت می‌شود)؛ ترازو در فهرست بودن محصول را با رنگ فیروزه‌ای نشان می‌دهد
+- **`/compare` — جدول مقایسه**: یک ستون برای هر محصول و ردیف‌های قیمت، دسته‌بندی، موجودی، میانگین امتیاز + تعداد نظر، پرسش‌های پاسخ‌داده و دکمه‌های خرید؛ **ارزان‌ترین ستون سبز می‌شود با بج «بهترین قیمت»** تا تصمیم مالی با یک نگاه گرفته شود
+- **یک کوئری برای کل جدول، بدون N+1**: میانگین امتیاز از `withRating()` و پرسش‌های پاسخ‌داده از subquery یک `withCount` می‌آیند — همان الگوهای یک-کوئری کارت‌های محصول و داشبورد ادمین
+- **جدول ترتیب شما را نگه می‌دارد**: ستون‌ها به **ترتیب افزودن** می‌آیند (ترتیبی که محصول‌ها را اضافه کردید، نه ترتیب شناسه‌ها) — هم در سشن و هم بعد از کوئری تجمیعی؛ صفحه مثل فهرست انتخابی خودتان خوانده می‌شود
+- **فهرستی که خودش را ترمیم می‌کند**: محصولی را غیرفعال یا حذف کنید — بی‌سروصدا از جدول می‌افتد **و همان درخواست، سشن را بازمی‌نویسد**؛ شمارندهٔ ناوبار هرگز محصولی را نمی‌شمارد که فروشگاه دیگر نشان نمی‌دهد
+- **حفاظت‌ها**: محصول پنجم با فلش هشداری رد می‌شود و برای Ajax با فیلد `full` در JSON؛ محصول غیرفعال روی toggle ارور 404 می‌گیرد؛ `POST /compare/clear` کل فهرست را خالی می‌کند؛ مسیر `/compare/clear` قبل از مسیر اسلاگ ثبت شده تا هرگز تداخل نکنند
+- آمادهٔ موبایل: جدول داخل `table-responsive` (کف 640px) به‌طور افقی اسکرول می‌خورد به‌جای اینکه ستون‌ها له شوند؛ حالت خالی هم‌لحن صفحهٔ علاقه‌مندی‌هاست و به ویترین می‌رساند
 
 ### 📊 اعداد
 
-- **۲۶۴ تست فیچر** (۹۹۰ ادعا) — همه سبز؛ سبک کد: Pint پاک
-- یک مهاجرت جدید (`personal_access_tokens`) — با `php artisan shop:install` یا `migrate` ساده اعمال می‌شود؛ بدون تغییر کانفیگ
-- ۱۸ نقطهٔ اتصال جدید زیر `/api/v1`؛ ۱ سرویس مشترک جدید (`PlaceOrder`)؛ ۷ منبع API؛ ۵ مجموعهٔ تست جدید
+- **۲۸۳ تست فیچر** (۱۰۸۶ ادعا) — همه سبز؛ سبک کد: Pint پاک
+- **بدون مهاجرت جدید، بدون تغییر کانفیگ** — زیپ را اعمال کنید و تمام؛ `shop:install` چیز تازه‌ای برای اجرا ندارد
+- ۱ سرویس جدید (`Compare`، سشن‌محور، `MAX = 4`)؛ ۱ کنترلر جدید (`CompareController`)؛ ۳ مسیر جدید (`/compare`، `/compare/{slug}`، `/compare/clear`)؛ ۱۹ تست جدید در `CompareTest`
 
 <details>
 <summary>راه‌اندازی سریع (بدون تغییر)</summary>
@@ -111,30 +114,35 @@ php artisan serve            # → http://localhost:8000
 <details>
 <summary>دیدن آن در عمل</summary>
 
+**http://localhost:8000/products** را باز کنید و روی **آیکون ترازو** گوشهٔ هر کارت محصول
+کلیک کنید — ترازو فیروزه‌ای می‌شود و شمارندهٔ ناوبار می‌پرد به «۱». سه محصول دیگر
+باید امتحان کنید (مثلاً ارزان‌ترین و گران‌ترین یک دسته) و بعد
+**http://localhost:8000/compare** را باز کنید:
+
+- چهار محصول کنار هم می‌ایستند: قیمت، دسته، موجودی، امتیاز، پرسش‌های پاسخ‌داده
+- **ارزان‌ترین ستون سبز می‌درخشد با بج «بهترین قیمت»**
+- محصول پنجم را هم امتحان کنید — پیام سقف می‌گیرید («فهرست مقایسه پر است…»)، نه جدولِ شکسته
+- با دکمهٔ «حذف از فهرست» یکی را بردارید — ستون بدون رفرش کامل می‌رود
+- همهٔ این‌ها **بدون ورود** کار می‌کند؛ مقایسه مثل سبد، فیچر سشنی است
+
+بدون UI هم می‌خواهید ببینید؟ toggle یک فرم ساده است — هر کلاینت HTTP جواب می‌دهد:
+
 ```bash
-# از «اپ» وارد شوید و توکن بگیرید:
-curl -s -X POST http://localhost:8000/api/v1/auth/login \
-  -H "Accept: application/json" -H "Content-Type: application/json" \
-  -d '{"email":"you@example.com","password":"secret","device_name":"Pixel 8"}'
-# → {"message":"خوش آمدید!","data":{…},"token":"1|abc…"}
+CSRF=$(curl -s -c /tmp/c.txt http://localhost:8000/products \
+ | grep -oP 'csrf-token" content="\K[^"]+')
 
-# کاتالوگ را ببینید — ارقام فارسی در فیلتر قیمت کار می‌کند:
-curl -s "http://localhost:8000/api/v1/products?sort=popular&min=۵۰۰٬۰۰۰" \
-  -H "Accept: application/json"
+# افزودن محصول به فهرست (شاخهٔ Ajax پاسخ JSON می‌دهد):
+curl -s -b /tmp/c.txt -X POST http://localhost:8000/compare/fiber-optic-cable \
+  -H "X-Requested-With: XMLHttpRequest" -H "Accept: application/json" \
+  -H "X-CSRF-TOKEN: $CSRF"
+# → {"success":true,"inCompare":true,"full":false,"count":1,"message":"«کابل فیبر نوری» به فهرست مقایسه اضافه شد."}
 
-# مستقیم از اپ سفارش ثبت کنید، با کد تخفیف:
-curl -s -X POST http://localhost:8000/api/v1/orders \
-  -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" \
-  -H "Content-Type: application/json" \
-  -d '{"items":[{"slug":"network-switch","quantity":1}],
-       "customer_name":"سارا محمدی","customer_phone":"09123456789",
-       "customer_address":"تهران، خیابان ولیعصر، پلاک ۱۲",
-       "payment_method":"cod","coupon_code":"WELCOME10"}'
-# → 201 + سفارش با status_label و total_fa و payment_url برای سفارش آنلاین
+curl -s -b /tmp/c.txt http://localhost:8000/compare | grep -c ds-compare-table
+# → 1  (جدول برای همین سشن رندر می‌شود)
 
-# فقط از همین دستگاه خارج شوید — تبلت کارش را می‌کند:
-curl -s -X POST http://localhost:8000/api/v1/auth/logout \
-  -H "Authorization: Bearer $TOKEN" -H "Accept: application/json"
+curl -s -b /tmp/c.txt -X POST http://localhost:8000/compare/clear \
+  -H "X-CSRF-TOKEN: $CSRF" -o /dev/null -w "%{http_code}\n"
+# → 302 (فهرست خالی شد، PRG به /compare)
 ```
 
 </details>

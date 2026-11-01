@@ -5,11 +5,24 @@ All notable changes to this project are documented in this file.
 
 <div dir="rtl" align="center">
 
-راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.12.0** ✅
+راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.13.0** ✅
 
 </div>
 
 ## 🇬🇧 English
+
+## [2.13.0] — 2026-10-31
+
+### ⚖️ Added — Product Comparison (up to 4, side-by-side)
+
+- Customers can now **line products up side by side before they buy**: a session-based compare list, capped at **4 products** (more columns than that and a table stops being readable) — and because it lives in the session like the cart, **guests can compare without an account**, no login wall
+- **One click on the scale, everywhere the product appears**: the scale button sits on the corner of every product card (right under the wishlist heart), a big variant joins the price box on the product page, and the navbar gained a **compare icon with a live count badge** — same instant-toggle Ajax pattern as the wishlist hearts (PRG fallback when JavaScript is off), with the scale turning cyan when the product is in the list
+- **`/compare` — the comparison table**: one column per product, rows for price (with Persian formatting), category, stock, rating average + review count, answered-questions count and buy buttons; the cheapest column is highlighted green with a **«بهترین قیمت» (best price) badge** so the money decision takes one glance
+- **One query for the whole table, no N+1**: rating aggregates come from `withRating()` and answered questions from a `withCount` subquery — the same one-query patterns the cards and dashboard already use; the table also keeps **insertion order** (the order you added products, not their IDs), preserved through the session and re-applied after the aggregate query
+- **A list that heals itself**: if a product in the list is deactivated or deleted, the compare page silently drops it **and rewrites the session on the same request** — the navbar badge can never count a product the store no longer shows
+- **Guardrails**: a 5th product is refused with a friendly warning flash («فهرست مقایسه پر است…») and, for Ajax callers, a `full` flag in the JSON — the cap is stated in Persian numerals in the message; `POST /compare/clear` empties the whole list; inactive products 404 on toggle; the `/compare/clear` route is registered before the slug route so the two can never collide
+- Mobile-ready: the table lives inside `table-responsive` with a 640px floor — on phones it scrolls horizontally instead of squashing the columns; the empty state («هنوز محصولی برای مقایسه انتخاب نکرده‌اید») matches the wishlist page's tone and points to the catalog
+- 19 new tests / 96 assertions in `CompareTest`: guest adds without login, toggle on/off, inactive 404, the 4-cap with warning flash and `full` JSON flag, Ajax response shape, empty state, table contents (titles/prices/categories/stock/ratings/QA counts), best-price badge lands on exactly one column, out-of-stock render, remove-from-page, clear, navbar badge on/off, card & detail buttons, session self-healing after deactivation, insertion-order preservation — **283 tests total, 1086 assertions**
 
 ## [2.12.0] — 2026-10-30
 
@@ -238,6 +251,19 @@ All notable changes to this project are documented in this file.
 ---
 
 ## 🇮🇷 فارسی
+
+## [2.13.0] — ۲۰۲۶-۱۰-۳۱
+
+### ⚖️ افزوده شد — مقایسهٔ محصولات (حداکثر ۴، کنار-به-کنار)
+
+- مشتری حالا می‌تواند **قبل از خرید، محصولات را کنار هم بچیند**: فهرست مقایسهٔ مبتنی بر سشن با سقف **۴ محصول** (بیشتر از آن، جدول دیگر خوانا نمی‌ماند) — و چون مثل سبد خرید روی سشن زندگی می‌کند، **مهمان هم بدون حساب کاربری مقایسه می‌کند**، بدون دیوار ورود
+- **یک کلیک روی ترازو، همه‌جایی که محصول هست**: دکمهٔ ترازو گوشهٔ کارت هر محصول است (درست زیر قلب علاقه‌مندی)، نسخهٔ بزرگش به ردیف قیمتِ صفحهٔ محصول می‌پیوندد و ناوبار **آیکون مقایسه با شمارندهٔ زنده** گرفت — همان الگوی Ajax یک‌کلیکی قلب‌های علاقه‌مندی (بدون جاوااسکریپت همان فرم عادی سابمیت می‌شود)؛ ترازو در فهرست بودن محصول را با رنگ فیروزه‌ای نشان می‌دهد
+- **`/compare` — جدول مقایسه**: یک ستون برای هر محصول و ردیف‌های قیمت (با قالب فارسی)، دسته‌بندی، موجودی، میانگین امتیاز + تعداد نظر، تعداد پرسش‌های پاسخ‌داده و دکمه‌های خرید؛ **ارزان‌ترین ستون سبز می‌شود با بج «بهترین قیمت»** تا تصمیم مالی با یک نگاه گرفته شود
+- **یک کوئری برای کل جدول، بدون N+1**: میانگین امتیاز از `withRating()` و پرسش‌های پاسخ‌داده از subquery یک `withCount` می‌آیند — همان الگوهای یک-کوئری کارت‌ها و داشبورد؛ جدول **ترتیب افزودن** را نگه می‌دارد (ترتیبی که محصول‌ها را اضافه کردید، نه ترتیب شناسه‌ها) — هم در سشن و هم بعد از کوئری تجمیعی
+- **فهرستی که خودش را ترمیم می‌کند**: اگر محصولی از فهرست غیرفعال یا حذف شود، صفحهٔ مقایسه بی‌سروصدا همان را می‌اندازد **و سشن را در همان درخواست بازمی‌نویسد** — شمارندهٔ ناوبار هرگز محصولی را نمی‌شمارد که فروشگاه دیگر نشان نمی‌دهد
+- **حفاظت‌ها**: محصول پنجم با فلش هشداری رد می‌شود («فهرست مقایسه پر است…») و برای Ajax با فیلد `full` در JSON — سقف در پیام با عدد فارسی گفته می‌شود؛ `POST /compare/clear` کل فهرست را خالی می‌کند؛ محصول غیرفعال روی toggle ارور 404 می‌گیرد؛ مسیر `/compare/clear` قبل از مسیر اسلاگ ثبت شده تا هرگز تداخل نکنند
+- آمادهٔ موبایل: جدول داخل `table-responsive` با کف 640px قرار گرفته — روی گوشی افقی اسکرول می‌خورد به‌جای اینکه ستون‌ها له شوند؛ حالت خالی («هنوز محصولی برای مقایسه انتخاب نکرده‌اید») هم‌لحن صفحهٔ علاقه‌مندی‌هاست و به ویترین می‌رساند
+- ۱۹ تست جدید / ۹۶ ادعا در `CompareTest`: افزودن مهمان بدون ورود، روشن/خاموش، 404 غیرفعال، سقف ۴ با فلش هشدار و فیلد `full`، شکل پاسخ Ajax، حالت خالی، محتوای جدول (عنوان/قیمت/دسته/موجودی/امتیاز/پرسش)، بج بهترین قیمت دقیقاً روی یک ستون، رندر ناموجود، حذف از خود صفحه، خالی‌کردن، بج ناوبار خاموش/روشن، دکمه‌های کارت و جزئیات، ترمیم سشن بعد از غیرفعال‌شدن، حفظ ترتیب افزودن — **در مجموع ۲۸۳ تست، ۱۰۸۶ ادعا**
 
 ## [2.12.0] — ۲۰۲۶-۱۰-۳۰
 

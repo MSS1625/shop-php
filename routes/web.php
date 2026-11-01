@@ -13,6 +13,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Shop\AccountController;
 use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\CheckoutController;
+use App\Http\Controllers\Shop\CompareController;
 use App\Http\Controllers\Shop\HomeController;
 use App\Http\Controllers\Shop\OrderTrackingController;
 use App\Http\Controllers\Shop\PaymentController;
@@ -79,6 +80,16 @@ Route::prefix('cart')->name('cart.')->group(function () {
 Route::middleware('auth')->prefix('wishlist')->name('wishlist.')->group(function () {
     Route::get('/', [WishlistController::class, 'index'])->name('index');
     Route::post('/{product:slug}', [WishlistController::class, 'toggle'])
+        ->name('toggle')
+        ->where('product', '[a-z0-9-]+');
+});
+
+// مقایسهٔ محصولات — مبتنی بر سشن؛ مهمان هم می‌تواند مقایسه کند (همان الگوی سبد)
+Route::prefix('compare')->name('compare.')->group(function () {
+    // «clear» قبل از اسلاگ ثبت می‌شود تا با /compare/{product} تداخل نکند
+    Route::post('/clear', [CompareController::class, 'clear'])->name('clear');
+    Route::get('/', [CompareController::class, 'index'])->name('index');
+    Route::post('/{product:slug}', [CompareController::class, 'toggle'])
         ->name('toggle')
         ->where('product', '[a-z0-9-]+');
 });
