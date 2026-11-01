@@ -5,11 +5,24 @@ All notable changes to this project are documented in this file.
 
 <div dir="rtl" align="center">
 
-راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.13.0** ✅
+راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.14.0** ✅
 
 </div>
 
 ## 🇬🇧 English
+
+## [2.14.0] — 2026-11-01
+
+### 🔑 Added — Admin Panel for API Tokens (issue · audit · revoke)
+
+- The store's API tokens are no longer invisible: a new `/admin/tokens` page lists **every Sanctum personal access token in one table** — owner (with a blue «مدیر» badge for manager tokens and «کاربر حذف‌شده» for orphans), device name, issue date, **last use** («هرگز» amber badge for never-used ones) and expiry (red «منقضی‌شده» badge for dead ones) — the security-audit view the v2.12.0 API was missing
+- **Issue tokens from the panel**: the form at the top of the page picks a user (all users, searchable by email), names the device (`iPhone 15`…, 3–100 chars) and sets a lifetime — **no expiry, 7, 30 or 90 days**; the full plain token appears **exactly once**, in a one-time modal after the post-redirect (with a copy button) — refreshing the page never shows it again, and the database still stores only the hash (Sanctum's own policy: plain text exists for one flash)
+- **Expiry is real, not cosmetic**: Sanctum rejects an expired token at authentication time — choosing «۷ روز» literally means the token dies on day 7; and every authenticated API request stamps `last_used_at`, so the panel always shows when a device last called
+- **Revoke in one click**: a confirm dialog («این توکن فوراً باطل می‌شود و دستگاه مربوطه باید دوباره وارد شود») kills the token instantly — the device must log in again, while orders, reviews and every other record of that user stay untouched; unknown ids answer 404
+- **Tabs with counts** (same pattern as orders/reviews/questions): «همه / بدون استفاده / منقضی‌شده» — the last two are the cleanup candidates; unknown filter values fall back to «همه»
+- **Orphan tokens can't hide**: user deletion doesn't cascade Sanctum's morph table (no FK), so the panel shows ownerless rows as «کاربر حذف‌شده» — visible, explainable and revocable, instead of silently lingering in the database
+- Guardrails: the page sits behind `auth` + `admin` (customers get 403 on all three actions, guests get the admin login redirect); validation messages are Persian and the «همه» count renders in Persian numerals; the sidebar gained a «توکن‌های API» item with a key icon
+- 14 new tests / 70 assertions in `TokenManagementTest`: guest redirect, non-admin 403 across index/store/destroy, tab filters with counts, newest-first ordering, expired/never-used/manager badges, orphan row, form user list, validation errors, issuance with 30-day expiry (±1 day tolerance) and the one-time modal (shown on the redirect, gone on the next request), admin-issued token working against the real `/api/v1/auth/me`, expired-token 401 end-to-end, revoke end-to-end (issued through the real form → API dead after revoke), 404 on unknown id — **297 tests total, 1157 assertions**
 
 ## [2.13.0] — 2026-10-31
 
@@ -251,6 +264,19 @@ All notable changes to this project are documented in this file.
 ---
 
 ## 🇮🇷 فارسی
+
+## [2.14.0] — ۲۰۲۶-۱۱-۰۱
+
+### 🔑 افزوده شد — پنل مدیریت توکن‌های API (صدور · گزارش · ابطال)
+
+- توکن‌های API فروشگاه دیگر نامرئی نیستند: صفحهٔ جدید `/admin/tokens` **همهٔ توکن‌های دسترسی شخصی Sanctum را در یک جدول** می‌آورد — صاحب توکن (با بج آبی «مدیر» برای توکن مدیران و «کاربر حذف‌شده» برای بی‌صاحب‌ها)، نام دستگاه، تاریخ صدور، **آخرین استفاده** (بج زرد «هرگز» برای هرگز استفاده‌نشده‌ها) و انقضا (بج قرمز «منقضی‌شده» برای مرده‌ها) — همان نمای ممیزی امنیتی که API نسخهٔ v2.12.0 کم داشت
+- **صدور توکن از خود پنل**: فرم بالای صفحه کاربر را انتخاب می‌کند (همهٔ کاربران، قابل تشخیص با ایمیل)، نام دستگاه را می‌گیرد (`iPhone 15`…، ۳ تا ۱۰۰ کاراکتر) و عمر را تعیین می‌کند — **بدون انقضا، ۷، ۳۰ یا ۹۰ روز**؛ مقدار کامل توکن **دقیقاً یک‌بار**، در مودالی بعد از ریدایرکت ظاهر می‌شود (با دکمهٔ کپی) — رفرش صفحه دیگر هرگز نشانش نمی‌دهد و دیتابیس همچنان فقط هش را نگه می‌دارد (سیاست خود Sanctum: متن کامل فقط برای یک لحظه)
+- **انقضا واقعی است، نه تزئینی**: Sanctum توکن منقضی را همان لحظهٔ احراز هویت رد می‌کند — انتخاب «۷ روز» یعنی واقعاً روز هفتم توکن می‌میرد؛ و هر درخواست API احرازشده `last_used_at` را به‌روز می‌کند تا پنل همیشه بداند هر دستگاه آخرین بار کِی زنگ زده
+- **ابطال با یک کلیک**: دیالوگ تأیید («این توکن فوراً باطل می‌شود و دستگاه مربوطه باید دوباره وارد شود») توکن را همان لحظه می‌کُشد — دستگاه باید دوباره وارد شود، ولی سفارش‌ها، نظرات و بقیهٔ سوابق همان کاربر دست‌نخورده می‌مانند؛ شناسهٔ ناشناس هم 404 می‌گیرد
+- **تب‌های شمار‌دار** (همان الگوی سفارش‌ها/نظرات/پرسش‌ها): «همه / بدون استفاده / منقضی‌شده» — دو تای آخر همان کاندیداهای پاک‌سازی‌اند؛ مقدار فیلتر ناشناخته به «همه» برمی‌گردد
+- **توکن یتیم نمی‌تواند پنهان بماند**: حذف کاربر جدول morph سانکتوم را آبشاری نمی‌کند (بدون FK)، پس پنل ردیف‌های بی‌صاحب را «کاربر حذف‌شده» نشان می‌دهد — دیده‌شده، قابل توضیح و قابل ابطال، به‌جای اینکه بی‌سروصدا در دیتابیس بماند
+- حفاظت‌ها: صفحه پشت `auth` + `admin` است (مشتری‌ها روی هر سه عملیات 403 می‌گیرند، مهمان‌ها به ورود مدیر می‌روند)؛ پیام‌های اعتبارسنجی فارسی است، شمارندهٔ «همه» با عدد فارسی رندر می‌شود و نوار کناری پنل آیتم **«توکن‌های API» با آیکن کلید** گرفت
+- ۱۴ تست جدید / ۷۰ ادعا در `TokenManagementTest`: ریدایرکت مهمان، 403 غیرمدیر روی هر سه عملیات، فیلتر تب‌ها با شمارنده، ترتیب جدیدترین-اول، بج‌های منقضی/هرگز/مدیر، ردیف یتیم، فهرست کاربران فرم، خطاهای اعتبارسنجی، صدور با انقضای ۳۰ روزه (با تحمل ±۱ روز) و مودال یک‌باره (در ریدایرکت هست، در درخواست بعدی نیست)، کارکردن توکنِ صادرشده از پنل در `/api/v1/auth/me` واقعی، رد شدن توکن منقضی سرتاسری، ابطال سرتاسری (صدور از خود فرم → مرگ توکن در API)، 404 شناسهٔ ناشناس — **در مجموع ۲۹۷ تست، ۱۱۵۷ ادعا**
 
 ## [2.13.0] — ۲۰۲۶-۱۰-۳۱
 

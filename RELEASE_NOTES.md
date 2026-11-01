@@ -1,4 +1,4 @@
-# ⚖️ v2.13.0 — مقایسهٔ محصولات (Product Comparison)
+# 🔑 v2.14.0 — پنل مدیریت توکن‌های API (Admin API Token Management)
 
 <div dir="rtl" align="center">
 
@@ -9,22 +9,18 @@ Laravel 12 · PHP 8.2+ · Bootstrap 5 RTL · MIT License
 
 ## 🇬🇧 English
 
-### ⚖️ New — Compare up to 4 products side by side
+### 🔑 New — issue, audit and revoke API tokens from the admin panel
 
-- Customers can now **line products up before they buy**: a session-based compare list capped at **4 products** (more columns than that and the table stops being readable) — and because it lives in the session like the cart, **guests can compare without an account**; no login wall between a visitor and a decision
-- **One click on the scale, everywhere the product appears**: the scale button sits on the corner of every product card (right under the wishlist heart), a big variant joins the price box on the product page, and the navbar gained a **compare icon with a live count badge** — the same instant-toggle Ajax pattern as the wishlist hearts (PRG fallback when JavaScript is off); the scale turns cyan while the product is in the list
-- **`/compare` — the comparison table**: one column per product, rows for price, category, stock, rating average + review count, answered-questions count and buy buttons; the cheapest column is highlighted green with a **«بهترین قیمت» (best price) badge**, so the money decision takes one glance
-- **One query for the whole table, no N+1**: rating aggregates come from `withRating()` and answered questions from a `withCount` subquery — the same one-query patterns the product cards and the admin dashboard already use
-- **The table keeps your order**: columns follow **insertion order** (the order you added the products, not their IDs) — preserved through the session and re-applied after the aggregate query, so the page reads like your own shortlist
-- **A list that heals itself**: deactivate or delete a product and it silently drops from the table **while the same request rewrites the session** — the navbar badge never counts a product the store no longer shows
-- **Guardrails**: a 5th product is refused with a friendly warning flash and, for Ajax callers, a `full` flag in the JSON; inactive products 404 on toggle; `POST /compare/clear` empties the whole list; the `/compare/clear` route is registered before the slug route so the two can never collide
-- Mobile-ready: the table scrolls horizontally inside `table-responsive` (640px floor) instead of squashing the columns; the empty state matches the wishlist page's tone and points to the catalog
+- The v2.12.0 REST API shipped tokens nobody could see. Now `/admin/tokens` lists **every personal access token in one table** — owner (blue «مدیر» badge for manager tokens, «کاربر حذف‌شده» for orphans), device name, issue date, **last use** («هرگز» badge for never-used ones) and expiry (red «منقضی‌شده» badge for dead ones)
+- **Issue tokens without touching a terminal**: pick a user, name the device (`iPhone 15`…), choose a lifetime — **no expiry, 7, 30 or 90 days**; the full plain token appears **exactly once** in a modal after the redirect (copy button included) — refresh and it's gone forever; the database still stores only the hash
+- **Expiry is enforced by Sanctum itself**, at authentication time: «۷ روز» really means the token dies on day 7 — and every authenticated API call stamps `last_used_at`, so the panel always knows when a device last called
+- **Revoke in one click** (with a confirm dialog): the device must log in again; the user's orders, reviews and everything else stay untouched. Tabs «همه / بدون استفاده / منقضی‌شده» (with counts) point at the cleanup candidates
 
 ### 📊 Numbers
 
-- **283 feature tests** (1086 assertions) — all green; code style: Pint clean
+- **297 feature tests** (1157 assertions) — all green; code style: Pint clean
 - **Zero migrations, zero config changes** — apply the zip and you're done; `shop:install` has nothing new to run
-- 1 new service (`Compare`, session-based, `MAX = 4`); 1 new controller (`CompareController`); 3 new routes (`/compare`, `/compare/{slug}`, `/compare/clear`); 19 new tests in `CompareTest`
+- 1 new controller (`Admin/TokenController`); 1 new admin view (`admin/tokens`); 3 new routes (`GET/POST /admin/tokens`, `DELETE /admin/tokens/{token}`); 14 new tests in `TokenManagementTest`
 
 <details>
 <summary>Quick start (unchanged)</summary>
@@ -42,35 +38,33 @@ php artisan serve            # → http://localhost:8000
 <details>
 <summary>Seeing it in action</summary>
 
-Open **http://localhost:8000/products** and click the **scale icon** on the corner of
-any product card — the scale turns cyan and the navbar badge jumps to «۱».
-Add three more (try the cheapest and the most expensive in a category), then open
-**http://localhost:8000/compare**:
+Log into **http://localhost:8000/admin** and click **«توکن‌های API»** in the sidebar:
 
-- the four products stand side by side: price, category, stock, rating, answered questions
-- the **cheapest column glows green with a «بهترین قیمت» badge**
-- try adding a 5th product — you get the cap warning («فهرست مقایسه پر است…»), not a broken table
-- remove one with its «حذف از فهرست» button — the column disappears without a full reload
-- everything above works **logged out**; compare is a session feature, like the cart
+- the table shows every token: who owns it, on which device, when it last called,
+  when it expires — manager tokens carry the blue «مدیر» badge
+- open the **«بدون استفاده»** tab — those are the forgotten tokens; the
+  **«منقضی‌شده»** tab shows the dead ones (red badge)
+- issue one from the form: pick a user, type `iPhone 15`, choose «۷ روز» and
+  hit **«صدور توکن»** — a modal shows the full token **once** (copy it);
+  refresh the page — it never appears again
+- call the API with it, then **revoke** it from the panel and try again — the
+  same token is now 401, the device must log in again
 
-Want the state without the UI? The toggle is a plain form — any HTTP client works:
+Want the proof without the UI? Here is a full lifecycle through real endpoints:
 
 ```bash
-CSRF=$(curl -s -c /tmp/c.txt http://localhost:8000/products \
- | grep -oP 'csrf-token" content="\K[^"]+')
+# 1) the admin panel issues a token (form → PRG; token appears once in the modal HTML)
+#    — do it once in the browser and copy the value, then:
 
-# add a product to the compare list (Ajax branch returns JSON):
-curl -s -b /tmp/c.txt -X POST http://localhost:8000/compare/fiber-optic-cable \
-  -H "X-Requested-With: XMLHttpRequest" -H "Accept: application/json" \
-  -H "X-CSRF-TOKEN: $CSRF"
-# → {"success":true,"inCompare":true,"full":false,"count":1,"message":"«کابل فیبر نوری» به فهرست مقایسه اضافه شد."}
+# 2) the token works against the real API:
+curl -s http://localhost:8000/api/v1/auth/me \
+  -H "Authorization: Bearer 3|COPY_THE_TOKEN_FROM_THE_MODAL"
+# → {"data":{"id":2,"name":"...", "email":"..."}}   and last_used_at gets stamped
 
-curl -s -b /tmp/c.txt http://localhost:8000/compare | grep -c ds-compare-table
-# → 1  (the table renders for this session)
-
-curl -s -b /tmp/c.txt -X POST http://localhost:8000/compare/clear \
-  -H "X-CSRF-TOKEN: $CSRF" -o /dev/null -w "%{http_code}\n"
-# → 302 (list emptied, PRG back to /compare)
+# 3) admin revokes it (one click in /admin/tokens) — the same token is now dead:
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8000/api/v1/auth/me \
+  -H "Authorization: Bearer 3|COPY_THE_TOKEN_FROM_THE_MODAL"
+# → 401  (the device must log in again; the user's data is untouched)
 ```
 
 </details>
@@ -81,22 +75,18 @@ curl -s -b /tmp/c.txt -X POST http://localhost:8000/compare/clear \
 
 <div dir="rtl">
 
-### ⚖️ جدید — مقایسهٔ حداکثر ۴ محصول، کنار-به-کنار
+### 🔑 جدید — صدور، گزارش و ابطالِ توکن‌های API از پنل مدیریت
 
-- مشتری حالا می‌تواند **قبل از خرید، محصولات را کنار هم بچیند**: فهرست مقایسهٔ مبتنی بر سشن با سقف **۴ محصول** (بیشتر از آن، جدول دیگر خوانا نمی‌ماند) — و چون مثل سبد خرید روی سشن زندگی می‌کند، **مهمان هم بدون حساب کاربری مقایسه می‌کند**؛ بین بازدیدکننده و تصمیمش دیواری نیست
-- **یک کلیک روی ترازو، همه‌جایی که محصول هست**: دکمهٔ ترازو گوشهٔ کارت هر محصول است (درست زیر قلب علاقه‌مندی)، نسخهٔ بزرگش به ردیف قیمتِ صفحهٔ محصول می‌پیوندد و ناوبار **آیکون مقایسه با شمارندهٔ زنده** گرفت — همان الگوی Ajax یک‌کلیکی قلب‌های علاقه‌مندی (بدون جاوااسکریپت همان فرم عادی سابمیت می‌شود)؛ ترازو در فهرست بودن محصول را با رنگ فیروزه‌ای نشان می‌دهد
-- **`/compare` — جدول مقایسه**: یک ستون برای هر محصول و ردیف‌های قیمت، دسته‌بندی، موجودی، میانگین امتیاز + تعداد نظر، پرسش‌های پاسخ‌داده و دکمه‌های خرید؛ **ارزان‌ترین ستون سبز می‌شود با بج «بهترین قیمت»** تا تصمیم مالی با یک نگاه گرفته شود
-- **یک کوئری برای کل جدول، بدون N+1**: میانگین امتیاز از `withRating()` و پرسش‌های پاسخ‌داده از subquery یک `withCount` می‌آیند — همان الگوهای یک-کوئری کارت‌های محصول و داشبورد ادمین
-- **جدول ترتیب شما را نگه می‌دارد**: ستون‌ها به **ترتیب افزودن** می‌آیند (ترتیبی که محصول‌ها را اضافه کردید، نه ترتیب شناسه‌ها) — هم در سشن و هم بعد از کوئری تجمیعی؛ صفحه مثل فهرست انتخابی خودتان خوانده می‌شود
-- **فهرستی که خودش را ترمیم می‌کند**: محصولی را غیرفعال یا حذف کنید — بی‌سروصدا از جدول می‌افتد **و همان درخواست، سشن را بازمی‌نویسد**؛ شمارندهٔ ناوبار هرگز محصولی را نمی‌شمارد که فروشگاه دیگر نشان نمی‌دهد
-- **حفاظت‌ها**: محصول پنجم با فلش هشداری رد می‌شود و برای Ajax با فیلد `full` در JSON؛ محصول غیرفعال روی toggle ارور 404 می‌گیرد؛ `POST /compare/clear` کل فهرست را خالی می‌کند؛ مسیر `/compare/clear` قبل از مسیر اسلاگ ثبت شده تا هرگز تداخل نکنند
-- آمادهٔ موبایل: جدول داخل `table-responsive` (کف 640px) به‌طور افقی اسکرول می‌خورد به‌جای اینکه ستون‌ها له شوند؛ حالت خالی هم‌لحن صفحهٔ علاقه‌مندی‌هاست و به ویترین می‌رساند
+- API نسخهٔ v2.12.0 توکن‌هایی صادر می‌کرد که کسی نمی‌توانست ببیند. حالا `/admin/tokens` **همهٔ توکن‌های دسترسی شخصی را در یک جدول** می‌آورد — صاحب (بج آبی «مدیر» برای توکن مدیران، «کاربر حذف‌شده» برای یتیم‌ها)، نام دستگاه، تاریخ صدور، **آخرین استفاده** (بج «هرگز» برای هرگز استفاده‌نشده‌ها) و انقضا (بج قرمز «منقضی‌شده» برای مرده‌ها)
+- **صدور توکن بدون خط فرمان**: یک کاربر را انتخاب کنید، دستگاه را نام‌گذاری کنید (`iPhone 15`…)، عمر را تعیین کنید — **بدون انقضا، ۷، ۳۰ یا ۹۰ روز**؛ مقدار کامل توکن **دقیقاً یک‌بار** بعد از ریدایرکت در مودال ظاهر می‌شود (با دکمهٔ کپی) — رفرش کنید و برای همیشه می‌رود؛ دیتابیس همچنان فقط هش را نگه می‌دارد
+- **انقضا را خود Sanctum**، در لحظهٔ احراز هویت، اجرا می‌کند: «۷ روز» واقعاً یعنی روز هفتم توکن می‌میرد — و هر فراخوانی احرازشدهٔ API، `last_used_at` را مهر می‌زند تا پنل همیشه بداند هر دستگاه آخرین بار کِی زنگ زده
+- **ابطال با یک کلیک** (با دیالوگ تأیید): دستگاه باید دوباره وارد شود؛ سفارش‌ها، نظرات و بقیهٔ سوابق همان کاربر دست‌نخورده می‌مانند. تب‌های «همه / بدون استفاده / منقضی‌شده» (با شمارنده) کاندیداهای پاک‌سازی را نشانتان می‌دهند
 
 ### 📊 اعداد
 
-- **۲۸۳ تست فیچر** (۱۰۸۶ ادعا) — همه سبز؛ سبک کد: Pint پاک
+- **۲۹۷ تست فیچر** (۱۱۵۷ ادعا) — همه سبز؛ سبک کد: Pint پاک
 - **بدون مهاجرت جدید، بدون تغییر کانفیگ** — زیپ را اعمال کنید و تمام؛ `shop:install` چیز تازه‌ای برای اجرا ندارد
-- ۱ سرویس جدید (`Compare`، سشن‌محور، `MAX = 4`)؛ ۱ کنترلر جدید (`CompareController`)؛ ۳ مسیر جدید (`/compare`، `/compare/{slug}`، `/compare/clear`)؛ ۱۹ تست جدید در `CompareTest`
+- ۱ کنترلر جدید (`Admin/TokenController`)؛ ۱ نمای جدید (`admin/tokens`)؛ ۳ مسیر جدید (`GET/POST /admin/tokens` و `DELETE /admin/tokens/{token}`)؛ ۱۴ تست جدید در `TokenManagementTest`
 
 <details>
 <summary>راه‌اندازی سریع (بدون تغییر)</summary>
@@ -114,35 +104,33 @@ php artisan serve            # → http://localhost:8000
 <details>
 <summary>دیدن آن در عمل</summary>
 
-**http://localhost:8000/products** را باز کنید و روی **آیکون ترازو** گوشهٔ هر کارت محصول
-کلیک کنید — ترازو فیروزه‌ای می‌شود و شمارندهٔ ناوبار می‌پرد به «۱». سه محصول دیگر
-باید امتحان کنید (مثلاً ارزان‌ترین و گران‌ترین یک دسته) و بعد
-**http://localhost:8000/compare** را باز کنید:
+وارد **http://localhost:8000/admin** شوید و در نوار کناری روی **«توکن‌های API»** کلیک کنید:
 
-- چهار محصول کنار هم می‌ایستند: قیمت، دسته، موجودی، امتیاز، پرسش‌های پاسخ‌داده
-- **ارزان‌ترین ستون سبز می‌درخشد با بج «بهترین قیمت»**
-- محصول پنجم را هم امتحان کنید — پیام سقف می‌گیرید («فهرست مقایسه پر است…»)، نه جدولِ شکسته
-- با دکمهٔ «حذف از فهرست» یکی را بردارید — ستون بدون رفرش کامل می‌رود
-- همهٔ این‌ها **بدون ورود** کار می‌کند؛ مقایسه مثل سبد، فیچر سشنی است
+- جدول همهٔ توکن‌ها را نشان می‌دهد: صاحبِ هر کدام، روی کدام دستگاه، آخرین بار کِی
+  زنگ زده، کِی می‌میرد — توکن مدیران بج آبی «مدیر» دارند
+- تب **«بدون استفاده»** را باز کنید — این‌ها همان توکن‌های فراموش‌شده‌اند؛ تب
+  **«منقضی‌شده»** مرده‌ها را با بج قرمز نشان می‌دهد
+- از فرم یکی صادر کنید: یک کاربر را انتخاب کنید، `iPhone 15` بنویسید، «۷ روز»
+  را بردارید و **«صدور توکن»** را بزنید — مودال مقدار کامل را **یک‌بار** نشان
+  می‌دهد (کپی کنید)؛ صفحه را رفرش کنید — دیگر هرگز دیده نمی‌شود
+- با آن API را صدا بزنید، بعد از پنل **ابطالش** کنید و دوباره امتحان کنید —
+  همان توکن حالا 401 است؛ دستگاه باید دوباره وارد شود
 
-بدون UI هم می‌خواهید ببینید؟ toggle یک فرم ساده است — هر کلاینت HTTP جواب می‌دهد:
+بدون UI هم می‌خواهید ببینید؟ این یک چرخهٔ کامل از دل نقاط اتصال واقعی است:
 
 ```bash
-CSRF=$(curl -s -c /tmp/c.txt http://localhost:8000/products \
- | grep -oP 'csrf-token" content="\K[^"]+')
+# ۱) پنل توکن را صادر می‌کند (فرم → PRG؛ توکن فقط یک‌بار در HTML مودال هست)
+#    — یک‌بار در مرورگر انجامش بدهید و مقدار را کپی کنید، بعد:
 
-# افزودن محصول به فهرست (شاخهٔ Ajax پاسخ JSON می‌دهد):
-curl -s -b /tmp/c.txt -X POST http://localhost:8000/compare/fiber-optic-cable \
-  -H "X-Requested-With: XMLHttpRequest" -H "Accept: application/json" \
-  -H "X-CSRF-TOKEN: $CSRF"
-# → {"success":true,"inCompare":true,"full":false,"count":1,"message":"«کابل فیبر نوری» به فهرست مقایسه اضافه شد."}
+# ۲) توکن در API واقعی کار می‌کند:
+curl -s http://localhost:8000/api/v1/auth/me \
+  -H "Authorization: Bearer 3|مقدار_توکن_را_از_مودال_کپی_کنید"
+# → {"data":{"id":2,"name":"...", "email":"..."}}   و last_used_at مهر می‌خورد
 
-curl -s -b /tmp/c.txt http://localhost:8000/compare | grep -c ds-compare-table
-# → 1  (جدول برای همین سشن رندر می‌شود)
-
-curl -s -b /tmp/c.txt -X POST http://localhost:8000/compare/clear \
-  -H "X-CSRF-TOKEN: $CSRF" -o /dev/null -w "%{http_code}\n"
-# → 302 (فهرست خالی شد، PRG به /compare)
+# ۳) مدیر از پنل ابطالش کند (یک کلیک در /admin/tokens) — همان توکن مرده است:
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8000/api/v1/auth/me \
+  -H "Authorization: Bearer 3|مقدار_توکن_را_از_مودال_کپی_کنید"
+# → 401  (دستگاه باید دوباره وارد شود؛ داده‌های کاربر دست‌نخورده است)
 ```
 
 </details>

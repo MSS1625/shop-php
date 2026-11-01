@@ -1911,3 +1911,31 @@ a {
     background: rgba(52, 211, 153, 0.12);
     border: 1px solid rgba(52, 211, 153, 0.35);
 }
+
+/* ===== v2.14.0 — مدیریت توکن‌های API (پنل مدیریت) ===== */
+
+/* جعبهٔ نمایش یک‌بارهٔ مقدار توکن داخل مودال صدور —
+   مودال Swal پس‌زمینهٔ روشن دارد؛ رنگ‌ها هم‌خانوادهٔ بنفش برند، متن تیره */
+.ds-token-code {
+    display: block;
+    margin: 0.7rem 0 0.3rem;
+    padding: 0.55rem 0.85rem;
+    border-radius: 10px;
+    direction: ltr;
+    text-align: left;
+    word-break: break-all;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: #6d28d9;
+    background: #f5f3ff;
+    border: 1px solid #ddd6fe;
+}
+
+/* یادداشت بالای جعبه — «دوباره نمایش داده نمی‌شود» */
+.ds-token-note {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.7;
+    color: #6b7280;
+}

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\QuestionController as AdminQuestionController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
+use App\Http\Controllers\Admin\TokenController as AdminTokenController;
 use App\Http\Controllers\Auth\AdminLoginController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -223,4 +224,9 @@ Route::middleware(['auth', 'admin'])
             ->name('questions.reject');
         Route::delete('questions/{question}', [AdminQuestionController::class, 'destroy'])
             ->name('questions.destroy');
+
+        // مدیریت توکن‌های API — لیست/صدور/ابطال از پنل
+        Route::get('tokens', [AdminTokenController::class, 'index'])->name('tokens.index');
+        Route::post('tokens', [AdminTokenController::class, 'store'])->name('tokens.store');
+        Route::delete('tokens/{token}', [AdminTokenController::class, 'destroy'])->name('tokens.destroy');
     });
