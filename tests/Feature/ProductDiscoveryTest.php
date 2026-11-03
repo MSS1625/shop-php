@@ -340,7 +340,7 @@ class ProductDiscoveryTest extends TestCase
             'price' => $price,
             'stock' => $stock,
             'is_active' => $isActive,
-            'category_id' => $category?->id ?? Category::factory()->create()->id,
+            'category_id' => $category->id ?? Category::factory()->create()->id,
         ]);
 
         $product->saveQuietly();

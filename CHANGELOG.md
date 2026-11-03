@@ -5,11 +5,24 @@ All notable changes to this project are documented in this file.
 
 <div dir="rtl" align="center">
 
-راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.14.0** ✅
+راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.15.0** ✅
 
 </div>
 
 ## 🇬🇧 English
+
+## [2.15.0] — 2026-11-04
+
+### 🤖 Added — CI automation: Larastan, coverage badge, auto-release
+
+- **Larastan (PHPStan for Laravel) level 5 — 0 errors, 0 ignores**: the whole codebase (`app`, `config`, `database`, `routes`, `tests`) now passes strict static analysis; a new `static-analysis` job runs it in CI on PHP 8.2 on every push and PR — beside the existing test matrix (8.2/8.3/8.4) and Pint
+- To get there, **~35 files got real type annotations instead of suppressed errors**: every Eloquent relation declares its generics (`@return HasMany<OrderItem, $this>`…), factories bind their model (`@extends Factory<Product>`), and every API Resource declares `@mixin` of its model — so `$order->items`, `$item->product` and `$this->id` inside resources are statically checked, not magic
+- The analysis caught real things, and they are fixed: building cart items and API order items is now an explicit null-safe loop (same behavior, honest types — no `filter()` that pretends nulls can't happen), `answeredQuestions()` applies its `where` clause directly instead of riding the scope-through-relation proxy, `AdminUserSeeder` reads the admin password via `config('shop.admin_password')` (a plain `env()` call breaks under `config:cache`), and the stock `ExampleTest` placeholder — whose always-true assertion was literally the first finding — is gone
+- **Live coverage badge, zero third-party services**: on every push to `main`, the `coverage` job runs the suite with pcov on PHP 8.4, `php scripts/coverage-badge.php` (unit-tested) turns the Clover report into a shields.io endpoint JSON and pushes it to the `coverage-badge` branch — the new Coverage badge in both READMEs reads from there and updates itself (red < 50% · yellow ≥ 50% · green ≥ 80%)
+- **Auto-release**: push a tag `v*` and the new `release.yml` workflow runs the whole test suite (a broken tag never ships), extracts the bilingual notes for that version from `CHANGELOG.md` via `php scripts/extract-release-notes.php` (unit-tested) and creates the GitHub Release with title and body — no more copy-pasting from RELEASE_NOTES by hand
+- Two new standalone scripts under `scripts/` (plain PHP, no framework boot), each covered by its own unit test suite (`ExtractReleaseNotesTest`, `CoverageBadgeTest`)
+- New composer shortcuts: `composer analyse` (Larastan) and `composer check` (tests + Pint + Larastan — the same gate CI runs)
+- 8 new tests / 27 assertions — **304 tests total, 1183 assertions**, all green; Pint clean; Larastan clean; **zero migrations, zero config breaking changes** — apply the zip and done
 
 ## [2.14.0] — 2026-11-01
 
@@ -264,6 +277,19 @@ All notable changes to this project are documented in this file.
 ---
 
 ## 🇮🇷 فارسی
+
+## [2.15.0] — ۲۰۲۶-۱۱-۰۴
+
+### 🤖 افزوده شد — اتوماسیون CI: لاراستان، بج پوشش، انتشار خودکار
+
+- **لاراستان (PHPStan مخصوص Laravel) در سطح ۵ — صفر خطا، صفر استثنا**: کل کدبیس (`app`، `config`، `database`، `routes`، `tests`) تحلیل ایستای سخت‌گیرانه را پاس می‌کند؛ جاب جدید `static-analysis` آن را در CI روی PHP 8.2 و در هر push و PR اجرا می‌کند — کنار ماتریس تست‌های موجود (۸.۲/۸.۳/۸.۴) و Pint
+- برای رسیدن به این نقطه، **حدود ۳۵ فایل به‌جای سرکوب‌کردن خطاها، تایپ واقعی گرفتند**: هر رابطهٔ Eloquent جنریک‌هایش را اعلام می‌کند (`@return HasMany<OrderItem, $this>`…)، فکتوری‌ها مدل‌شان را بایند می‌کنند (`@extends Factory<Product>`) و هر Resource مربوط به API یک `@mixin` از مدلش دارد — یعنی `$order->items` و `$item->product` و `$this->id` داخل Resourceها ایستا چک می‌شوند، نه جادویی
+- تحلیل چند ایراد واقعی هم پیدا کرد که همه رفع شدند: ساخت اقلام سبد و سفارشِ API حالا یک حلقهٔ صریحِ null-safe است (همان رفتار، تایپ صادقانه — بدون `filter()` که انگار null اصلاً وجود ندارد)، `answeredQuestions()` شرط `where` را مستقیم اعمال می‌کند نه سوارشدن روی پروکسی اسکوپ-از-روی-رابطه، `AdminUserSeeder` رمز مدیر را از `config('shop.admin_password')` می‌خواند (فراخوانی خام `env()` زیر `config:cache` می‌شکند) و جانگهدارِ پیش‌فرض `ExampleTest` — که ادعای همیشه-درستش دقیقاً اولین یافتهٔ تحلیل بود — حذف شد
+- **بج زندهٔ پوشش، بدون هیچ سرویس خارجی**: روی هر push به `main`، جاب `coverage` کل تست‌ها را با pcov روی PHP 8.4 اجرا می‌کند، `php scripts/coverage-badge.php` (تست‌شده) گزارش Clover را به JSON قالب endpoint بج shields.io تبدیل و روی شاخهٔ `coverage-badge` پوش می‌کند — بج جدید Coverage در هر دو README از همان‌جا می‌خواند و خودش آپدیت می‌شود (قرمز < ۵۰٪ · زرد ≥ ۵۰٪ · سبز ≥ ۸۰٪)
+- **انتشار خودکار**: تگ `v*` را پوش کنید تا ورک‌فلو جدید `release.yml` کل تست‌ها را اجرا کند (تگِ شکسته هرگز رلیز نمی‌شود)، یادداشت‌های دوزبانهٔ همان نسخه را از `CHANGELOG.md` با `php scripts/extract-release-notes.php` (تست‌شده) بکشد و Release گیت‌هاب را با عنوان و متن بسازد — دیگر خبری از کپی‌وپیست دستی RELEASE_NOTES نیست
+- دو اسکریپت standalone جدید در `scripts/` (PHP خالص، بدون بوت فریم‌ورک)، هرکدام با مجموعهٔ تست واحد خودش (`ExtractReleaseNotesTest`، `CoverageBadgeTest`)
+- میان‌برهای جدید کامپوزر: `composer analyse` (لاراستان) و `composer check` (تست + Pint + لاراستان — همان دروازه‌ای که CI اجرا می‌کند)
+- ۸ تست / ۲۷ ادعای جدید — جمعاً **۳۰۴ تست، ۱۱۸۳ ادعا**، همه سبز؛ Pint تمیز؛ لاراستان تمیز؛ **صفر مایگریشن و صفر تغییر شکنندهٔ کانفیگ** — زیپ را اعمال کنید و تمام
 
 ## [2.14.0] — ۲۰۲۶-۱۱-۰۱
 

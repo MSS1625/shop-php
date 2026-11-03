@@ -14,6 +14,8 @@ class Wishlist extends Model
 
     /**
      * صاحب این ردیف علاقه‌مندی
+     *
+     * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo
     {
@@ -22,6 +24,8 @@ class Wishlist extends Model
 
     /**
      * محصول ذخیره‌شده
+     *
+     * @return BelongsTo<Product, $this>
      */
     public function product(): BelongsTo
     {

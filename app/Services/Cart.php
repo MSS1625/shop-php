@@ -35,19 +35,25 @@ class Cart
             ->get()
             ->keyBy('id');
 
-        return collect($raw)
-            ->filter(fn ($qty, $id) => $products->has((int) $id) && $qty > 0)
-            ->map(function ($qty, $id) use ($products) {
-                $product = $products[(int) $id];
-                $quantity = min((int) $qty, max($product->stock, 1));
+        $items = [];
 
-                return [
-                    'product' => $product,
-                    'quantity' => $quantity,
-                    'subtotal' => $product->price * $quantity,
-                ];
-            })
-            ->values();
+        foreach ($raw as $id => $qty) {
+            $product = $products->get((int) $id);
+
+            if ($product === null || (int) $qty <= 0) {
+                continue;
+            }
+
+            $quantity = min((int) $qty, max($product->stock, 1));
+
+            $items[] = [
+                'product' => $product,
+                'quantity' => $quantity,
+                'subtotal' => $product->price * $quantity,
+            ];
+        }
+
+        return collect($items);
     }
 
     /**

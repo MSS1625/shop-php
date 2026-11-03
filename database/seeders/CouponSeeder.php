@@ -24,7 +24,7 @@ class CouponSeeder extends Seeder
         );
 
         if ($coupon->wasRecentlyCreated) {
-            $this->command?->info('کد تخفیف نمونه ساخته شد: WELCOME10 (۱۰٪ روی هر سبد، ۱۰۰ بار)');
+            $this->command->info('کد تخفیف نمونه ساخته شد: WELCOME10 (۱۰٪ روی هر سبد، ۱۰۰ بار)');
         }
     }
 }

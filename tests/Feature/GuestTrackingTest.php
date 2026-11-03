@@ -123,11 +123,11 @@ class GuestTrackingTest extends TestCase
         // پیام یکسان = هیچ سرنخی دربارهٔ وجود/عدم وجود شماره سفارش لو نمی‌رود
         $this->guestOrder();
 
-        $wrongPhone = $this->lookup(['phone' => '09999999999'])->assertRedirect();
-        $messageA = $wrongPhone->getSession()?->get('track_error');
+        $this->lookup(['phone' => '09999999999'])->assertRedirect();
+        $messageA = session('track_error');
 
-        $wrongNumber = $this->lookup(['order_number' => 'DS-261021-ZZZZ'])->assertRedirect();
-        $messageB = $wrongNumber->getSession()?->get('track_error');
+        $this->lookup(['order_number' => 'DS-261021-ZZZZ'])->assertRedirect();
+        $messageB = session('track_error');
 
         $this->assertNotNull($messageA);
         $this->assertNotNull($messageB);

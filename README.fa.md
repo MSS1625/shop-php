@@ -7,6 +7,7 @@
 [![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?style=flat-square&logo=laravel)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?style=flat-square&logo=php)](https://php.net)
 [![CI](https://github.com/MSS1625/shop-php/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/MSS1625/shop-php/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FMSS1625%2Fshop-php%2Fcoverage-badge%2Fcoverage.json)](https://github.com/MSS1625/shop-php/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/MSS1625/shop-php?style=flat-square&label=Release)](../../releases)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
@@ -240,24 +241,28 @@ database/seeders/images/   # تصاویر نمونه محصولات
 docs/                      # صفحه دموی ایستا برای GitHub Pages
 public/assets/             # تم دارک + اسکریپت سبد خرید
 resources/views/           # قالب‌های Blade (فروشگاه + ادمین + احراز هویت + حساب)
-.github/workflows/ci.yml   # اجرای خودکار تست روی هر push
+.github/workflows/ci.yml     # اجرای خودکار تست روی هر push
+.github/workflows/release.yml  # انتشار خودکار Release از روی تگ
 README.md / README.fa.md   # English | فارسی
 ```
 
 ## 🧪 تست‌ها و CI
 
 ```bash
-php artisan test        # ۲۹۷ تست Feature
-vendor/bin/pint --test  # بررسی سبک کد
+php artisan test                  # ۳۰۴ تست (۱۱۸۳ ادعا)
+vendor/bin/pint --test            # بررسی سبک کد
+vendor/bin/phpstan analyse        # لاراستان سطح ۵ (صفر خطا)
+composer check                    # هر سه با هم — همان دروازهٔ CI
 ```
 
-روی هر `push` و هر `pull request`، تست‌ها به‌صورت خودکار روی GitHub Actions (PHP 8.2 / 8.3 / 8.4 + Pint) اجرا می‌شوند — بج بالای همین فایل.
+روی هر `push` و هر `pull request`، چهار جاب GitHub Actions به‌صورت خودکار اجرا می‌شود: ماتریس تست (PHP 8.2 / 8.3 / 8.4) و Pint و **تحلیل ایستای لاراستان سطح ۵** — بج‌های بالای همین فایل. روی هر push به `main` جاب پوشش، کل تست‌ها را با pcov اجرا و **بج زندهٔ Coverage** را (از شاخهٔ coverage-badge — بعد از اولین اجرا روی main ظاهر می‌شود) آپدیت می‌کند. تگ `v*` را پوش کنید تا ورک‌فلو `release` اول تست‌ها را اجرا و بعد Release گیت‌هاب را با یادداشت‌های دوزبانهٔ استخراج‌شده از `CHANGELOG.md` بسازد.
 
 ## 🗺 نقشه راه
 
 - [x] درگاه پرداخت آنلاین (زرین‌پال)
 - [x] حساب کاربری و تاریخچه سفارش‌ها
 - [x] GitHub Actions CI
+- [x] ارتقای اتوماسیون CI (لاراستان سطح ۵ + بج پوشش + انتشار خودکار)
 - [x] وب‌سایت پروژه (دموی GitHub Pages)
 - [x] گالری تصاویر محصول (چند تصویر)
 - [x] کد تخفیف (کدهای تخفیف)

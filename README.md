@@ -7,6 +7,7 @@
 [![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?style=flat-square&logo=laravel)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?style=flat-square&logo=php)](https://php.net)
 [![CI](https://github.com/MSS1625/shop-php/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/MSS1625/shop-php/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FMSS1625%2Fshop-php%2Fcoverage-badge%2Fcoverage.json)](https://github.com/MSS1625/shop-php/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/MSS1625/shop-php?style=flat-square&label=Release)](../../releases)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
@@ -241,23 +242,27 @@ docs/                      # صفحه دموی ایستا برای GitHub Pages
 public/assets/             # تم دارک + اسکریپت سبد خرید
 resources/views/           # Blade templates (shop + admin + auth + account)
 .github/workflows/ci.yml   # اجرای خودکار تست روی هر push
+.github/workflows/release.yml # انتشار خودکار Release از روی تگ
 README.md / README.fa.md   # English | فارسی
 ```
 
 ## 🧪 Tests & CI
 
 ```bash
-php artisan test        # 297 feature tests
-vendor/bin/pint --test  # code style
+php artisan test                  # 304 tests (1183 assertions)
+vendor/bin/pint --test            # code style
+vendor/bin/phpstan analyse        # Larastan level 5 (0 errors)
+composer check                    # هر سه با هم — همان دروازهٔ CI
 ```
 
-Every `push` and `pull request` runs the full test matrix automatically on GitHub Actions (PHP 8.2 / 8.3 / 8.4 + Pint) — see the badge at the top.
+Every `push` and `pull request` runs four GitHub Actions jobs automatically: the test matrix (PHP 8.2 / 8.3 / 8.4), Pint, and **Larastan level 5** static analysis — see the badges at the top. On every push to `main`, a coverage job runs the suite with pcov and publishes the live **Coverage** badge (from the `coverage-badge` branch — it appears after the first run on `main`). Push a tag `v*` and the `release` workflow runs the tests, then creates the GitHub Release with the bilingual notes extracted from `CHANGELOG.md`.
 
 ## 🗺 Roadmap
 
 - [x] Online payment gateway (ZarinPal)
 - [x] Customer accounts & order history
 - [x] GitHub Actions CI
+- [x] CI automation upgrade (Larastan level 5 + coverage badge + auto-release)
 - [x] Project website (GitHub Pages demo)
 - [x] Product gallery (multiple images)
 - [x] Discount codes

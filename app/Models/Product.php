@@ -2,16 +2,26 @@
 
 namespace App\Models;
 
+use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
+/**
+ * @property int|null $reviews_count تعداد نظرات تأییدشده (با withRating)
+ * @property int|float|null $avg_rating میانگین امتیاز (با withRating/loadAvg)
+ * @property int|null $sold_units تعداد فروش (با withSum در اسکوپ ordered)
+ * @property LengthAwarePaginator|null $reviews_page صفحهٔ نظرات (setRelation — فقط زیر whenLoaded)
+ * @property LengthAwarePaginator|null $questions_page صفحهٔ پرسش‌ها (setRelation — فقط زیر whenLoaded)
+ */
 class Product extends Model
 {
+    /** @use HasFactory<ProductFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -55,11 +65,13 @@ class Product extends Model
         return $slug;
     }
 
+    /** @return BelongsTo<Category, $this> */
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
+    /** @return HasMany<OrderItem, $this> */
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
@@ -67,6 +79,8 @@ class Product extends Model
 
     /**
      * گالری تصاویر اضافی محصول — مرتب‌شده بر اساس موقعیت
+     *
+     * @return HasMany<ProductImage, $this>
      */
     public function images(): HasMany
     {
@@ -75,6 +89,8 @@ class Product extends Model
 
     /**
      * همهٔ نظرات این محصول (هر وضعیت)
+     *
+     * @return HasMany<Review, $this>
      */
     public function reviews(): HasMany
     {
@@ -83,6 +99,8 @@ class Product extends Model
 
     /**
      * فقط نظرات تأییدشده — همان چیزی که مشتری می‌بیند
+     *
+     * @return HasMany<Review, $this>
      */
     public function approvedReviews(): HasMany
     {
@@ -91,6 +109,8 @@ class Product extends Model
 
     /**
      * همهٔ پرسش‌های این محصول (هر وضعیت)
+     *
+     * @return HasMany<Question, $this>
      */
     public function questions(): HasMany
     {
@@ -99,10 +119,13 @@ class Product extends Model
 
     /**
      * فقط پرسش‌های پاسخ‌داده‌شده — همان چیزی که مشتری می‌بیند
+     * (شرط همین‌جا اعمال می‌شود چون اسکوپ از روی رابطه با تحلیل ایستا دیده نمی‌شود)
+     *
+     * @return HasMany<Question, $this>
      */
     public function answeredQuestions(): HasMany
     {
-        return $this->questions()->answered();
+        return $this->questions()->where('status', Question::STATUS_ANSWERED);
     }
 
     /**

@@ -104,8 +104,8 @@ class DashboardStats
             return [
                 'date' => $day,
                 'label' => fa_num($day->format('m/d')),
-                'sales' => (int) ($row?->sales_sum ?? 0),
-                'orders' => (int) ($row?->orders_count ?? 0),
+                'sales' => (int) data_get($row, 'sales_sum', 0),
+                'orders' => (int) data_get($row, 'orders_count', 0),
             ];
         });
     }

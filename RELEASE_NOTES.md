@@ -1,4 +1,4 @@
-# 🔑 v2.14.0 — پنل مدیریت توکن‌های API (Admin API Token Management)
+# 🤖 v2.15.0 — اتوماسیون CI: لاراستان، بج پوشش، انتشار خودکار (CI Automation: Larastan, Coverage Badge, Auto-Release)
 
 <div dir="rtl" align="center">
 
@@ -9,18 +9,38 @@ Laravel 12 · PHP 8.2+ · Bootstrap 5 RTL · MIT License
 
 ## 🇬🇧 English
 
-### 🔑 New — issue, audit and revoke API tokens from the admin panel
+### 🤖 New — CI automation: Larastan, coverage badge, auto-release
 
-- The v2.12.0 REST API shipped tokens nobody could see. Now `/admin/tokens` lists **every personal access token in one table** — owner (blue «مدیر» badge for manager tokens, «کاربر حذف‌شده» for orphans), device name, issue date, **last use** («هرگز» badge for never-used ones) and expiry (red «منقضی‌شده» badge for dead ones)
-- **Issue tokens without touching a terminal**: pick a user, name the device (`iPhone 15`…), choose a lifetime — **no expiry, 7, 30 or 90 days**; the full plain token appears **exactly once** in a modal after the redirect (copy button included) — refresh and it's gone forever; the database still stores only the hash
-- **Expiry is enforced by Sanctum itself**, at authentication time: «۷ روز» really means the token dies on day 7 — and every authenticated API call stamps `last_used_at`, so the panel always knows when a device last called
-- **Revoke in one click** (with a confirm dialog): the device must log in again; the user's orders, reviews and everything else stay untouched. Tabs «همه / بدون استفاده / منقضی‌شده» (with counts) point at the cleanup candidates
+- **Larastan (PHPStan for Laravel) level 5 — 0 errors, 0 ignores**: the whole codebase (`app`, `config`, `database`, `routes`, `tests`) now passes strict static analysis. A new `static-analysis` job runs it in CI on every push and PR, beside the test matrix (PHP 8.2 / 8.3 / 8.4) and Pint
+- Getting there meant **~35 files got real type annotations instead of suppressed errors**: every Eloquent relation declares its generics, factories bind their model, every API Resource declares `@mixin` of its model — so `$order->items`, `$item->product` and `$this->id` inside resources are statically checked, not magic
+- The analysis caught real things, and they are fixed: cart and API order-item building is now an explicit null-safe loop, `AdminUserSeeder` reads the admin password via `config()` (plain `env()` breaks under `config:cache`), and the stock `ExampleTest` placeholder — an always-true assertion — is gone
+- **Live coverage badge, zero third-party services**: on every push to `main` a coverage job runs the suite with pcov, `scripts/coverage-badge.php` (unit-tested) turns the Clover report into a shields.io endpoint JSON and pushes it to the `coverage-badge` branch — the new Coverage badge in both READMEs reads from there (red < 50% · yellow ≥ 50% · green ≥ 80%). It appears after the first run of the new workflow on `main`
+- **Auto-release**: push a tag `v*` and `release.yml` runs the whole test suite (a broken tag never ships), extracts the bilingual notes for that version from `CHANGELOG.md` via `scripts/extract-release-notes.php` (unit-tested) and creates the GitHub Release — title and body included, no manual copy-paste
+- New composer shortcuts: `composer analyse` (Larastan) and `composer check` (tests + Pint + Larastan — the exact gate CI runs)
 
 ### 📊 Numbers
 
-- **297 feature tests** (1157 assertions) — all green; code style: Pint clean
-- **Zero migrations, zero config changes** — apply the zip and you're done; `shop:install` has nothing new to run
-- 1 new controller (`Admin/TokenController`); 1 new admin view (`admin/tokens`); 3 new routes (`GET/POST /admin/tokens`, `DELETE /admin/tokens/{token}`); 14 new tests in `TokenManagementTest`
+- **304 tests (1183 assertions)** — all green; Pint clean; **Larastan level 5: 0 errors, 0 ignores**
+- **Zero migrations, zero config breaking changes** — apply the zip and you're done; `shop:install` has nothing new to run
+- New files: `phpstan.neon.dist`, `scripts/extract-release-notes.php`, `scripts/coverage-badge.php`, `tests/Unit/ExtractReleaseNotesTest.php`, `tests/Unit/CoverageBadgeTest.php`, `.github/workflows/release.yml`; larastan ^3.14 added to require-dev (composer.lock updated)
+
+<details>
+<summary>Seeing it in action</summary>
+
+On your machine:
+
+```bash
+composer analyse   # vendor/bin/phpstan analyse — level 5, 0 errors
+composer check     # tests + Pint + Larastan — the same gate CI runs
+```
+
+On GitHub, after pushing this version to `main`:
+
+- **Actions → CI** now shows four jobs: `PHP 8.2 / 8.3 / 8.4 — Tests`, `Code Style (Pint)`, `Static Analysis (Larastan)` and `Coverage + Badge`
+- when `Coverage + Badge` finishes, the **Coverage** badge in the README stops saying "inaccessible" and shows the real percentage — and updates itself on every push to `main`
+- push a tag and watch **Actions → Release**: tests run first, then the release appears on the Releases page with the bilingual notes pulled from `CHANGELOG.md`
+
+</details>
 
 <details>
 <summary>Quick start (unchanged)</summary>
@@ -35,104 +55,50 @@ php artisan serve            # → http://localhost:8000
 
 </details>
 
-<details>
-<summary>Seeing it in action</summary>
-
-Log into **http://localhost:8000/admin** and click **«توکن‌های API»** in the sidebar:
-
-- the table shows every token: who owns it, on which device, when it last called,
-  when it expires — manager tokens carry the blue «مدیر» badge
-- open the **«بدون استفاده»** tab — those are the forgotten tokens; the
-  **«منقضی‌شده»** tab shows the dead ones (red badge)
-- issue one from the form: pick a user, type `iPhone 15`, choose «۷ روز» and
-  hit **«صدور توکن»** — a modal shows the full token **once** (copy it);
-  refresh the page — it never appears again
-- call the API with it, then **revoke** it from the panel and try again — the
-  same token is now 401, the device must log in again
-
-Want the proof without the UI? Here is a full lifecycle through real endpoints:
-
-```bash
-# 1) the admin panel issues a token (form → PRG; token appears once in the modal HTML)
-#    — do it once in the browser and copy the value, then:
-
-# 2) the token works against the real API:
-curl -s http://localhost:8000/api/v1/auth/me \
-  -H "Authorization: Bearer 3|COPY_THE_TOKEN_FROM_THE_MODAL"
-# → {"data":{"id":2,"name":"...", "email":"..."}}   and last_used_at gets stamped
-
-# 3) admin revokes it (one click in /admin/tokens) — the same token is now dead:
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8000/api/v1/auth/me \
-  -H "Authorization: Bearer 3|COPY_THE_TOKEN_FROM_THE_MODAL"
-# → 401  (the device must log in again; the user's data is untouched)
-```
-
-</details>
-
----
-
 ## 🇮🇷 فارسی
 
-<div dir="rtl">
+### 🤖 جدید — اتوماسیون CI: لاراستان، بج پوشش، انتشار خودکار
 
-### 🔑 جدید — صدور، گزارش و ابطالِ توکن‌های API از پنل مدیریت
-
-- API نسخهٔ v2.12.0 توکن‌هایی صادر می‌کرد که کسی نمی‌توانست ببیند. حالا `/admin/tokens` **همهٔ توکن‌های دسترسی شخصی را در یک جدول** می‌آورد — صاحب (بج آبی «مدیر» برای توکن مدیران، «کاربر حذف‌شده» برای یتیم‌ها)، نام دستگاه، تاریخ صدور، **آخرین استفاده** (بج «هرگز» برای هرگز استفاده‌نشده‌ها) و انقضا (بج قرمز «منقضی‌شده» برای مرده‌ها)
-- **صدور توکن بدون خط فرمان**: یک کاربر را انتخاب کنید، دستگاه را نام‌گذاری کنید (`iPhone 15`…)، عمر را تعیین کنید — **بدون انقضا، ۷، ۳۰ یا ۹۰ روز**؛ مقدار کامل توکن **دقیقاً یک‌بار** بعد از ریدایرکت در مودال ظاهر می‌شود (با دکمهٔ کپی) — رفرش کنید و برای همیشه می‌رود؛ دیتابیس همچنان فقط هش را نگه می‌دارد
-- **انقضا را خود Sanctum**، در لحظهٔ احراز هویت، اجرا می‌کند: «۷ روز» واقعاً یعنی روز هفتم توکن می‌میرد — و هر فراخوانی احرازشدهٔ API، `last_used_at` را مهر می‌زند تا پنل همیشه بداند هر دستگاه آخرین بار کِی زنگ زده
-- **ابطال با یک کلیک** (با دیالوگ تأیید): دستگاه باید دوباره وارد شود؛ سفارش‌ها، نظرات و بقیهٔ سوابق همان کاربر دست‌نخورده می‌مانند. تب‌های «همه / بدون استفاده / منقضی‌شده» (با شمارنده) کاندیداهای پاک‌سازی را نشانتان می‌دهند
+- **لاراستان (PHPStan مخصوص Laravel) در سطح ۵ — صفر خطا، صفر استثنا**: کل کدبیس (`app`، `config`، `database`، `routes`، `tests`) تحلیل ایستای سخت‌گیرانه را پاس می‌کند. جاب جدید `static-analysis` آن را در هر push و PR اجرا می‌کند — کنار ماتریس تست‌ها (PHP 8.2 / 8.3 / 8.4) و Pint
+- برای رسیدن به این نقطه، **حدود ۳۵ فایل به‌جای سرکوب‌کردن خطاها تایپ واقعی گرفتند**: هر رابطهٔ Eloquent جنریک‌هایش را اعلام می‌کند، فکتوری‌ها مدل‌شان را بایند می‌کنند و هر Resource مربوط به API یک `@mixin` از مدلش دارد — یعنی `$order->items` و `$item->product` و `$this->id` داخل Resourceها ایستا چک می‌شوند، نه جادویی
+- تحلیل چند ایراد واقعی هم پیدا کرد که همه رفع شدند: ساخت اقلام سبد و سفارشِ API حالا حلقهٔ صریحِ null-safe است، `AdminUserSeeder` رمز مدیر را از `config()` می‌خواند (فراخوانی خام `env()` زیر `config:cache` می‌شکند) و جانگهدار پیش‌فرض `ExampleTest` — یک ادعای همیشه-درست — حذف شد
+- **بج زندهٔ پوشش، بدون هیچ سرویس خارجی**: روی هر push به `main` جاب پوشش، تست‌ها را با pcov اجرا می‌کند، `scripts/coverage-badge.php` (تست‌شده) گزارش Clover را به JSON بج shields.io تبدیل و روی شاخهٔ `coverage-badge` پوش می‌کند — بج جدید Coverage در هر دو README از همان‌جا می‌خواند (قرمز < ۵۰٪ · زرد ≥ ۵۰٪ · سبز ≥ ۸۰٪) و بعد از اولین اجرای ورک‌فلو روی `main` ظاهر می‌شود
+- **انتشار خودکار**: تگ `v*` را پوش کنید تا `release.yml` اول کل تست‌ها را اجرا کند (تگِ شکسته هرگز رلیز نمی‌شود)، یادداشت‌های دوزبانهٔ همان نسخه را از `CHANGELOG.md` بکشد و Release گیت‌هاب را با عنوان و متن بسازد — بدون کپی‌وپیست دستی
+- میان‌برهای جدید کامپوزر: `composer analyse` (لاراستان) و `composer check` (تست + Pint + لاراستان — دقیقاً همان دروازه‌ای که CI اجرا می‌کند)
 
 ### 📊 اعداد
 
-- **۲۹۷ تست فیچر** (۱۱۵۷ ادعا) — همه سبز؛ سبک کد: Pint پاک
-- **بدون مهاجرت جدید، بدون تغییر کانفیگ** — زیپ را اعمال کنید و تمام؛ `shop:install` چیز تازه‌ای برای اجرا ندارد
-- ۱ کنترلر جدید (`Admin/TokenController`)؛ ۱ نمای جدید (`admin/tokens`)؛ ۳ مسیر جدید (`GET/POST /admin/tokens` و `DELETE /admin/tokens/{token}`)؛ ۱۴ تست جدید در `TokenManagementTest`
+- **۳۰۴ تست (۱۱۸۳ ادعا)** — همه سبز؛ Pint تمیز؛ **لاراستان سطح ۵: صفر خطا، صفر استثنا**
+- **صفر مایگریشن و صفر تغییر شکنندهٔ کانفیگ** — زیپ را اعمال کنید و تمام؛ `shop:install` چیز جدیدی برای اجرا ندارد
+- فایل‌های جدید: `phpstan.neon.dist`، `scripts/extract-release-notes.php`، `scripts/coverage-badge.php`، `tests/Unit/ExtractReleaseNotesTest.php`، `tests/Unit/CoverageBadgeTest.php`، `.github/workflows/release.yml`؛ لاراستان ^3.14 به require-dev اضافه شد (composer.lock آپدیت شد)
 
 <details>
-<summary>راه‌اندازی سریع (بدون تغییر)</summary>
+<summary>دیدنش در عمل</summary>
+
+روی سیستم خودتان:
+
+```bash
+composer analyse   # vendor/bin/phpstan analyse — سطح ۵، صفر خطا
+composer check     # تست + Pint + لاراستان — همان دروازهٔ CI
+```
+
+روی گیت‌هاب، بعد از پوش این نسخه به `main`:
+
+- **Actions → CI** حالا چهار جاب دارد: تست‌های 8.2 / 8.3 / 8.4، Pint، **Static Analysis (Larastan)** و **Coverage + Badge**
+- وقتی جاب Coverage تمام شد، بج **Coverage** در README از حالت «inaccessible» درمی‌آید و درصد واقعی را نشان می‌دهد — و روی هر push به `main` خودش آپدیت می‌شود
+- یک تگ پوش کنید و **Actions → Release** را ببینید: اول تست‌ها اجرا می‌شوند، بعد Release با یادداشت‌های دوزبانهٔ استخراج‌شده از `CHANGELOG.md` در صفحهٔ Releases ظاهر می‌شود
+
+</details>
+
+<details>
+<summary>شروع سریع (بدون تغییر)</summary>
 
 ```bash
 git clone https://github.com/MSS1625/shop-php.git && cd shop-php
 composer install
-php artisan shop:install     # env + کلید + مهاجرت + داده + لینک (شامل WELCOME10)
+php artisan shop:install     # env + key + migrate + seed + link
 php artisan admin:create     # ساخت مدیر (تعاملی)
 php artisan serve            # → http://localhost:8000
 ```
 
 </details>
-
-<details>
-<summary>دیدن آن در عمل</summary>
-
-وارد **http://localhost:8000/admin** شوید و در نوار کناری روی **«توکن‌های API»** کلیک کنید:
-
-- جدول همهٔ توکن‌ها را نشان می‌دهد: صاحبِ هر کدام، روی کدام دستگاه، آخرین بار کِی
-  زنگ زده، کِی می‌میرد — توکن مدیران بج آبی «مدیر» دارند
-- تب **«بدون استفاده»** را باز کنید — این‌ها همان توکن‌های فراموش‌شده‌اند؛ تب
-  **«منقضی‌شده»** مرده‌ها را با بج قرمز نشان می‌دهد
-- از فرم یکی صادر کنید: یک کاربر را انتخاب کنید، `iPhone 15` بنویسید، «۷ روز»
-  را بردارید و **«صدور توکن»** را بزنید — مودال مقدار کامل را **یک‌بار** نشان
-  می‌دهد (کپی کنید)؛ صفحه را رفرش کنید — دیگر هرگز دیده نمی‌شود
-- با آن API را صدا بزنید، بعد از پنل **ابطالش** کنید و دوباره امتحان کنید —
-  همان توکن حالا 401 است؛ دستگاه باید دوباره وارد شود
-
-بدون UI هم می‌خواهید ببینید؟ این یک چرخهٔ کامل از دل نقاط اتصال واقعی است:
-
-```bash
-# ۱) پنل توکن را صادر می‌کند (فرم → PRG؛ توکن فقط یک‌بار در HTML مودال هست)
-#    — یک‌بار در مرورگر انجامش بدهید و مقدار را کپی کنید، بعد:
-
-# ۲) توکن در API واقعی کار می‌کند:
-curl -s http://localhost:8000/api/v1/auth/me \
-  -H "Authorization: Bearer 3|مقدار_توکن_را_از_مودال_کپی_کنید"
-# → {"data":{"id":2,"name":"...", "email":"..."}}   و last_used_at مهر می‌خورد
-
-# ۳) مدیر از پنل ابطالش کند (یک کلیک در /admin/tokens) — همان توکن مرده است:
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8000/api/v1/auth/me \
-  -H "Authorization: Bearer 3|مقدار_توکن_را_از_مودال_کپی_کنید"
-# → 401  (دستگاه باید دوباره وارد شود؛ داده‌های کاربر دست‌نخورده است)
-```
-
-</details>
-
-</div>

@@ -81,3 +81,96 @@ jobs:
 
       - name: Check code style
         run: vendor/bin/pint --test
+
+  static-analysis:
+    name: Static Analysis (Larastan)
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+          extensions: dom, curl, libxml, mbstring, zip, fileinfo
+          coverage: none
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-larastan-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-larastan-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction --no-scripts
+
+      - name: Run Larastan (PHPStan level 5)
+        run: vendor/bin/phpstan analyse --memory-limit=1G
+
+  coverage:
+    name: Coverage + Badge
+    runs-on: ubuntu-24.04
+
+    # فقط پوش به main — بج از داخل PRها آپدیت نمی‌شود
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, intl, iconv, fileinfo, gd
+          coverage: pcov
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-coverage-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-coverage-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction --no-scripts
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force
+
+      - name: Run test suite with coverage
+        run: vendor/bin/phpunit --coverage-clover=clover.xml
+
+      # درصد پوشش → JSON قالب endpoint بج shields.io
+      - name: Generate coverage badge
+        run: php scripts/coverage-badge.php clover.xml coverage.json
+
+      # بج روی شاخهٔ coverage-badge پوش می‌شود — README از همان‌جا می‌خواند
+      - name: Publish badge
+        run: |
+          DIR="$(mktemp -d)"
+          cd "$DIR"
+          git init -q
+          git checkout -q -b coverage-badge
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp "$GITHUB_WORKSPACE/coverage.json" .
+          git add coverage.json
+          git commit -qm "coverage: update badge"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" coverage-badge

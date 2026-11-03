@@ -18,7 +18,7 @@ class AdminUserSeeder extends Seeder
     public function run(): void
     {
         $email = config('shop.admin_email', 'admin@digishop.local');
-        $password = env('ADMIN_PASSWORD');
+        $password = config('shop.admin_password');
 
         if (User::where('email', $email)->exists()) {
             return;
