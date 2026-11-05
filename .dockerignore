@@ -1,0 +1,37 @@
+# هرگز وارد ایمیج نشود — ایمیج فقط همان چیزی را دارد که برای اجرا لازم است
+
+# کنترل نسخه و CI (داخل ایمیج نقشی ندارند)
+.git
+.github
+.gitattributes
+.editorconfig
+
+# اسرار و فایل‌های محلی (قالب .env.docker جداگانه وارد می‌شود)
+.env
+.env.backup
+.phpunit.result.cache
+
+# وابستگی‌های سیستم میزبان — داخل ایمیج خودمان نصب می‌کنیم
+vendor
+node_modules
+
+# پایگاه داده و خروجی‌های محلی
+database/database.sqlite
+storage/logs/*.log
+storage/framework/views/*.php
+storage/app/public/products
+# سیم‌لینک محلی storage — مسیر مطلقِ سیستم سازنده را دارد و در کانتینر
+# می‌شکند؛ entrypoint در هر بوت خودش سالمش می‌سازد
+public/storage
+
+# وب‌سایت مستقل دموی GitHub Pages و اسکرین‌شات‌ها (چند مگابایت، بی‌ربط به runtime)
+docs
+screenshots
+
+# بسته‌های خروجی
+*.zip
+
+# مستندات غیرضروری runtime (READMEها می‌مانند)
+CHANGELOG.md
+RELEASE_NOTES.md
+CONTRIBUTING.md

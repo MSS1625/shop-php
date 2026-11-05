@@ -7,6 +7,7 @@
 [![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?style=flat-square&logo=laravel)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?style=flat-square&logo=php)](https://php.net)
 [![CI](https://github.com/MSS1625/shop-php/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/MSS1625/shop-php/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FMSS1625%2Fshop-php%2Fcoverage-badge%2Fcoverage.json)](https://github.com/MSS1625/shop-php/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/MSS1625/shop-php?style=flat-square&label=Release)](../../releases)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
@@ -69,6 +70,7 @@
 
 ## ✨ امکانات
 
+- 🐳 **داکر — یک دستور، کل فروشگاه** — `docker compose up -d --wait` کانتینرهای PHP-FPM و nginx و MySQL 8.4 را بالا می‌آورد (سه کانتینر، یک ایمیج) و فروشگاه را روی http://localhost:8080 سرو می‌کند؛ بوت اول منتظر دیتابیس می‌ماند و همان نصب‌کنندهٔ idempotentِ `shop:install` را (مهاجرت + داده اولیه) بدون دخالت اجرا می‌کند — و `docker compose run --rm test` حتی کل تست‌ها را هم داخل کانتینر اجرا می‌کند؛ بدون نیاز به نصب PHP روی سیستم
 - 📡 **REST API نسخهٔ ۱ (Sanctum، آمادهٔ موبایل)** — کل فروشگاه پشت ۱۸ نقطهٔ اتصال توکنی زیر `/api/v1`: ثبت‌نام/ورود/خروج (توکن به تفکیک دستگاه)، کاتالوگ با همان فیلترهای ویترین (بازهٔ قیمت با ارقام فارسی)، جزئیات محصول در یک فراخوانی (گالری + تفکیک امتیاز + نظرات با نشان خریدار + پرسش‌های پاسخ‌داده + مشابه‌ها)، **ثبت سفارش مستقیم با کد تخفیف** از همان سرویس `PlaceOrder` فرم خرید وب، تاریخچه/لغو سفارش، علاقه‌مندی idempotent و ثبت نظر/پرسش — محدودیت ۶۰ درخواست در دقیقه، پاسخ‌های استاندارد 422/401/409
 - 🔑 **پنل مدیریت توکن‌های API** — همهٔ توکن‌ها در یک جدول روی `/admin/tokens`: صاحب (بج آبی «مدیر»، «کاربر حذف‌شده» برای یتیم‌ها)، دستگاه، تاریخ صدور، آخرین استفاده (بج «هرگز») و انقضا (بج قرمز «منقضی‌شده»)؛ **صدور توکن از خود پنل** (کاربر + نام دستگاه + عمرِ بدون‌انقضا/۷/۳۰/۹۰ روز — انقضا را خود Sanctum در لحظهٔ احراز هویت اجرا می‌کند)، مقدار کامل توکن **دقیقاً یک‌بار** در مودالی قابل‌کپی ظاهر می‌شود و دیتابیس فقط هش را نگه می‌دارد؛ **ابطال تک‌کلیکی** با دیالوگ تأیید؛ تب‌های «همه / بدون استفاده / منقضی‌شده» کاندیداهای پاک‌سازی را نشان می‌دهند
 - 💳 **پرداخت آنلاین زرین‌پال** — اتصال کامل به API نسخه ۴ زرین‌پال با تایید سمت سرور، امکان تلاش مجدد پس از خطا + گزینه «پرداخت در محل»؛ همراه با **درگاه آزمایشی محلی** برای تست کل جریان بدون نیاز به پذیرنده
@@ -155,6 +157,34 @@ php artisan serve
 
 حالا **http://localhost:8000** را باز کنید — فروشگاه با ۸ محصول نمونه آماده است. 🎉
 
+## 🐳 اجرا با داکر (یک دستور)
+
+کل فروشگاه — اپلیکیشن PHP-FPM، وب‌سرور nginx و دیتابیس MySQL 8.4 — با یک دستور بالا می‌آید. چیزی جز خود داکر لازم نیست نصب باشد:
+
+```bash
+git clone https://github.com/MSS1625/shop-php.git
+cd shop-php
+docker compose up -d --wait
+# ← http://localhost:8080
+```
+
+**سه کانتینر، یک ایمیج:** سرویس `app` (php-fpm + کد لاراول، پورت ۹۰۰۰ داخل شبکهٔ compose)، سرویس `web` (همان ایمیج در نقش وب — nginx فایل‌های استاتیک public را مستقیم از خود ایمیج می‌دهد و PHP را با نام سرویس به `app:9000` پاس می‌دهد) و سرویس `db` (ایمیج رسمی `mysql:8.4` با volume دارای healthcheck).
+
+بوت اول چه اتفاقی می‌افتد:
+
+- entrypoint فایل `.env.docker` را به `.env` کپی می‌کند، برای واقعاً آماده‌شدن MySQL صبر می‌کند (`depends_on` فقط «ترتیب» را تضمین می‌کند نه «آمادگی» را — این کار را healthcheckهای compose به‌همراه یک حلقهٔ تلاش مجدد انجام می‌دهند) و بعد `php artisan shop:install` را اجرا می‌کند: مهاجرت‌ها، seederهای idempotent (۸ محصول نمونه) و لینک تصاویر — همه بدون دخالت
+- ورود مدیر: `admin@digishop.local` — رمز تصادفی **یک‌بار** در `docker compose logs app` چاپ می‌شود؛ برای رمز دلخواه، `ADMIN_PASSWORD=…` را در `.env.docker` بگذارید و با `docker compose up -d --build` بوت کنید
+- تصاویر آپلودشدهٔ محصولات (volume با نام `storage-data`) و دیتابیس (volume با نام `db-data`) از restart و rebuild جان سالم به در می‌برند؛ فقط `docker compose down -v` پاکشان می‌کند
+
+```bash
+docker compose logs -f app        # لاگ‌های لاراول روی stderr (ایمیل‌ها هم اینجا)
+docker compose run --rm test      # کل ۳۰۴ تست، داخل کانتینر (SQLite درون‌حافظه)
+docker compose down               # توقف — داده‌ها در volumeها می‌مانند
+docker compose down -v            # توقف و پاک‌کردن داده‌ها
+```
+
+تغییر پورت هاست با یک فایل `.env` کنار docker-compose.yml: `echo 'DIGISHOP_PORT=3000' > .env`.
+
 ## 🛠 راه‌اندازی با XAMPP / MySQL
 
 ۱. در phpMyAdmin یک دیتابیس خالی با نام `shop_php` بسازید
@@ -240,24 +270,33 @@ database/seeders/images/   # تصاویر نمونه محصولات
 docs/                      # صفحه دموی ایستا برای GitHub Pages
 public/assets/             # تم دارک + اسکریپت سبد خرید
 resources/views/           # قالب‌های Blade (فروشگاه + ادمین + احراز هویت + حساب)
-.github/workflows/ci.yml   # اجرای خودکار تست روی هر push
+.github/workflows/ci.yml     # اجرای خودکار تست روی هر push
+.github/workflows/release.yml  # انتشار خودکار Release از روی تگ
+Dockerfile                     # ایمیج چندمرحله‌ای (composer → php:8.3-fpm-alpine)
+docker-compose.yml             # app + web + db — یک دستور: docker compose up -d --wait
+docker/                        # nginx.conf، entrypoint.sh، await-db.php
 README.md / README.fa.md   # English | فارسی
 ```
 
 ## 🧪 تست‌ها و CI
 
 ```bash
-php artisan test        # ۲۹۷ تست Feature
-vendor/bin/pint --test  # بررسی سبک کد
+php artisan test                  # ۳۰۴ تست (۱۱۸۳ ادعا)
+vendor/bin/pint --test            # بررسی سبک کد
+vendor/bin/phpstan analyse        # لاراستان سطح ۵ (صفر خطا)
+composer check                    # هر سه با هم — همان دروازهٔ CI
 ```
 
-روی هر `push` و هر `pull request`، تست‌ها به‌صورت خودکار روی GitHub Actions (PHP 8.2 / 8.3 / 8.4 + Pint) اجرا می‌شوند — بج بالای همین فایل.
+روی هر `push` و هر `pull request`، پنج جاب GitHub Actions به‌صورت خودکار اجرا می‌شود: ماتریس تست (PHP 8.2 / 8.3 / 8.4)، Pint، **تحلیل ایستای لاراستان سطح ۵** و **جاب داکر** که ایمیج production را می‌سازد، کل استک compose را (با دروازهٔ healthcheckها: MySQL سالم، fpm بالا، صفحهٔ اول پاسخ‌گو) بالا می‌آورد و صفحهٔ رندرشده را اسموک‌تست می‌کند — بج‌های بالای همین فایل. روی هر push به `main` جاب پوشش، کل تست‌ها را با pcov اجرا و **بج زندهٔ Coverage** را (از شاخهٔ coverage-badge — بعد از اولین اجرا روی main ظاهر می‌شود) آپدیت می‌کند. تگ `v*` را پوش کنید تا ورک‌فلو `release` اول تست‌ها را اجرا و بعد Release گیت‌هاب را با یادداشت‌های دوزبانهٔ استخراج‌شده از `CHANGELOG.md` بسازد.
+
+داخل کانتینر (بدون PHP روی سیستم): `docker compose run --rm test`.
 
 ## 🗺 نقشه راه
 
 - [x] درگاه پرداخت آنلاین (زرین‌پال)
 - [x] حساب کاربری و تاریخچه سفارش‌ها
 - [x] GitHub Actions CI
+- [x] ارتقای اتوماسیون CI (لاراستان سطح ۵ + بج پوشش + انتشار خودکار)
 - [x] وب‌سایت پروژه (دموی GitHub Pages)
 - [x] گالری تصاویر محصول (چند تصویر)
 - [x] کد تخفیف (کدهای تخفیف)
@@ -272,6 +311,7 @@ vendor/bin/pint --test  # بررسی سبک کد
 - [x] پرسش و پاسخ محصولات (پرسش در صفحهٔ محصول، جریان پاسخ مدیر، ایمیل پاسخ)
 - [x] REST API نسخهٔ ۱ با Sanctum (آمادهٔ موبایل: توکن، کاتالوگ، سفارش مستقیم، علاقه‌مندی، نظرات، پرسش‌ها)
 - [x] پنل مدیریت توکن‌های API (صدور از پنل با نمایش یک‌باره، جدول ممیزی، ابطال تک‌کلیکی)
+- [x] دپلوی با داکر (استک یک‌دستوری compose: app + web + db، تست‌شده در CI)
 
 ## 🤝 مشارکت
 

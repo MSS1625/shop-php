@@ -54,14 +54,23 @@ class OrderController extends Controller
             ->get()
             ->keyBy('slug');
 
-        $items = collect($quantities)
-            ->map(fn (int $quantity, string $slug) => $products->has($slug) ? [
-                'product' => $products[$slug],
+        $items = [];
+
+        foreach ($quantities as $slug => $quantity) {
+            $product = $products->get($slug);
+
+            if ($product === null) {
+                continue;
+            }
+
+            $items[] = [
+                'product' => $product,
                 'quantity' => $quantity,
-                'subtotal' => $products[$slug]->price * $quantity,
-            ] : null)
-            ->filter()
-            ->values();
+                'subtotal' => $product->price * $quantity,
+            ];
+        }
+
+        $items = collect($items);
 
         // بین اعتبارسنجی فرم و ثبت نهایی، محصولی حذف/غیرفعال شده باشد
         if ($items->isEmpty()) {

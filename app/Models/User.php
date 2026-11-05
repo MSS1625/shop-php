@@ -62,6 +62,8 @@ class User extends Authenticatable
 
     /**
      * سفارش‌های این کاربر
+     *
+     * @return HasMany<Order, $this>
      */
     public function orders(): HasMany
     {
@@ -70,6 +72,8 @@ class User extends Authenticatable
 
     /**
      * ردیف‌های علاقه‌مندی این کاربر
+     *
+     * @return HasMany<Wishlist, $this>
      */
     public function wishlists(): HasMany
     {
@@ -79,6 +83,8 @@ class User extends Authenticatable
     /**
      * محصولات علاقه‌مندی از طریق جدول پیوت —
      * جدیدترین ذخیره‌شده اول (مرتب‌سازی روی تاریخ پیوت)
+     *
+     * @return BelongsToMany<Product, $this>
      */
     public function wishlistProducts(): BelongsToMany
     {

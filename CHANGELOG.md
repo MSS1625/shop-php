@@ -5,11 +5,37 @@ All notable changes to this project are documented in this file.
 
 <div dir="rtl" align="center">
 
-راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.14.0** ✅
+راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.16.0** ✅
 
 </div>
 
 ## 🇬🇧 English
+
+## [2.16.0] — 2026-11-04
+
+### 🐳 Added — Docker: the whole shop in one command
+
+- **The entire store — PHP-FPM app, nginx and MySQL 8.4 — now boots with a single command**: `docker compose up -d --wait` → http://localhost:8080 — no PHP, no Composer, no MySQL on the host; only Docker
+- **One image, three containers**: the multi-stage `Dockerfile` (a `composer:2` stage bakes an optimized no-dev autoloader into the image, then `php:8.3-fpm-alpine` with `pdo_mysql`/`bcmath`/`intl`/`opcache` + nginx) is built once and used twice — the `app` service runs php-fpm (port 9000 inside the compose network), the `web` service runs the *same image* in web role: nginx serves the static files of `public/` straight from the image and proxies PHP to `app:9000` by service name; the `db` service is the official `mysql:8.4` with a health-checked data volume
+- **The container boots through the project's own one-command installer**: the entrypoint copies `.env.docker` → `.env` on first boot, waits for MySQL to be *really* ready (`depends_on` only guarantees order, not readiness — the compose healthchecks plus a `docker/await-db.php` retry loop are the actual gate), then runs `php artisan shop:install`: the very same idempotent installer (migrations + `updateOrCreate` seeders + storage link) the project has had since v1.0.0 — so restarts re-run it safely and never duplicate data (verified: categories/products/coupons/admin counts identical after a second boot)
+- **Data survives rebuilds**: `db-data` (MySQL) and `storage-data` (uploaded product images, shared read-only with the web role) named volumes; only `docker compose down -v` wipes them; the host port is `8080` by default and changeable via `DIGISHOP_PORT` in an `.env` file
+- **The whole test suite now runs inside a container too — without installing PHP**: `docker compose run --rm test` builds the `dev` target (dev dependencies + phpunit) and runs all 304 tests on SQLite in-memory, no database service needed
+- **A new `docker` job in CI** proves the image on every push and PR: build → `docker compose up -d --wait` (gated on healthchecks: MySQL up, fpm running, storefront answering) → smoke-test the rendered homepage (store title + a seeded product) → run the full suite in the `test` container
+- `.dockerignore` keeps the image lean (no `docs/`, `screenshots/`, `.git`, local env or host vendor) and excludes the machine-local `public/storage` symlink that would dangle inside the container — the entrypoint recreates it on every boot
+- **Zero migrations, zero PHP code changes** — the suite stays at 304 tests / 1183 assertions; Docker is pure infrastructure around the existing app
+
+## [2.15.0] — 2026-11-04
+
+### 🤖 Added — CI automation: Larastan, coverage badge, auto-release
+
+- **Larastan (PHPStan for Laravel) level 5 — 0 errors, 0 ignores**: the whole codebase (`app`, `config`, `database`, `routes`, `tests`) now passes strict static analysis; a new `static-analysis` job runs it in CI on PHP 8.2 on every push and PR — beside the existing test matrix (8.2/8.3/8.4) and Pint
+- To get there, **~35 files got real type annotations instead of suppressed errors**: every Eloquent relation declares its generics (`@return HasMany<OrderItem, $this>`…), factories bind their model (`@extends Factory<Product>`), and every API Resource declares `@mixin` of its model — so `$order->items`, `$item->product` and `$this->id` inside resources are statically checked, not magic
+- The analysis caught real things, and they are fixed: building cart items and API order items is now an explicit null-safe loop (same behavior, honest types — no `filter()` that pretends nulls can't happen), `answeredQuestions()` applies its `where` clause directly instead of riding the scope-through-relation proxy, `AdminUserSeeder` reads the admin password via `config('shop.admin_password')` (a plain `env()` call breaks under `config:cache`), and the stock `ExampleTest` placeholder — whose always-true assertion was literally the first finding — is gone
+- **Live coverage badge, zero third-party services**: on every push to `main`, the `coverage` job runs the suite with pcov on PHP 8.4, `php scripts/coverage-badge.php` (unit-tested) turns the Clover report into a shields.io endpoint JSON and pushes it to the `coverage-badge` branch — the new Coverage badge in both READMEs reads from there and updates itself (red < 50% · yellow ≥ 50% · green ≥ 80%)
+- **Auto-release**: push a tag `v*` and the new `release.yml` workflow runs the whole test suite (a broken tag never ships), extracts the bilingual notes for that version from `CHANGELOG.md` via `php scripts/extract-release-notes.php` (unit-tested) and creates the GitHub Release with title and body — no more copy-pasting from RELEASE_NOTES by hand
+- Two new standalone scripts under `scripts/` (plain PHP, no framework boot), each covered by its own unit test suite (`ExtractReleaseNotesTest`, `CoverageBadgeTest`)
+- New composer shortcuts: `composer analyse` (Larastan) and `composer check` (tests + Pint + Larastan — the same gate CI runs)
+- 8 new tests / 27 assertions — **304 tests total, 1183 assertions**, all green; Pint clean; Larastan clean; **zero migrations, zero config breaking changes** — apply the zip and done
 
 ## [2.14.0] — 2026-11-01
 
@@ -264,6 +290,32 @@ All notable changes to this project are documented in this file.
 ---
 
 ## 🇮🇷 فارسی
+
+## [2.16.0] — ۲۰۲۶-۱۱-۰۴
+
+### 🐳 افزوده شد — داکر: کل فروشگاه در یک دستور
+
+- **کل فروشگاه — اپ PHP-FPM و nginx و MySQL 8.4 — حالا با یک دستور بالا می‌آید**: `docker compose up -d --wait` → http://localhost:8080 — بدون PHP، بدون Composer و بدون MySQL روی سیستم؛ فقط خود داکر
+- **یک ایمیج، سه کانتینر**: `Dockerfile` چندمرحله‌ای (مرحلهٔ `composer:2` که autoloader بهینهٔ بدون-dev را داخل ایمیج می‌پزد و بعد `php:8.3-fpm-alpine` با `pdo_mysql`/`bcmath`/`intl`/`opcache` + nginx) یک‌بار بیلد می‌شود و دو نقش را اجرا می‌کند — سرویس `app` همان php-fpm است (پورت ۹۰۰۰ داخل شبکهٔ compose) و سرویس `web` همان ایمیج را در نقش وب اجرا می‌کند: nginx فایل‌های استاتیک `public` را مستقیم از خود ایمیج می‌دهد و PHP را با نام سرویس به `app:9000` پاس می‌دهد؛ سرویس `db` هم ایمیج رسمی `mysql:8.4` با volume دارای healthcheck است
+- **کانتینر با همان نصب‌کنندهٔ یک‌مرحله‌ای خود پروژه بوت می‌شود**: entrypoint در بوت اول `.env.docker` را به `.env` کپی می‌کند، برای *واقعاً* آماده‌شدن MySQL صبر می‌کند (`depends_on` فقط ترتیب را تضمین می‌کند نه آمادگی را — این کار را healthcheckهای compose به‌همراه حلقهٔ تلاش مجدد `docker/await-db.php` انجام می‌دهند) و بعد `php artisan shop:install` را اجرا می‌کند: همان نصب‌کنندهٔ idempotent (مهاجرت‌ها + seederهای `updateOrCreate` + لینک تصاویر) که از v1.0.0 همراه پروژه بوده — پس restartها بدون خطر دوباره اجرا می‌شوند و هرگز داده تکراری نمی‌سازند (تأیید شد: تعداد دسته/محصول/کد تخفیف/مدیر بعد از بوت دوم یکسان ماند)
+- **داده‌ها از rebuild جان سالم به در می‌برند**: volumeهای با نام `db-data` (MySQL) و `storage-data` (تصاویر آپلودشده، به‌اشتراک فقط‌خواندنی با نقش وب)؛ فقط `docker compose down -v` پاکشان می‌کند؛ پورت هاست پیش‌فرض ۸۰۸۰ است و با `DIGISHOP_PORT` در یک فایل `.env` قابل تغییر است
+- **کل تست‌ها حالا داخل کانتینر هم اجرا می‌شوند — بدون نصب PHP**: `docker compose run --rm test` تارگت `dev` را می‌سازد (وابستگی‌های توسعه + phpunit) و هر ۳۰۴ تست را با SQLite درون‌حافظه اجرا می‌کند؛ بدون نیاز به سرویس دیتابیس
+- **جاب جدید `docker` در CI** ایمیج را روی هر push و PR اثبات می‌کند: بیلد ← `docker compose up -d --wait` (با دروازهٔ healthcheckها: MySQL سالم، fpm بالا، صفحهٔ اول پاسخ‌گو) ← اسموک‌تست صفحهٔ رندرشده (عنوان فروشگاه + یک محصول seed شده) ← اجرای کل تست‌ها در کانتینر `test`
+- `.dockerignore` ایمیج را سبک نگه می‌دارد (بدون docs و screenshots و .git و env محلی و vendor سیستم) و سیم‌لینک محلی `public/storage` را که داخل کانتینر می‌شکست حذف می‌کند — entrypoint در هر بوت سالمش را می‌سازد
+- **صفر مایگریشن و صفر تغییر کد PHP** — تست‌ها همان ۳۰۴ تست / ۱۱۸۳ ادعا می‌مانند؛ داکر فقط زیرساختِ دور همان اپ فعلی است
+
+## [2.15.0] — ۲۰۲۶-۱۱-۰۴
+
+### 🤖 افزوده شد — اتوماسیون CI: لاراستان، بج پوشش، انتشار خودکار
+
+- **لاراستان (PHPStan مخصوص Laravel) در سطح ۵ — صفر خطا، صفر استثنا**: کل کدبیس (`app`، `config`، `database`، `routes`، `tests`) تحلیل ایستای سخت‌گیرانه را پاس می‌کند؛ جاب جدید `static-analysis` آن را در CI روی PHP 8.2 و در هر push و PR اجرا می‌کند — کنار ماتریس تست‌های موجود (۸.۲/۸.۳/۸.۴) و Pint
+- برای رسیدن به این نقطه، **حدود ۳۵ فایل به‌جای سرکوب‌کردن خطاها، تایپ واقعی گرفتند**: هر رابطهٔ Eloquent جنریک‌هایش را اعلام می‌کند (`@return HasMany<OrderItem, $this>`…)، فکتوری‌ها مدل‌شان را بایند می‌کنند (`@extends Factory<Product>`) و هر Resource مربوط به API یک `@mixin` از مدلش دارد — یعنی `$order->items` و `$item->product` و `$this->id` داخل Resourceها ایستا چک می‌شوند، نه جادویی
+- تحلیل چند ایراد واقعی هم پیدا کرد که همه رفع شدند: ساخت اقلام سبد و سفارشِ API حالا یک حلقهٔ صریحِ null-safe است (همان رفتار، تایپ صادقانه — بدون `filter()` که انگار null اصلاً وجود ندارد)، `answeredQuestions()` شرط `where` را مستقیم اعمال می‌کند نه سوارشدن روی پروکسی اسکوپ-از-روی-رابطه، `AdminUserSeeder` رمز مدیر را از `config('shop.admin_password')` می‌خواند (فراخوانی خام `env()` زیر `config:cache` می‌شکند) و جانگهدارِ پیش‌فرض `ExampleTest` — که ادعای همیشه-درستش دقیقاً اولین یافتهٔ تحلیل بود — حذف شد
+- **بج زندهٔ پوشش، بدون هیچ سرویس خارجی**: روی هر push به `main`، جاب `coverage` کل تست‌ها را با pcov روی PHP 8.4 اجرا می‌کند، `php scripts/coverage-badge.php` (تست‌شده) گزارش Clover را به JSON قالب endpoint بج shields.io تبدیل و روی شاخهٔ `coverage-badge` پوش می‌کند — بج جدید Coverage در هر دو README از همان‌جا می‌خواند و خودش آپدیت می‌شود (قرمز < ۵۰٪ · زرد ≥ ۵۰٪ · سبز ≥ ۸۰٪)
+- **انتشار خودکار**: تگ `v*` را پوش کنید تا ورک‌فلو جدید `release.yml` کل تست‌ها را اجرا کند (تگِ شکسته هرگز رلیز نمی‌شود)، یادداشت‌های دوزبانهٔ همان نسخه را از `CHANGELOG.md` با `php scripts/extract-release-notes.php` (تست‌شده) بکشد و Release گیت‌هاب را با عنوان و متن بسازد — دیگر خبری از کپی‌وپیست دستی RELEASE_NOTES نیست
+- دو اسکریپت standalone جدید در `scripts/` (PHP خالص، بدون بوت فریم‌ورک)، هرکدام با مجموعهٔ تست واحد خودش (`ExtractReleaseNotesTest`، `CoverageBadgeTest`)
+- میان‌برهای جدید کامپوزر: `composer analyse` (لاراستان) و `composer check` (تست + Pint + لاراستان — همان دروازه‌ای که CI اجرا می‌کند)
+- ۸ تست / ۲۷ ادعای جدید — جمعاً **۳۰۴ تست، ۱۱۸۳ ادعا**، همه سبز؛ Pint تمیز؛ لاراستان تمیز؛ **صفر مایگریشن و صفر تغییر شکنندهٔ کانفیگ** — زیپ را اعمال کنید و تمام
 
 ## [2.14.0] — ۲۰۲۶-۱۱-۰۱
 

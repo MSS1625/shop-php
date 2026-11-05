@@ -1,4 +1,4 @@
-# 🔑 v2.14.0 — پنل مدیریت توکن‌های API (Admin API Token Management)
+# 🐳 v2.16.0 — داکر: کل فروشگاه در یک دستور (Docker: the whole shop in one command)
 
 <div dir="rtl" align="center">
 
@@ -9,21 +9,44 @@ Laravel 12 · PHP 8.2+ · Bootstrap 5 RTL · MIT License
 
 ## 🇬🇧 English
 
-### 🔑 New — issue, audit and revoke API tokens from the admin panel
+### 🐳 New — Docker: the whole shop in one command
 
-- The v2.12.0 REST API shipped tokens nobody could see. Now `/admin/tokens` lists **every personal access token in one table** — owner (blue «مدیر» badge for manager tokens, «کاربر حذف‌شده» for orphans), device name, issue date, **last use** («هرگز» badge for never-used ones) and expiry (red «منقضی‌شده» badge for dead ones)
-- **Issue tokens without touching a terminal**: pick a user, name the device (`iPhone 15`…), choose a lifetime — **no expiry, 7, 30 or 90 days**; the full plain token appears **exactly once** in a modal after the redirect (copy button included) — refresh and it's gone forever; the database still stores only the hash
-- **Expiry is enforced by Sanctum itself**, at authentication time: «۷ روز» really means the token dies on day 7 — and every authenticated API call stamps `last_used_at`, so the panel always knows when a device last called
-- **Revoke in one click** (with a confirm dialog): the device must log in again; the user's orders, reviews and everything else stay untouched. Tabs «همه / بدون استفاده / منقضی‌شده» (with counts) point at the cleanup candidates
+- **`docker compose up -d --wait` → http://localhost:8080** — the full store (PHP-FPM app, nginx, MySQL 8.4) boots with one command; no PHP, no Composer, no MySQL on the host — only Docker
+- **One image, three containers**: a multi-stage `Dockerfile` (composer:2 stage bakes the optimized no-dev autoloader, then `php:8.3-fpm-alpine` + nginx) runs twice — the `app` service is php-fpm, the `web` service is the same image in web role serving static files and proxying PHP to `app:9000` by service name; `db` is the official `mysql:8.4` with a health-checked volume
+- **The container boots through the project's own installer**: the entrypoint copies `.env.docker` → `.env`, waits for MySQL to be really ready (healthchecks + a `docker/await-db.php` retry loop — `depends_on` alone only guarantees order), then runs the same idempotent `php artisan shop:install` the project has had since v1.0.0 — restart-safe, no duplicate data
+- **Data survives rebuilds** in the `db-data` and `storage-data` volumes; host port changeable via `DIGISHOP_PORT`; admin password printed once in `docker compose logs app` (or set `ADMIN_PASSWORD` in `.env.docker`)
+- **Tests inside a container, zero host tooling**: `docker compose run --rm test` runs all 304 tests on SQLite in-memory
+- **New `docker` job in CI** proves the image on every push and PR: build → healthcheck-gated compose up → homepage smoke test (title + seeded product) → full suite in the `test` container
+- `.dockerignore` keeps the image lean and excludes the machine-local `public/storage` symlink (it would dangle in the container; the entrypoint recreates it each boot)
 
 ### 📊 Numbers
 
-- **297 feature tests** (1157 assertions) — all green; code style: Pint clean
-- **Zero migrations, zero config changes** — apply the zip and you're done; `shop:install` has nothing new to run
-- 1 new controller (`Admin/TokenController`); 1 new admin view (`admin/tokens`); 3 new routes (`GET/POST /admin/tokens`, `DELETE /admin/tokens/{token}`); 14 new tests in `TokenManagementTest`
+- **Zero migrations, zero PHP code changes** — the suite stays at **304 tests (1183 assertions)**, all green; Pint clean (163 files); Larastan level 5: 0 errors
+- New files: `Dockerfile`, `docker-compose.yml`, `.dockerignore`, `.env.docker`, `docker/nginx.conf`, `docker/entrypoint.sh`, `docker/await-db.php`; `ci.yml` gained the `docker` job (now five jobs + coverage on main)
 
 <details>
-<summary>Quick start (unchanged)</summary>
+<summary>Seeing it in action</summary>
+
+On any machine with Docker:
+
+```bash
+git clone https://github.com/MSS1625/shop-php.git && cd shop-php
+docker compose up -d --wait     # build + boot app/web/db, gated on healthchecks
+# → http://localhost:8080
+
+docker compose logs app         # admin password + Laravel logs (stderr)
+docker compose run --rm test    # the whole 304-test suite, inside a container
+docker compose down             # stop (data stays) · add -v to wipe
+```
+
+On GitHub, after pushing this version:
+
+- **Actions → CI** now shows the **Docker — build & boot the full stack** job beside the test matrix, Pint, Larastan and Coverage: it builds the production image, boots the whole stack with `--wait`, greps the rendered homepage for the store title and a seeded product, then runs the full suite inside the `test` container
+
+</details>
+
+<details>
+<summary>Quick start without Docker (unchanged)</summary>
 
 ```bash
 git clone https://github.com/MSS1625/shop-php.git && cd shop-php
@@ -35,104 +58,53 @@ php artisan serve            # → http://localhost:8000
 
 </details>
 
-<details>
-<summary>Seeing it in action</summary>
-
-Log into **http://localhost:8000/admin** and click **«توکن‌های API»** in the sidebar:
-
-- the table shows every token: who owns it, on which device, when it last called,
-  when it expires — manager tokens carry the blue «مدیر» badge
-- open the **«بدون استفاده»** tab — those are the forgotten tokens; the
-  **«منقضی‌شده»** tab shows the dead ones (red badge)
-- issue one from the form: pick a user, type `iPhone 15`, choose «۷ روز» and
-  hit **«صدور توکن»** — a modal shows the full token **once** (copy it);
-  refresh the page — it never appears again
-- call the API with it, then **revoke** it from the panel and try again — the
-  same token is now 401, the device must log in again
-
-Want the proof without the UI? Here is a full lifecycle through real endpoints:
-
-```bash
-# 1) the admin panel issues a token (form → PRG; token appears once in the modal HTML)
-#    — do it once in the browser and copy the value, then:
-
-# 2) the token works against the real API:
-curl -s http://localhost:8000/api/v1/auth/me \
-  -H "Authorization: Bearer 3|COPY_THE_TOKEN_FROM_THE_MODAL"
-# → {"data":{"id":2,"name":"...", "email":"..."}}   and last_used_at gets stamped
-
-# 3) admin revokes it (one click in /admin/tokens) — the same token is now dead:
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8000/api/v1/auth/me \
-  -H "Authorization: Bearer 3|COPY_THE_TOKEN_FROM_THE_MODAL"
-# → 401  (the device must log in again; the user's data is untouched)
-```
-
-</details>
-
----
-
 ## 🇮🇷 فارسی
 
-<div dir="rtl">
+### 🐳 جدید — داکر: کل فروشگاه در یک دستور
 
-### 🔑 جدید — صدور، گزارش و ابطالِ توکن‌های API از پنل مدیریت
-
-- API نسخهٔ v2.12.0 توکن‌هایی صادر می‌کرد که کسی نمی‌توانست ببیند. حالا `/admin/tokens` **همهٔ توکن‌های دسترسی شخصی را در یک جدول** می‌آورد — صاحب (بج آبی «مدیر» برای توکن مدیران، «کاربر حذف‌شده» برای یتیم‌ها)، نام دستگاه، تاریخ صدور، **آخرین استفاده** (بج «هرگز» برای هرگز استفاده‌نشده‌ها) و انقضا (بج قرمز «منقضی‌شده» برای مرده‌ها)
-- **صدور توکن بدون خط فرمان**: یک کاربر را انتخاب کنید، دستگاه را نام‌گذاری کنید (`iPhone 15`…)، عمر را تعیین کنید — **بدون انقضا، ۷، ۳۰ یا ۹۰ روز**؛ مقدار کامل توکن **دقیقاً یک‌بار** بعد از ریدایرکت در مودال ظاهر می‌شود (با دکمهٔ کپی) — رفرش کنید و برای همیشه می‌رود؛ دیتابیس همچنان فقط هش را نگه می‌دارد
-- **انقضا را خود Sanctum**، در لحظهٔ احراز هویت، اجرا می‌کند: «۷ روز» واقعاً یعنی روز هفتم توکن می‌میرد — و هر فراخوانی احرازشدهٔ API، `last_used_at` را مهر می‌زند تا پنل همیشه بداند هر دستگاه آخرین بار کِی زنگ زده
-- **ابطال با یک کلیک** (با دیالوگ تأیید): دستگاه باید دوباره وارد شود؛ سفارش‌ها، نظرات و بقیهٔ سوابق همان کاربر دست‌نخورده می‌مانند. تب‌های «همه / بدون استفاده / منقضی‌شده» (با شمارنده) کاندیداهای پاک‌سازی را نشانتان می‌دهند
+- **`docker compose up -d --wait` → http://localhost:8080** — کل فروشگاه (اپ PHP-FPM، nginx، MySQL 8.4) با یک دستور بالا می‌آید؛ بدون PHP و Composer و MySQL روی سیستم — فقط خود داکر
+- **یک ایمیج، سه کانتینر**: `Dockerfile` چندمرحله‌ای (مرحلهٔ composer:2 که autoloader بهینهٔ بدون-dev را می‌پزد و بعد `php:8.3-fpm-alpine` + nginx) یک‌بار ساخته و دو بار استفاده می‌شود — سرویس `app` همان php-fpm است و سرویس `web` همان ایمیج در نقش وب: فایل‌های استاتیک را مستقیم می‌دهد و PHP را با نام سرویس به `app:9000` پاس می‌کند؛ `db` هم ایمیج رسمی `mysql:8.4` با volume دارای healthcheck است
+- **کانتینر با نصب‌کنندهٔ خود پروژه بوت می‌شود**: entrypoint فایل `.env.docker` را به `.env` کپی می‌کند، برای آماده‌شدن واقعی MySQL صبر می‌کند (healthcheckها + حلقهٔ تلاش مجدد `docker/await-db.php` — `depends_on` به‌تنهایی فقط ترتیب را تضمین می‌کند) و بعد همان `php artisan shop:install` idempotent را اجرا می‌کند که از v1.0.0 همراه پروژه بوده — restart بدون خطر، بدون دادهٔ تکراری
+- **داده‌ها از rebuild می‌مانند** (volumeهای `db-data` و `storage-data`)؛ پورت هاست با `DIGISHOP_PORT` قابل تغییر است؛ رمز مدیر یک‌بار در `docker compose logs app` چاپ می‌شود (یا `ADMIN_PASSWORD` را در `.env.docker` بگذارید)
+- **تست داخل کانتینر، بدون هیچ ابزاری روی سیستم**: `docker compose run --rm test` هر ۳۰۴ تست را با SQLite درون‌حافظه اجرا می‌کند
+- **جاب جدید `docker` در CI** ایمیج را روی هر push و PR اثبات می‌کند: بیلد ← بوت compose با دروازهٔ healthcheckها ← اسموک‌تست صفحهٔ اول (عنوان + محصول seed شده) ← کل تست‌ها در کانتینر `test`
+- `.dockerignore` ایمیج را سبک نگه می‌دارد و سیم‌لینک محلی `public/storage` را حذف می‌کند (داخل کانتینر می‌شکست؛ entrypoint در هر بوت می‌سازدش)
 
 ### 📊 اعداد
 
-- **۲۹۷ تست فیچر** (۱۱۵۷ ادعا) — همه سبز؛ سبک کد: Pint پاک
-- **بدون مهاجرت جدید، بدون تغییر کانفیگ** — زیپ را اعمال کنید و تمام؛ `shop:install` چیز تازه‌ای برای اجرا ندارد
-- ۱ کنترلر جدید (`Admin/TokenController`)؛ ۱ نمای جدید (`admin/tokens`)؛ ۳ مسیر جدید (`GET/POST /admin/tokens` و `DELETE /admin/tokens/{token}`)؛ ۱۴ تست جدید در `TokenManagementTest`
+- **صفر مایگریشن و صفر تغییر کد PHP** — تست‌ها همان **۳۰۴ تست (۱۱۸۳ ادعا)**، همه سبز؛ Pint تمیز (۱۶۳ فایل)؛ لاراستان سطح ۵: صفر خطا
+- فایل‌های جدید: `Dockerfile`، `docker-compose.yml`، `.dockerignore`، `.env.docker`، `docker/nginx.conf`، `docker/entrypoint.sh`، `docker/await-db.php`؛ جاب `docker` به `ci.yml` اضافه شد (حالا پنج جاب + پوشش روی main)
 
 <details>
-<summary>راه‌اندازی سریع (بدون تغییر)</summary>
+<summary>دیدنش در عمل</summary>
+
+روی هر سیستمی که داکر دارد:
+
+```bash
+git clone https://github.com/MSS1625/shop-php.git && cd shop-php
+docker compose up -d --wait     # بیلد + بوت app/web/db با دروازهٔ healthcheckها
+# ← http://localhost:8080
+
+docker compose logs app         # رمز مدیر + لاگ‌های لاراول (روی stderr)
+docker compose run --rm test    # کل ۳۰۴ تست، داخل کانتینر
+docker compose down             # توقف (داده‌ها می‌مانند) · با -v پاک می‌شوند
+```
+
+روی گیت‌هاب، بعد از پوش این نسخه:
+
+- **Actions → CI** حالا جاب **Docker — build & boot the full stack** را کنار ماتریس تست، Pint، لاراستان و پوشش نشان می‌دهد: ایمیج production را می‌سازد، کل استک را با `--wait` بالا می‌آورد، عنوان فروشگاه و یک محصول seed شده را در صفحهٔ رندرشده جستجو می‌کند و بعد کل تست‌ها را داخل کانتینر `test` اجرا می‌کند
+
+</details>
+
+<details>
+<summary>شروع سریع بدون داکر (بدون تغییر)</summary>
 
 ```bash
 git clone https://github.com/MSS1625/shop-php.git && cd shop-php
 composer install
-php artisan shop:install     # env + کلید + مهاجرت + داده + لینک (شامل WELCOME10)
+php artisan shop:install     # env + کلید + مهاجرت + داده اولیه + لینک
 php artisan admin:create     # ساخت مدیر (تعاملی)
 php artisan serve            # → http://localhost:8000
 ```
 
 </details>
-
-<details>
-<summary>دیدن آن در عمل</summary>
-
-وارد **http://localhost:8000/admin** شوید و در نوار کناری روی **«توکن‌های API»** کلیک کنید:
-
-- جدول همهٔ توکن‌ها را نشان می‌دهد: صاحبِ هر کدام، روی کدام دستگاه، آخرین بار کِی
-  زنگ زده، کِی می‌میرد — توکن مدیران بج آبی «مدیر» دارند
-- تب **«بدون استفاده»** را باز کنید — این‌ها همان توکن‌های فراموش‌شده‌اند؛ تب
-  **«منقضی‌شده»** مرده‌ها را با بج قرمز نشان می‌دهد
-- از فرم یکی صادر کنید: یک کاربر را انتخاب کنید، `iPhone 15` بنویسید، «۷ روز»
-  را بردارید و **«صدور توکن»** را بزنید — مودال مقدار کامل را **یک‌بار** نشان
-  می‌دهد (کپی کنید)؛ صفحه را رفرش کنید — دیگر هرگز دیده نمی‌شود
-- با آن API را صدا بزنید، بعد از پنل **ابطالش** کنید و دوباره امتحان کنید —
-  همان توکن حالا 401 است؛ دستگاه باید دوباره وارد شود
-
-بدون UI هم می‌خواهید ببینید؟ این یک چرخهٔ کامل از دل نقاط اتصال واقعی است:
-
-```bash
-# ۱) پنل توکن را صادر می‌کند (فرم → PRG؛ توکن فقط یک‌بار در HTML مودال هست)
-#    — یک‌بار در مرورگر انجامش بدهید و مقدار را کپی کنید، بعد:
-
-# ۲) توکن در API واقعی کار می‌کند:
-curl -s http://localhost:8000/api/v1/auth/me \
-  -H "Authorization: Bearer 3|مقدار_توکن_را_از_مودال_کپی_کنید"
-# → {"data":{"id":2,"name":"...", "email":"..."}}   و last_used_at مهر می‌خورد
-
-# ۳) مدیر از پنل ابطالش کند (یک کلیک در /admin/tokens) — همان توکن مرده است:
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8000/api/v1/auth/me \
-  -H "Authorization: Bearer 3|مقدار_توکن_را_از_مودال_کپی_کنید"
-# → 401  (دستگاه باید دوباره وارد شود؛ داده‌های کاربر دست‌نخورده است)
-```
-
-</details>
-
-</div>

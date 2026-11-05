@@ -11,6 +11,9 @@ return [
     // ایمیل مدیر اولیه که توسط seeder ساخته می‌شود
     'admin_email' => env('SHOP_ADMIN_EMAIL', 'admin@digishop.local'),
 
+    // رمز مدیر اولیه از env — اگر تنظیم نشده باشد seeder رمز تصادفی می‌سازد
+    'admin_password' => env('ADMIN_PASSWORD'),
+
     // تعداد محصولات در هر صفحه فروشگاه
     'per_page_shop' => 12,
 

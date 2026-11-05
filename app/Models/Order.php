@@ -11,6 +11,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+/**
+ * @property int|null $items_count تعداد اقلام (با withCount)
+ * @property int|null $sales_sum جمع فروش (selectRaw داشبورد)
+ * @property int|null $orders_count تعداد سفارش (selectRaw داشبورد)
+ */
 class Order extends Model
 {
     /** @use HasFactory<OrderFactory> */
@@ -138,6 +143,7 @@ class Order extends Model
         return $number;
     }
 
+    /** @return HasMany<OrderItem, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
@@ -155,7 +161,10 @@ class Order extends Model
         return $this->subtotal ?? $this->total;
     }
 
-    /** کاربر مالک سفارش (اگر با حساب کاربری خرید شده باشد) */
+    /** کاربر مالک سفارش (اگر با حساب کاربری خرید شده باشد)
+     *
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

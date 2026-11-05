@@ -1,0 +1,63 @@
+name: Release
+
+# انتشار خودکار: پوش تگ v* → کل تست‌ها → Release دوزبانه از CHANGELOG
+# (تگ شکسته هرگز رلیز نمی‌شود — اول کل تست‌ها سبز می‌شوند)
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Test + create GitHub release
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, intl, iconv, fileinfo, gd
+          coverage: none
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-release-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-release-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction --no-scripts
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force
+
+      - name: Run test suite
+        run: php artisan test
+
+      # بدنهٔ دوزبانهٔ همین نسخه از CHANGELOG — عنوان از اولین سرفصل «### …»
+      - name: Extract release notes from CHANGELOG
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          php scripts/extract-release-notes.php "$VERSION" > release-body.md
+          php scripts/extract-release-notes.php "$VERSION" --title > release-title.txt
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          TITLE="$(cat release-title.txt)"
+          gh release create "$TAG" --title "$TAG — $TITLE" --notes-file release-body.md --latest

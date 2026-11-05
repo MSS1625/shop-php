@@ -15,6 +15,8 @@ class ProductImage extends Model
 
     /**
      * تصویر متعلق به کدام محصول است
+     *
+     * @return BelongsTo<Product, $this>
      */
     public function product(): BelongsTo
     {
