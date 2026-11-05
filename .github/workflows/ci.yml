@@ -174,3 +174,40 @@ jobs:
           git add coverage.json
           git commit -qm "coverage: update badge"
           git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" coverage-badge
+
+  # ─────────────────────────────────────────────
+  # ایمیج داکر: بیلد + بوت کامل استک (app + web + db) + اسموک‌تست
+  # ─────────────────────────────────────────────
+  docker:
+    name: Docker — build & boot the full stack
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      # ۱) ایمیج production ساخته می‌شود (مرحلهٔ composer + runtime)
+      - name: Build the production image
+        run: docker build -t digishop:ci .
+
+      # ۲) کل فروشگاه با compose بالا می‌آید؛ --wait یعنی منتظر
+      #    healthcheckهای همهٔ سرویس‌ها (db سالم، fpm بالا، صفحهٔ اول پاسخ)
+      - name: Boot app + web + db
+        run: docker compose up -d --wait --wait-timeout 300
+
+      # ۳) صفحهٔ اول واقعاً رندر شده باشد: عنوان فروشگاه + محصول seed شده
+      - name: Smoke-test the storefront
+        run: |
+          body="$(curl -fsS http://localhost:8080/)"
+          echo "$body" | grep -q 'دیجی‌شاپ'
+          echo "$body" | grep -q 'مودم'
+          echo "storefront OK — title + seeded product found"
+
+      # ۴) کل تست‌ها داخل کانتینر (target dev، SQLite درون‌حافظه)
+      - name: Run the test suite inside a container
+        run: docker compose run --rm test
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v --remove-orphans

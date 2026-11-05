@@ -70,6 +70,7 @@ It replicates the home page (hero, categories, product cards) with the real samp
 
 ## ✨ Features
 
+- 🐳 **Docker — one command, the whole shop** — `docker compose up -d --wait` boots PHP-FPM + nginx + MySQL 8.4 (three containers, one image) and serves on http://localhost:8080; the first boot waits for the database, runs the same idempotent `shop:install` (migrations + seeders) unattended, and `docker compose run --rm test` even runs the whole test suite inside a container — no PHP on the host needed
 - 📡 **REST API v1 (Sanctum, mobile-ready)** — the whole store behind 18 token-authenticated endpoints under `/api/v1`: register/login/logout (per-device tokens), catalog with the same filters as the storefront (Persian-digit price ranges included), one-call product detail (gallery + rating breakdown + verified-badge reviews + answered questions + related), **direct order placement with coupons** through the same `PlaceOrder` service as the web checkout, order history/cancel, idempotent wishlist and review/question submission — 60 req/min rate limit, standard 422/401/409 responses
 - 🔑 **Admin API Token Management** — every token in one table on `/admin/tokens`: owner (blue «مدیر» badge, «کاربر حذف‌شده» for orphans), device, issue date, last use («هرگز» badge) and expiry (red «منقضی‌شده»); **issue tokens from the panel** (user + device name + lifetime of no-expiry/7/30/90 days — Sanctum enforces the expiry at auth time), the plain token appears **exactly once** in a copyable modal and the DB keeps only the hash; **one-click revoke** with confirm dialog; tabs «همه / بدون استفاده / منقضی‌شده» point at the cleanup candidates
 - 💳 **Online Payment (ZarinPal)** — full payment-gateway integration (ZarinPal v4 API) with server-side verification, retry-on-failure, plus Cash-on-Delivery option; ships with a local **mock gateway** so you can test the whole payment flow without a merchant account
@@ -155,6 +156,34 @@ php artisan serve
 ```
 
 Open **http://localhost:8000** — the shop is ready with 8 sample products. 🎉
+
+## 🐳 Run with Docker (one command)
+
+The full store — PHP-FPM app, nginx web server and MySQL 8.4 database — boots with a single command. Nothing but Docker needs to be installed:
+
+```bash
+git clone https://github.com/MSS1625/shop-php.git
+cd shop-php
+docker compose up -d --wait
+# → http://localhost:8080
+```
+
+**Three containers, one image:** `app` (php-fpm + the Laravel app, port 9000 inside the compose network), `web` (the *same image* in web role — nginx serves the static files of `public/` straight from the image and proxies PHP to `app:9000` by service name) and `db` (official `mysql:8.4` with a health-checked data volume).
+
+What happens on the first boot:
+
+- the entrypoint copies `.env.docker` → `.env`, waits for MySQL to be really ready (`depends_on` only guarantees order, not readiness — the compose healthchecks plus a small retry loop do the actual gating), then runs `php artisan shop:install`: migrations, idempotent seeders (8 sample products) and the storage link, all unattended
+- admin login is `admin@digishop.local` — the random password is printed **once** in `docker compose logs app`; to set your own, put `ADMIN_PASSWORD=…` in `.env.docker` and boot with `docker compose up -d --build`
+- uploaded product images (the `storage-data` volume) and the database (the `db-data` volume) survive restarts and rebuilds; only `docker compose down -v` wipes them
+
+```bash
+docker compose logs -f app        # Laravel logs on stderr (emails land here too)
+docker compose run --rm test      # the whole 304-test suite, inside a container (SQLite in-memory)
+docker compose down               # stop — data stays in the volumes
+docker compose down -v            # stop and wipe the data
+```
+
+Change the host port with an `.env` file next to `docker-compose.yml`: `echo 'DIGISHOP_PORT=3000' > .env`.
 
 ## 🛠 Setup with XAMPP / MySQL
 
@@ -243,6 +272,9 @@ public/assets/             # تم دارک + اسکریپت سبد خرید
 resources/views/           # Blade templates (shop + admin + auth + account)
 .github/workflows/ci.yml   # اجرای خودکار تست روی هر push
 .github/workflows/release.yml # انتشار خودکار Release از روی تگ
+Dockerfile                  # ایمیج چندمرحله‌ای (composer → php:8.3-fpm-alpine)
+docker-compose.yml          # app + web + db — یک دستور: docker compose up -d --wait
+docker/                     # nginx.conf، entrypoint.sh، await-db.php
 README.md / README.fa.md   # English | فارسی
 ```
 
@@ -255,7 +287,9 @@ vendor/bin/phpstan analyse        # Larastan level 5 (0 errors)
 composer check                    # هر سه با هم — همان دروازهٔ CI
 ```
 
-Every `push` and `pull request` runs four GitHub Actions jobs automatically: the test matrix (PHP 8.2 / 8.3 / 8.4), Pint, and **Larastan level 5** static analysis — see the badges at the top. On every push to `main`, a coverage job runs the suite with pcov and publishes the live **Coverage** badge (from the `coverage-badge` branch — it appears after the first run on `main`). Push a tag `v*` and the `release` workflow runs the tests, then creates the GitHub Release with the bilingual notes extracted from `CHANGELOG.md`.
+Every `push` and `pull request` runs five GitHub Actions jobs automatically: the test matrix (PHP 8.2 / 8.3 / 8.4), Pint, **Larastan level 5** static analysis, and a **Docker job** that builds the production image, boots the whole compose stack (healthcheck-gated: MySQL up, fpm running, storefront answering) and smoke-tests the rendered homepage — see the badges at the top. On every push to `main`, a coverage job runs the suite with pcov and publishes the live **Coverage** badge (from the `coverage-badge` branch — it appears after the first run on `main`). Push a tag `v*` and the `release` workflow runs the tests, then creates the GitHub Release with the bilingual notes extracted from `CHANGELOG.md`.
+
+Inside a container (no PHP on the host needed): `docker compose run --rm test`.
 
 ## 🗺 Roadmap
 
@@ -277,6 +311,7 @@ Every `push` and `pull request` runs four GitHub Actions jobs automatically: the
 - [x] Product Q&A (ask on the product page, admin answer workflow, answer email)
 - [x] REST API v1 with Sanctum (mobile-ready: token auth, catalog, direct orders, wishlist, reviews, questions)
 - [x] Admin API token management (issue from the panel with one-time display, audit table, one-click revoke)
+- [x] Docker deployment (one-command compose stack: app + web + db, CI-tested)
 
 ## 🤝 Contributing
 

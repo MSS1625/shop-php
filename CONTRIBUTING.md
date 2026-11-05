@@ -25,6 +25,9 @@ composer analyse
 
 # یا همه با هم — همان دروازهٔ CI
 composer check
+
+# بدون PHP روی سیستم؟ کل تست‌ها داخل کانتینر:
+docker compose run --rm test
 ```
 
 ## قوانین

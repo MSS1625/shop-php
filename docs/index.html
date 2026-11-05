@@ -432,6 +432,10 @@ footer { border-top: 1px solid var(--border); padding: 2.6rem 0 1.8rem; margin-t
                     <div><b>جستجو و کشف هوشمند</b><p>جستجوی زنده، فیلتر دسته و بازهٔ قیمت، فقط موجود، مرتب‌سازی پرفروش‌ترین (بدون احتساب سفارش لغوشده) و محصولات مشابه موجود-اول.</p></div>
                 </div>
                 <div class="feature">
+                    <span class="fi"><i class="fa-brands fa-docker"></i></span>
+                    <div><b>داکر — یک دستور، کل فروشگاه</b><p>docker compose up -d --wait و اپ + nginx + MySQL 8.4 (سه کانتینر، یک ایمیج) بالا می‌آید؛ بوت اول خودش منتظر دیتابیس می‌ماند و همان shop:install را اجرا می‌کند — حتی کل تست‌ها هم داخل کانتینر اجرا می‌شوند.</p></div>
+                </div>
+                <div class="feature">
                     <span class="fi"><i class="fa-solid fa-star-half-stroke"></i></span>
                     <div><b>نظرات و امتیازدهی</b><p>امتیاز ۱ تا ۵ ستاره با میانگین و نمودار تفکیک، نشان «خریدار تأییدشده» برای خریداران واقعی و جریان بررسی/تأیید نظرات در پنل مدیریت.</p></div>
                 </div>
@@ -469,7 +473,7 @@ footer { border-top: 1px solid var(--border); padding: 2.6rem 0 1.8rem; margin-t
                 </div>
                 <div class="feature">
                     <span class="fi"><i class="fa-solid fa-robot"></i></span>
-                    <div><b>تست و CI خودکار</b><p>۳۰۴ تست که روی هر push در GitHub Actions با ماتریس PHP 8.2 / 8.3 / 8.4، Pint و تحلیل ایستای لاراستان (سطح ۵، صفر خطا) اجرا می‌شود؛ بج زندهٔ پوشش تست و انتشار خودکار Release از روی تگ.</p></div>
+                    <div><b>تست و CI خودکار</b><p>۳۰۴ تست که روی هر push در GitHub Actions با ماتریس PHP 8.2 / 8.3 / 8.4، Pint، تحلیل ایستای لاراستان (سطح ۵، صفر خطا) و جاب داکر (بیلد ایمیج + بوت استک + اسموک‌تست) اجرا می‌شود؛ بج زندهٔ پوشش تست و انتشار خودکار Release از روی تگ.</p></div>
                 </div>
             </div>
         </div>
@@ -481,6 +485,15 @@ footer { border-top: 1px solid var(--border); padding: 2.6rem 0 1.8rem; margin-t
                 <h2 class="section-title">راه‌اندازی نسخه کامل</h2>
             </div>
             <div class="steps">
+                <div class="step">
+                    <span class="sn">۰</span>
+                    <b>راه‌اندازی با داکر (سریع‌ترین راه)</b>
+                    <p>فقط داکر لازم است — بدون PHP و Composer و MySQL؛ اپ + nginx + MySQL با هم بالا می‌آیند.</p>
+                    <code>git clone https://github.com/MSS1625/shop-php.git
+cd shop-php
+docker compose up -d --wait
+# http://localhost:8080</code>
+                </div>
                 <div class="step">
                     <span class="sn">۱</span>
                     <b>دریافت و نصب وابستگی‌ها</b>
@@ -509,7 +522,10 @@ php artisan serve
                 <code>$ git clone https://github.com/MSS1625/shop-php.git &amp;&amp; cd shop-php
 $ composer install
 $ php artisan shop:install &amp;&amp; php artisan admin:create
-$ php artisan serve   →   http://localhost:8000  🎉</code>
+$ php artisan serve   →   http://localhost:8000  🎉
+
+# یا فقط با داکر:
+$ docker compose up -d --wait   →   http://localhost:8080  🐳</code>
             </div>
         </div>
     </section>

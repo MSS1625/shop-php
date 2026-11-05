@@ -1,0 +1,92 @@
+# ============================================================
+#  دیجی‌شاپ — کل فروشگاه با یک دستور | Digi-Shop in one command
+#
+#      docker compose up -d --wait
+#      → http://localhost:8080
+#
+#  سه کانتینر، یک ایمیج:
+#    app — php-fpm + منطق بوت (صبر برای دیتابیس، migrate، seed)
+#    web — nginx: فایل‌های استاتیک از خودش، PHP را به app:9000 پاس می‌دهد
+#    db  — MySQL 8.4 با healthcheck؛ داده‌ها روی volume می‌مانند
+#
+#  پورت هاست را با DIGISHOP_PORT در فایل .env کنار همین فایل عوض کنید:
+#      echo 'DIGISHOP_PORT=3000' > .env
+# ============================================================
+name: digishop
+
+services:
+  # اپلیکیشن لاراول — php-fpm روی پورت ۹۰۰۰ (داخل شبکهٔ compose)
+  app:
+    build: .
+    image: digishop-app
+    restart: unless-stopped
+    volumes:
+      # تصاویر آپلودشدهٔ محصولات — بین app و web مشترک و مانا
+      - storage-data:/var/www/storage/app
+    depends_on:
+      db:
+        # ترتیب + آمادگی: app فقط وقتی شروع می‌شود که db سالم باشد
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pidof php-fpm >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      # بوت اول: صبر برای MySQL + migrate + seed قبل از بالا آمدن fpm
+      start_period: 90s
+
+  # نقش وب از همان ایمیج — nginx روی پورت ۸۰ کانتینر
+  web:
+    image: digishop-app
+    build: .
+    restart: unless-stopped
+    command: web
+    ports:
+      - "${DIGISHOP_PORT:-8080}:80"
+    volumes:
+      - storage-data:/var/www/storage/app:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      # صفحهٔ اول واقعاً پاسخ بدهد (یعنی nginx و app و db هر سه زنده‌اند)
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+      start_period: 120s
+
+  # دیتابیس — دیتا روی volume می‌ماند (فقط down -v پاکش می‌کند)
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: digishop
+      MYSQL_USER: digishop
+      MYSQL_PASSWORD: digishop
+      MYSQL_ROOT_PASSWORD: digishop-root
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      # TCP روی 127.0.0.1 — در بوت اولِ MySQL (فاز init بدون شبکه) هنوز fail می‌شود؛
+      # یعنی «سالم» فقط وقتی درست است که سرور واقعی آماده باشد
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -udigishop -pdigishop --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 60s
+
+  # اجرای کل تست‌ها داخل کانتینر — بدون نصب PHP/Composer روی سیستم:
+  #      docker compose run --rm test
+  # تست‌ها با SQLite درون‌حافظه اجرا می‌شوند؛ به سرویس db نیازی ندارند.
+  test:
+    build:
+      context: .
+      target: dev
+    image: digishop-dev
+    profiles: ["test"]
+    command: sh -c "php artisan key:generate --force && php artisan test"
+
+volumes:
+  db-data:
+  storage-data:

@@ -5,11 +5,24 @@ All notable changes to this project are documented in this file.
 
 <div dir="rtl" align="center">
 
-راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.15.0** ✅
+راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.16.0** ✅
 
 </div>
 
 ## 🇬🇧 English
+
+## [2.16.0] — 2026-11-04
+
+### 🐳 Added — Docker: the whole shop in one command
+
+- **The entire store — PHP-FPM app, nginx and MySQL 8.4 — now boots with a single command**: `docker compose up -d --wait` → http://localhost:8080 — no PHP, no Composer, no MySQL on the host; only Docker
+- **One image, three containers**: the multi-stage `Dockerfile` (a `composer:2` stage bakes an optimized no-dev autoloader into the image, then `php:8.3-fpm-alpine` with `pdo_mysql`/`bcmath`/`intl`/`opcache` + nginx) is built once and used twice — the `app` service runs php-fpm (port 9000 inside the compose network), the `web` service runs the *same image* in web role: nginx serves the static files of `public/` straight from the image and proxies PHP to `app:9000` by service name; the `db` service is the official `mysql:8.4` with a health-checked data volume
+- **The container boots through the project's own one-command installer**: the entrypoint copies `.env.docker` → `.env` on first boot, waits for MySQL to be *really* ready (`depends_on` only guarantees order, not readiness — the compose healthchecks plus a `docker/await-db.php` retry loop are the actual gate), then runs `php artisan shop:install`: the very same idempotent installer (migrations + `updateOrCreate` seeders + storage link) the project has had since v1.0.0 — so restarts re-run it safely and never duplicate data (verified: categories/products/coupons/admin counts identical after a second boot)
+- **Data survives rebuilds**: `db-data` (MySQL) and `storage-data` (uploaded product images, shared read-only with the web role) named volumes; only `docker compose down -v` wipes them; the host port is `8080` by default and changeable via `DIGISHOP_PORT` in an `.env` file
+- **The whole test suite now runs inside a container too — without installing PHP**: `docker compose run --rm test` builds the `dev` target (dev dependencies + phpunit) and runs all 304 tests on SQLite in-memory, no database service needed
+- **A new `docker` job in CI** proves the image on every push and PR: build → `docker compose up -d --wait` (gated on healthchecks: MySQL up, fpm running, storefront answering) → smoke-test the rendered homepage (store title + a seeded product) → run the full suite in the `test` container
+- `.dockerignore` keeps the image lean (no `docs/`, `screenshots/`, `.git`, local env or host vendor) and excludes the machine-local `public/storage` symlink that would dangle inside the container — the entrypoint recreates it on every boot
+- **Zero migrations, zero PHP code changes** — the suite stays at 304 tests / 1183 assertions; Docker is pure infrastructure around the existing app
 
 ## [2.15.0] — 2026-11-04
 
@@ -277,6 +290,19 @@ All notable changes to this project are documented in this file.
 ---
 
 ## 🇮🇷 فارسی
+
+## [2.16.0] — ۲۰۲۶-۱۱-۰۴
+
+### 🐳 افزوده شد — داکر: کل فروشگاه در یک دستور
+
+- **کل فروشگاه — اپ PHP-FPM و nginx و MySQL 8.4 — حالا با یک دستور بالا می‌آید**: `docker compose up -d --wait` → http://localhost:8080 — بدون PHP، بدون Composer و بدون MySQL روی سیستم؛ فقط خود داکر
+- **یک ایمیج، سه کانتینر**: `Dockerfile` چندمرحله‌ای (مرحلهٔ `composer:2` که autoloader بهینهٔ بدون-dev را داخل ایمیج می‌پزد و بعد `php:8.3-fpm-alpine` با `pdo_mysql`/`bcmath`/`intl`/`opcache` + nginx) یک‌بار بیلد می‌شود و دو نقش را اجرا می‌کند — سرویس `app` همان php-fpm است (پورت ۹۰۰۰ داخل شبکهٔ compose) و سرویس `web` همان ایمیج را در نقش وب اجرا می‌کند: nginx فایل‌های استاتیک `public` را مستقیم از خود ایمیج می‌دهد و PHP را با نام سرویس به `app:9000` پاس می‌دهد؛ سرویس `db` هم ایمیج رسمی `mysql:8.4` با volume دارای healthcheck است
+- **کانتینر با همان نصب‌کنندهٔ یک‌مرحله‌ای خود پروژه بوت می‌شود**: entrypoint در بوت اول `.env.docker` را به `.env` کپی می‌کند، برای *واقعاً* آماده‌شدن MySQL صبر می‌کند (`depends_on` فقط ترتیب را تضمین می‌کند نه آمادگی را — این کار را healthcheckهای compose به‌همراه حلقهٔ تلاش مجدد `docker/await-db.php` انجام می‌دهند) و بعد `php artisan shop:install` را اجرا می‌کند: همان نصب‌کنندهٔ idempotent (مهاجرت‌ها + seederهای `updateOrCreate` + لینک تصاویر) که از v1.0.0 همراه پروژه بوده — پس restartها بدون خطر دوباره اجرا می‌شوند و هرگز داده تکراری نمی‌سازند (تأیید شد: تعداد دسته/محصول/کد تخفیف/مدیر بعد از بوت دوم یکسان ماند)
+- **داده‌ها از rebuild جان سالم به در می‌برند**: volumeهای با نام `db-data` (MySQL) و `storage-data` (تصاویر آپلودشده، به‌اشتراک فقط‌خواندنی با نقش وب)؛ فقط `docker compose down -v` پاکشان می‌کند؛ پورت هاست پیش‌فرض ۸۰۸۰ است و با `DIGISHOP_PORT` در یک فایل `.env` قابل تغییر است
+- **کل تست‌ها حالا داخل کانتینر هم اجرا می‌شوند — بدون نصب PHP**: `docker compose run --rm test` تارگت `dev` را می‌سازد (وابستگی‌های توسعه + phpunit) و هر ۳۰۴ تست را با SQLite درون‌حافظه اجرا می‌کند؛ بدون نیاز به سرویس دیتابیس
+- **جاب جدید `docker` در CI** ایمیج را روی هر push و PR اثبات می‌کند: بیلد ← `docker compose up -d --wait` (با دروازهٔ healthcheckها: MySQL سالم، fpm بالا، صفحهٔ اول پاسخ‌گو) ← اسموک‌تست صفحهٔ رندرشده (عنوان فروشگاه + یک محصول seed شده) ← اجرای کل تست‌ها در کانتینر `test`
+- `.dockerignore` ایمیج را سبک نگه می‌دارد (بدون docs و screenshots و .git و env محلی و vendor سیستم) و سیم‌لینک محلی `public/storage` را که داخل کانتینر می‌شکست حذف می‌کند — entrypoint در هر بوت سالمش را می‌سازد
+- **صفر مایگریشن و صفر تغییر کد PHP** — تست‌ها همان ۳۰۴ تست / ۱۱۸۳ ادعا می‌مانند؛ داکر فقط زیرساختِ دور همان اپ فعلی است
 
 ## [2.15.0] — ۲۰۲۶-۱۱-۰۴
 
