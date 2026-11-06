@@ -19,6 +19,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // هدرهای امنیتی برای همه پاسخ‌ها
         $middleware->append(SecurityHeaders::class);
 
+        // پشت پروکسی معکوس (Caddy در docker-compose.prod.yml): هدرهای
+        // X-Forwarded-For/Proto/Host باور می‌شوند تا URLها، ریدایرکت‌ها و
+        // callback درگاه پرداخت https بمانند — بدون این، لاروال همه‌چیز
+        // را http می‌بیند چون خودش فقط با caddy داخل شبکه حرف می‌زند
+        $middleware->trustProxies(at: '*');
+
         // محدودیت نرخ پیش‌فرض برای گروه api (throttle:api)
         $middleware->throttleApi();
 

@@ -1,0 +1,123 @@
+# ============================================================
+#  دیجی‌شاپ — استک پروداکشن روی VPS | Production stack on a VPS
+#
+#  دامنه + HTTPS خودکار، فقط با دو دستور:
+#      cp .env.production.example .env.production   # و مقدارها را ویرایش کنید
+#      docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build --wait
+#      → https://دامنهٔ-شما
+#
+#  چهار کانتینر:
+#    caddy — دروازهٔ ورود روی 80/443؛ گواهی Let's Encrypt را خودکار
+#            می‌گیرد و تمدید می‌کند (فقط همین سرویس پورت بیرونی دارد)
+#    web   — همان ایمیج app در نقش nginx؛ فقط داخل شبکهٔ compose
+#    app   — php-fpm + منطق بوت (صبر برای دیتابیس، migrate، seed)
+#    db    — MySQL 8.4 با رمزهای قوی از .env.production
+#
+#  تفاوت با docker-compose.yml (نسخهٔ توسعه):
+#    - فقط caddy بیرون در دسترس است (80/443)؛ app و web و db نه
+#    - دامنه و رمزهای دیتابیس از .env.production خوانده می‌شوند (هاردکد نیست)
+#    - APP_URL خودکار https://دامنه می‌شود تا ریدایرکت‌ها و درگاه پرداخت درست باشند
+#
+#  راهنمای قدم‌به‌قدم (شامل سرور رایگان): docs/DEPLOY.fa.md
+# ============================================================
+name: digishop-prod
+
+services:
+  # دروازهٔ ورود — HTTPS خودکار با Let's Encrypt؛ تمدید گواهی هم خودکار است
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    environment:
+      DIGISHOP_DOMAIN: ${DIGISHOP_DOMAIN:?DIGISHOP_DOMAIN را در .env.production تنظیم کنید}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # گواهی‌ها روی volume می‌مانند؛ وگرنه هر rebuild یک درخواست تازهٔ
+      # گواهی می‌فرستد و به rate-limit لِتس‌انکریپت می‌خورد
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      # API مدیریتی Caddy روی 127.0.0.1:2019 — یعنی کانفیگ بار شده و آماده است
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1:2019/config/ || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+      start_period: 30s
+
+  # نقش وب — همان ایمیج؛ این بار بدون پورت بیرونی، پشت caddy
+  web:
+    image: digishop-app
+    build: .
+    restart: unless-stopped
+    command: web
+    volumes:
+      - storage-data:/var/www/storage/app:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      # صفحهٔ اول واقعاً پاسخ بدهد (یعنی nginx و app و db هر سه زنده‌اند)
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+      start_period: 120s
+
+  # اپلیکیشن — مقادیر حساس از .env.production به‌صورت متغیر محیطی تزریق می‌شود
+  # (متغیر محیطی واقعی، مقدار همان کلید در .env.docker داخل کانتینر را override می‌کند؛
+  #  فقط کلیدهای رشته‌ای — بولین‌ها از .env.docker می‌مانند تا «false» رشته‌ای نشود)
+  app:
+    build: .
+    image: digishop-app
+    restart: unless-stopped
+    volumes:
+      - storage-data:/var/www/storage/app
+    environment:
+      APP_URL: https://${DIGISHOP_DOMAIN:?DIGISHOP_DOMAIN را در .env.production تنظیم کنید}
+      DB_DATABASE: ${DB_DATABASE:-digishop}
+      DB_USERNAME: ${DB_USERNAME:-digishop}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD را در .env.production تنظیم کنید}
+      SHOP_ADMIN_EMAIL: ${SHOP_ADMIN_EMAIL:-admin@digishop.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pidof php-fpm >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 90s
+
+  # دیتابیس — رمزهای قوی از .env.production (نه پیش‌فرض‌های نسخهٔ توسعه)
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-digishop}
+      MYSQL_USER: ${DB_USERNAME:-digishop}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD را در .env.production تنظیم کنید}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?DB_ROOT_PASSWORD را در .env.production تنظیم کنید}
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      # TCP روی 127.0.0.1 — با همان کاربر/رمزی که خود سرویس تعریف شده؛
+      # در بوت اولِ MySQL (فاز init بدون شبکه) هنوز fail می‌شود، یعنی «سالم»
+      # فقط وقتی درست است که سرور واقعی آماده باشد
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 60s
+
+volumes:
+  db-data:
+  storage-data:
+  caddy-data:
+  caddy-config:
