@@ -178,12 +178,23 @@ What happens on the first boot:
 
 ```bash
 docker compose logs -f app        # Laravel logs on stderr (emails land here too)
-docker compose run --rm test      # the whole 304-test suite, inside a container (SQLite in-memory)
+docker compose run --rm test      # the whole 306-test suite, inside a container (SQLite in-memory)
 docker compose down               # stop — data stays in the volumes
 docker compose down -v            # stop and wipe the data
 ```
 
 Change the host port with an `.env` file next to `docker-compose.yml`: `echo 'DIGISHOP_PORT=3000' > .env`.
+
+## ☁️ Deploy to a Free VPS (production, HTTPS)
+
+The production stack adds a fourth service — **Caddy** — as the only public entry point: it obtains the Let's Encrypt certificate for your domain automatically, renews it, redirects HTTP→HTTPS and proxies everything to the `web` service. Two commands on any Ubuntu server:
+
+```bash
+cp .env.production.example .env.production      # set your domain + strong DB passwords
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build --wait
+```
+
+The full step-by-step — an honest comparison of the 2026 free tiers (Oracle Always Free, GCP, Codespaces, Render), the Oracle Security List trap, DNS-first-then-deploy, backups and troubleshooting — lives in **[docs/DEPLOY.md](docs/DEPLOY.md)** (فارسی: [docs/DEPLOY.fa.md](docs/DEPLOY.fa.md)).
 
 ## 🛠 Setup with XAMPP / MySQL
 
@@ -274,20 +285,24 @@ resources/views/           # Blade templates (shop + admin + auth + account)
 .github/workflows/release.yml # انتشار خودکار Release از روی تگ
 Dockerfile                  # ایمیج چندمرحله‌ای (composer → php:8.3-fpm-alpine)
 docker-compose.yml          # app + web + db — یک دستور: docker compose up -d --wait
+docker-compose.prod.yml     # استک پروداکشن: app + web + db + caddy (HTTPS خودکار)
+deploy/Caddyfile            # پروکسی معکوس: دامنه + گواهی Let's Encrypt خودکار
+.env.production.example     # قالب تنظیمات پروداکشن (دامنه + رمزهای دیتابیس)
 docker/                     # nginx.conf، entrypoint.sh، await-db.php
+docs/DEPLOY.md / DEPLOY.fa.md  # راهنمای دیپلوی روی VPS (انگلیسی | فارسی)
 README.md / README.fa.md   # English | فارسی
 ```
 
 ## 🧪 Tests & CI
 
 ```bash
-php artisan test                  # 304 tests (1183 assertions)
+php artisan test                  # 306 tests (1187 assertions)
 vendor/bin/pint --test            # code style
 vendor/bin/phpstan analyse        # Larastan level 5 (0 errors)
 composer check                    # هر سه با هم — همان دروازهٔ CI
 ```
 
-Every `push` and `pull request` runs five GitHub Actions jobs automatically: the test matrix (PHP 8.2 / 8.3 / 8.4), Pint, **Larastan level 5** static analysis, and a **Docker job** that builds the production image, boots the whole compose stack (healthcheck-gated: MySQL up, fpm running, storefront answering) and smoke-tests the rendered homepage — see the badges at the top. On every push to `main`, a coverage job runs the suite with pcov and publishes the live **Coverage** badge (from the `coverage-badge` branch — it appears after the first run on `main`). Push a tag `v*` and the `release` workflow runs the tests, then creates the GitHub Release with the bilingual notes extracted from `CHANGELOG.md`.
+Every `push` and `pull request` runs five GitHub Actions jobs automatically: the test matrix (PHP 8.2 / 8.3 / 8.4), Pint, **Larastan level 5** static analysis, and a **Docker job** that builds the production image, boots the whole compose stack (healthcheck-gated: MySQL up, fpm running, storefront answering), smoke-tests the rendered homepage and validates the production compose file — see the badges at the top. On every push to `main`, a coverage job runs the suite with pcov and publishes the live **Coverage** badge (from the `coverage-badge` branch — it appears after the first run on `main`). Push a tag `v*` and the `release` workflow runs the tests, then creates the GitHub Release with the bilingual notes extracted from `CHANGELOG.md`.
 
 Inside a container (no PHP on the host needed): `docker compose run --rm test`.
 
@@ -312,6 +327,7 @@ Inside a container (no PHP on the host needed): `docker compose run --rm test`.
 - [x] REST API v1 with Sanctum (mobile-ready: token auth, catalog, direct orders, wishlist, reviews, questions)
 - [x] Admin API token management (issue from the panel with one-time display, audit table, one-click revoke)
 - [x] Docker deployment (one-command compose stack: app + web + db, CI-tested)
+- [x] Production deployment on a free VPS (Caddy edge, automatic HTTPS, bilingual deploy guide)
 
 ## 🤝 Contributing
 

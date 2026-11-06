@@ -208,6 +208,14 @@ jobs:
       - name: Run the test suite inside a container
         run: docker compose run --rm test
 
+      # ۵) فایل compose پروداکشن هم همیشه معتبر بماند — بدون دامنهٔ
+      #    واقعی، فقط ساختار و interpolation با مقادیر نمونه چک می‌شود
+      - name: Validate the production compose file
+        run: >-
+          DIGISHOP_DOMAIN=ci-example.com
+          DB_PASSWORD=ci-secret DB_ROOT_PASSWORD=ci-root-secret
+          docker compose -f docker-compose.prod.yml config --quiet
+
       - name: Tear down
         if: always()
         run: docker compose down -v --remove-orphans

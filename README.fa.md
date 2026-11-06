@@ -178,12 +178,23 @@ docker compose up -d --wait
 
 ```bash
 docker compose logs -f app        # لاگ‌های لاراول روی stderr (ایمیل‌ها هم اینجا)
-docker compose run --rm test      # کل ۳۰۴ تست، داخل کانتینر (SQLite درون‌حافظه)
+docker compose run --rm test      # کل ۳۰۶ تست، داخل کانتینر (SQLite درون‌حافظه)
 docker compose down               # توقف — داده‌ها در volumeها می‌مانند
 docker compose down -v            # توقف و پاک‌کردن داده‌ها
 ```
 
 تغییر پورت هاست با یک فایل `.env` کنار docker-compose.yml: `echo 'DIGISHOP_PORT=3000' > .env`.
+
+## ☁️ دیپلوی روی VPS رایگان (پروداکشن، HTTPS)
+
+استک پروداکشن یک سرویس چهارم هم دارد — **Caddy** — به‌عنوان تنها دروازهٔ عمومی: گواهی Let's Encrypt دامنهٔ شما را خودکار می‌گیرد و تمدید می‌کند، HTTP را به HTTPS ریدایرکت می‌کند و همهٔ درخواست‌ها را به سرویس `web` پاس می‌دهد. روی هر سرور اوبونتویی، دو دستور:
+
+```bash
+cp .env.production.example .env.production      # دامنه + رمزهای قوی دیتابیس را تنظیم کنید
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build --wait
+```
+
+راهنمای کامل قدم‌به‌قدم — مقایسهٔ صادقانهٔ Free Tierهای ۲۰۲۶ (Oracle Always Free، GCP، Codespaces، Render)، تلهٔ Security List اوراکل، اول-DNS-بعد-دیپلوی، بکاپ و عیب‌یابی — در **[docs/DEPLOY.fa.md](docs/DEPLOY.fa.md)** (English: [docs/DEPLOY.md](docs/DEPLOY.md)).
 
 ## 🛠 راه‌اندازی با XAMPP / MySQL
 
@@ -274,20 +285,24 @@ resources/views/           # قالب‌های Blade (فروشگاه + ادمی�
 .github/workflows/release.yml  # انتشار خودکار Release از روی تگ
 Dockerfile                     # ایمیج چندمرحله‌ای (composer → php:8.3-fpm-alpine)
 docker-compose.yml             # app + web + db — یک دستور: docker compose up -d --wait
+docker-compose.prod.yml        # استک پروداکشن: app + web + db + caddy (HTTPS خودکار)
+deploy/Caddyfile               # پروکسی معکوس: دامنه + گواهی Let's Encrypt خودکار
+.env.production.example        # قالب تنظیمات پروداکشن (دامنه + رمزهای دیتابیس)
 docker/                        # nginx.conf، entrypoint.sh، await-db.php
+docs/DEPLOY.md / DEPLOY.fa.md  # راهنمای دیپلوی روی VPS (انگلیسی | فارسی)
 README.md / README.fa.md   # English | فارسی
 ```
 
 ## 🧪 تست‌ها و CI
 
 ```bash
-php artisan test                  # ۳۰۴ تست (۱۱۸۳ ادعا)
+php artisan test                  # ۳۰۶ تست (۱۱۸۷ ادعا)
 vendor/bin/pint --test            # بررسی سبک کد
 vendor/bin/phpstan analyse        # لاراستان سطح ۵ (صفر خطا)
 composer check                    # هر سه با هم — همان دروازهٔ CI
 ```
 
-روی هر `push` و هر `pull request`، پنج جاب GitHub Actions به‌صورت خودکار اجرا می‌شود: ماتریس تست (PHP 8.2 / 8.3 / 8.4)، Pint، **تحلیل ایستای لاراستان سطح ۵** و **جاب داکر** که ایمیج production را می‌سازد، کل استک compose را (با دروازهٔ healthcheckها: MySQL سالم، fpm بالا، صفحهٔ اول پاسخ‌گو) بالا می‌آورد و صفحهٔ رندرشده را اسموک‌تست می‌کند — بج‌های بالای همین فایل. روی هر push به `main` جاب پوشش، کل تست‌ها را با pcov اجرا و **بج زندهٔ Coverage** را (از شاخهٔ coverage-badge — بعد از اولین اجرا روی main ظاهر می‌شود) آپدیت می‌کند. تگ `v*` را پوش کنید تا ورک‌فلو `release` اول تست‌ها را اجرا و بعد Release گیت‌هاب را با یادداشت‌های دوزبانهٔ استخراج‌شده از `CHANGELOG.md` بسازد.
+روی هر `push` و هر `pull request`، پنج جاب GitHub Actions به‌صورت خودکار اجرا می‌شود: ماتریس تست (PHP 8.2 / 8.3 / 8.4)، Pint، **تحلیل ایستای لاراستان سطح ۵** و **جاب داکر** که ایمیج production را می‌سازد، کل استک compose را (با دروازهٔ healthcheckها: MySQL سالم، fpm بالا، صفحهٔ اول پاسخ‌گو) بالا می‌آورد، صفحهٔ رندرشده را اسموک‌تست می‌کند و فایل compose پروداکشن را هم اعتبارسنجی می‌کند — بج‌های بالای همین فایل. روی هر push به `main` جاب پوشش، کل تست‌ها را با pcov اجرا و **بج زندهٔ Coverage** را (از شاخهٔ coverage-badge — بعد از اولین اجرا روی main ظاهر می‌شود) آپدیت می‌کند. تگ `v*` را پوش کنید تا ورک‌فلو `release` اول تست‌ها را اجرا و بعد Release گیت‌هاب را با یادداشت‌های دوزبانهٔ استخراج‌شده از `CHANGELOG.md` بسازد.
 
 داخل کانتینر (بدون PHP روی سیستم): `docker compose run --rm test`.
 
@@ -312,6 +327,7 @@ composer check                    # هر سه با هم — همان درواز�
 - [x] REST API نسخهٔ ۱ با Sanctum (آمادهٔ موبایل: توکن، کاتالوگ، سفارش مستقیم، علاقه‌مندی، نظرات، پرسش‌ها)
 - [x] پنل مدیریت توکن‌های API (صدور از پنل با نمایش یک‌باره، جدول ممیزی، ابطال تک‌کلیکی)
 - [x] دپلوی با داکر (استک یک‌دستوری compose: app + web + db، تست‌شده در CI)
+- [x] دیپلوی پروداکشن روی VPS رایگان (لبهٔ Caddy، HTTPS خودکار، راهنمای دوزبانهٔ دیپلوی)
 
 ## 🤝 مشارکت
 

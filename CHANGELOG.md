@@ -5,11 +5,22 @@ All notable changes to this project are documented in this file.
 
 <div dir="rtl" align="center">
 
-راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.16.0** ✅
+راه سریع تشخیص نسخه: جدیدترین ورودی بالای هر بخش = نسخه فعلی؛ الان **v2.17.0** ✅
 
 </div>
 
 ## 🇬🇧 English
+
+## [2.17.0] — 2026-11-05
+
+### ☁️ Added — Production deployment: a free VPS, a domain, automatic HTTPS
+
+- **The shop now deploys to a real server with two commands** — copy `.env.production.example` to `.env.production` (set your domain + strong DB passwords) and run `docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build --wait` → `https://your-domain`. The new **`docker-compose.prod.yml`** runs the same app/web/db trio plus a fourth service, **Caddy**, as the only public entry point (80/443): it obtains the Let's Encrypt certificate automatically, redirects HTTP→HTTPS, speaks HTTP/3 and **renews the certificate by itself** — certificates live in the `caddy-data` volume so rebuilds never re-request them
+- **No more dev defaults in production**: the domain, DB name/user/password and root password come from `.env.production` and compose refuses to boot without them; they are injected into the containers as real environment variables, which take precedence over `.env.docker` inside. Only string keys are injected — never booleans (a string `"false"` would truthy-cast) — so `APP_ENV=production`/`APP_DEBUG=false` keep their Dotenv-parsed values, and `APP_URL` becomes `https://your-domain` automatically so redirects and the payment callback stay on HTTPS
+- **The one real PHP fix of this release — `trustProxies`**: behind a reverse proxy Laravel only saw internal HTTP (Caddy ↔ app is inside the compose network), so generated URLs and redirects could come out as `http://` — `bootstrap/app.php` now trusts `X-Forwarded-For/Proto/Host` (`$middleware->trustProxies(at: '*')`), covered by the new `TrustedProxyTest` (URLs flip to `https://` only when the proxy header is actually present)
+- **`docs/DEPLOY.md` + `docs/DEPLOY.fa.md` — the honest free-tier guide**: a comparison of what is really free in autumn 2026 (Oracle Always Free ⭐ — the equivalent of 2 ARM cores + 12 GB RAM always-on; GCP's e2-micro; GitHub Codespaces' 60 h/month; Render's no-card plan and why its 15-minute spin-down + ephemeral filesystem don't fit this project), then step by step: creating the ARM instance, the classic **Security List trap** (ports 80/443 must be opened by hand), DNS-first-then-deploy, Docker install, the two deploy commands, updates, **database + uploads backups** and a troubleshooting table — plus a zero-server practice path on Codespaces
+- CI's docker job gained a **production-compose validation step** (`docker compose -f docker-compose.prod.yml config --quiet` with sample values) so the file can never silently rot
+- **Zero migrations** — 306 tests / 1187 assertions, all green (2 new tests for the proxy behavior); every image in the stack ships arm64 builds, so free Oracle ARM instances run it as-is
 
 ## [2.16.0] — 2026-11-04
 
@@ -290,6 +301,17 @@ All notable changes to this project are documented in this file.
 ---
 
 ## 🇮🇷 فارسی
+
+## [2.17.0] — ۲۰۲۶-۱۱-۰۵
+
+### ☁️ افزوده شد — دیپلوی پروداکشن: VPS رایگان، دامنه، HTTPS خودکار
+
+- **فروشگاه حالا با دو دستور روی سرور واقعی بالا می‌آید** — `.env.production.example` را به `.env.production` کپی کنید (دامنه + رمزهای قوی دیتابیس) و اجرا کنید: `docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build --wait` → `https://دامنهٔ-شما`. فایل جدید **`docker-compose.prod.yml`** همان سه سرویس app/web/db را به‌همراه سرویس چهارم — **Caddy** — به‌عنوان تنها دروازهٔ عمومی (۸۰/۴۴۳) اجرا می‌کند: گواهی Let's Encrypt را خودکار می‌گیرد، HTTP را به HTTPS ریدایرکت می‌کند، HTTP/3 حرف می‌زند و **تمدید گواهی را هم خودش انجام می‌دهد** — گواهی‌ها روی volume با نام `caddy-data` می‌مانند تا rebuildها هرگز درخواست تازه نزنند
+- **خداحافظ پیش‌فرض‌های توسعه در پروداکشن**: دامنه و نام/کاربر/رمز دیتابیس و رمز root از `.env.production` خوانده می‌شوند و بدون آنها compose اصلاً بالا نمی‌آید؛ این مقادیر به‌صورت متغیر محیطی واقعی به کانتینرها تزریق می‌شوند که بر `.env.docker` داخل کانتینر اولویت دارند. فقط کلیدهای رشته‌ای تزریق می‌شوند — نه بولین‌ها (رشتهٔ `"false"` به‌عنوان true خوانده می‌شد!) — پس `APP_ENV=production` و `APP_DEBUG=false` مقدارهای درستِ خود را دارند و `APP_URL` خودکار `https://دامنه` می‌شود تا ریدایرکت‌ها و callback درگاه پرداخت روی HTTPS بمانند
+- **تنها تغییر واقعی PHP این نسخه — `trustProxies`**: پشت پروکسی معکوس، لاراول فقط HTTP داخلی می‌دید (ارتباط Caddy و اپ داخل شبکهٔ compose است) پس URLها و ریدایرکت‌های تولیدی می‌توانستند `http://` دربیایند — حالا `bootstrap/app.php` هدرهای `X-Forwarded-For/Proto/Host` را باور می‌کند (`$middleware->trustProxies(at: '*')`) و تست جدید `TrustedProxyTest` پوششش می‌دهد (URLها فقط وقتی هدر پروکسی واقعاً موجود باشد https می‌شوند)
+- **`docs/DEPLOY.md` و `docs/DEPLOY.fa.md` — راهنمای صادقانهٔ Free Tierها**: مقایسهٔ اینکه پاییز ۲۰۲۶ واقعاً چه چیزی رایگان است (Oracle Always Free ⭐ — معادل ۲ هستهٔ ARM و ۱۲ گیگ رم همیشه‌روشن؛ e2-micro گوگل؛ ۶۰ ساعت در ماه Codespaces؛ پلن بدون‌کارت Render و اینکه چرا خواب ۱۵دقیقه‌ای و فایل‌سیستم موقتش با این پروژه جور درنمی‌آید) و بعد قدم‌به‌قدم: ساخت ماشین ARM، تلهٔ معروف **Security List** (پورت‌های ۸۰/۴۴۳ باید دستی باز شوند)، اول-DNS-بعد-دیپلوی، نصب داکر، دو دستور دیپلوی، آپدیت، **بکاپ دیتابیس و تصاویر** و جدول عیب‌یابی — به‌همراه مسیر تمرین بدون هیچ سروری روی Codespaces
+- جاب داکر در CI یک **گام اعتبارسنجی compose پروداکشن** هم گرفت (`docker compose -f docker-compose.prod.yml config --quiet` با مقادیر نمونه) تا این فایل هرگرنه بی‌سروصدا خراب شود
+- **صفر مایگریشن** — ۳۰۶ تست / ۱۱۸۷ ادعا، همه سبز (۲ تست جدید برای رفتار پروکسی)؛ همهٔ ایمیج‌های استک نسخهٔ arm64 دارند، پس ماشین‌های رایگان ARM اوراکل همین‌طور اجرایش می‌کنند
 
 ## [2.16.0] — ۲۰۲۶-۱۱-۰۴
 
